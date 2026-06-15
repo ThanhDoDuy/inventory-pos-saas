@@ -1,10 +1,15 @@
+'use client';
+
 import { PlaceholderPage } from '@/components/placeholder-page';
+import { useTranslation } from '@/lib/i18n/use-translation';
 
 export default function AuditLogsPage() {
+  const { t } = useTranslation();
+
   return (
     <PlaceholderPage
-      title="Nhật ký audit"
-      description="Theo dõi hoạt động hệ thống: đăng nhập, thay đổi dữ liệu, xuất báo cáo."
+      title={t('auditLogs.title')}
+      description={t('auditLogs.description')}
       apiHint="GET /audit-logs · GET /audit-logs/export?format=csv"
     />
   );

@@ -21,20 +21,22 @@ import {
   getModuleLabel,
   roleGrantsPermission,
 } from '@/lib/rbac-utils';
+import { useTranslation } from '@/lib/i18n/use-translation';
 
 type RbacTab = 'overview' | 'matrix' | 'custom';
 
-const TABS: { id: RbacTab; label: string; icon: typeof Shield }[] = [
-  { id: 'overview', label: 'Vai trò & quyền', icon: Shield },
-  { id: 'matrix', label: 'Ma trận phân quyền', icon: Table2 },
-  { id: 'custom', label: 'Vai trò tùy chỉnh', icon: UserCog },
-];
-
 export default function RbacPage() {
+  const { t } = useTranslation();
   const { roles, isLoading: rolesLoading, error: rolesError, mutate } = useRoles();
   const { permissions, isLoading: permLoading, error: permError } = usePermissions();
   const [activeTab, setActiveTab] = useState<RbacTab>('overview');
   const [selectedRoleId, setSelectedRoleId] = useState<string | null>(null);
+
+  const tabs: { id: RbacTab; label: string; icon: typeof Shield }[] = [
+    { id: 'overview', label: t('rbac.tabs.overview'), icon: Shield },
+    { id: 'matrix', label: t('rbac.tabs.matrix'), icon: Table2 },
+    { id: 'custom', label: t('rbac.tabs.custom'), icon: UserCog },
+  ];
 
   const isLoading = rolesLoading || permLoading;
   const hasError = rolesError || permError;
@@ -79,14 +81,12 @@ export default function RbacPage() {
   return (
     <div>
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-foreground mb-2">Vai trò & Quyền</h1>
-        <p className="text-muted-foreground">
-          Quản lý phân quyền theo vai trò trong cửa hàng
-        </p>
+        <h1 className="text-3xl font-bold text-foreground mb-2">{t('rbac.title')}</h1>
+        <p className="text-muted-foreground">{t('rbac.subtitle')}</p>
       </div>
 
       <div className="flex gap-2 mb-8 border-b border-border overflow-x-auto">
-        {TABS.map((tab) => {
+        {tabs.map((tab) => {
           const Icon = tab.icon;
           return (
             <button
@@ -109,11 +109,11 @@ export default function RbacPage() {
       {isLoading ? (
         <div className="flex items-center gap-2 text-muted-foreground py-16 justify-center">
           <Loader2 className="animate-spin" size={20} />
-          Đang tải dữ liệu phân quyền...
+          {t('rbac.loading')}
         </div>
       ) : hasError ? (
         <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-6 text-destructive text-sm">
-          Không tải được dữ liệu vai trò hoặc quyền. Vui lòng thử lại sau.
+          {t('rbac.error.loadFailed')}
         </div>
       ) : (
         <>
@@ -126,7 +126,7 @@ export default function RbacPage() {
                   </div>
                   <div>
                     <p className="text-2xl font-bold text-foreground">{stats.roleCount}</p>
-                    <p className="text-sm text-muted-foreground">Vai trò</p>
+                    <p className="text-sm text-muted-foreground">{t('rbac.stats.roles')}</p>
                   </div>
                 </div>
                 <div className="bg-card border border-border rounded-lg p-5 flex items-center gap-4">
@@ -135,7 +135,7 @@ export default function RbacPage() {
                   </div>
                   <div>
                     <p className="text-2xl font-bold text-foreground">{stats.permissionCount}</p>
-                    <p className="text-sm text-muted-foreground">Quyền hệ thống</p>
+                    <p className="text-sm text-muted-foreground">{t('rbac.stats.permissions')}</p>
                   </div>
                 </div>
                 <div className="bg-card border border-border rounded-lg p-5 flex items-center gap-4">
@@ -148,18 +148,18 @@ export default function RbacPage() {
                       {stats.customRoles > 0 && (
                         <span className="text-base font-normal text-muted-foreground">
                           {' '}
-                          + {stats.customRoles} tùy chỉnh
+                          {t('rbac.stats.customSuffix', { count: stats.customRoles })}
                         </span>
                       )}
                     </p>
-                    <p className="text-sm text-muted-foreground">Vai trò hệ thống</p>
+                    <p className="text-sm text-muted-foreground">{t('rbac.stats.systemRoles')}</p>
                   </div>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
                 <div className="xl:col-span-1 bg-card rounded-lg border border-border p-6">
-                  <h2 className="text-lg font-bold text-foreground mb-4">Vai trò trong cửa hàng</h2>
+                  <h2 className="text-lg font-bold text-foreground mb-4">{t('rbac.rolesInStore')}</h2>
                   <div className="space-y-2">
                     {roles.map((role) => {
                       const isSelected = selectedRole?.id === role.id;
@@ -193,20 +193,20 @@ export default function RbacPage() {
                             {role.is_system ? (
                               <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
                                 <Lock size={12} />
-                                Hệ thống
+                                {t('rbac.system')}
                               </span>
                             ) : (
                               <span className="text-xs text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">
-                                Tùy chỉnh
+                                {t('rbac.custom')}
                               </span>
                             )}
                             {role.is_wildcard ? (
                               <span className="text-xs text-red-700 bg-red-100 px-2 py-0.5 rounded-full">
-                                Toàn quyền (*)
+                                {t('rbac.fullAccess')}
                               </span>
                             ) : (
                               <span className="text-xs text-muted-foreground">
-                                {granted}/{permissions.length} quyền
+                                {t('rbac.permissionsCount', { granted, total: permissions.length })}
                               </span>
                             )}
                           </div>
@@ -222,12 +222,15 @@ export default function RbacPage() {
                       <div className="flex items-start justify-between gap-4 mb-6">
                         <div>
                           <h2 className="text-lg font-bold text-foreground">
-                            Quyền của vai trò: {selectedRole.name}
+                            {t('rbac.rolePermissions', { roleName: selectedRole.name })}
                           </h2>
                           <p className="text-sm text-muted-foreground mt-1">
                             {selectedRole.is_wildcard
-                              ? 'Vai trò này có toàn quyền truy cập mọi chức năng.'
-                              : `Được cấp ${grantedCountForRole(selectedRole.id)} trong tổng số ${permissions.length} quyền.`}
+                              ? t('rbac.wildcardDesc')
+                              : t('rbac.permissionsCount', {
+                                  granted: grantedCountForRole(selectedRole.id),
+                                  total: permissions.length,
+                                })}
                           </p>
                         </div>
                         <span
@@ -240,9 +243,9 @@ export default function RbacPage() {
                       {selectedRole.is_wildcard ? (
                         <div className="rounded-lg border border-green-200 bg-green-50 p-6 text-center">
                           <Check className="mx-auto text-green-600 mb-2" size={28} />
-                          <p className="font-semibold text-green-800">Toàn quyền (*)</p>
+                          <p className="font-semibold text-green-800">{t('rbac.fullAccess')}</p>
                           <p className="text-sm text-green-700 mt-1">
-                            Mọi quyền trong hệ thống đều được cấp cho vai trò này.
+                            {t('rbac.wildcardGranted')}
                           </p>
                         </div>
                       ) : (
@@ -290,7 +293,7 @@ export default function RbacPage() {
                     </>
                   ) : (
                     <p className="text-muted-foreground text-sm py-8 text-center">
-                      Chưa có vai trò nào trong cửa hàng.
+                      {t('rbac.empty.noRoles')}
                     </p>
                   )}
                 </div>
@@ -301,9 +304,9 @@ export default function RbacPage() {
           {activeTab === 'matrix' && (
             <div className="bg-card rounded-lg border border-border overflow-hidden">
               <div className="px-6 py-4 border-b border-border">
-                <h2 className="text-lg font-bold text-foreground">Ma trận phân quyền</h2>
+                <h2 className="text-lg font-bold text-foreground">{t('rbac.permissionMatrix')}</h2>
                 <p className="text-sm text-muted-foreground mt-1">
-                  So sánh quyền giữa các vai trò trong cửa hàng
+                  {t('rbac.matrixDesc')}
                 </p>
               </div>
               <div className="overflow-x-auto">
@@ -311,7 +314,7 @@ export default function RbacPage() {
                   <thead>
                     <tr className="bg-secondary/50 border-b border-border">
                       <th className="text-left px-4 py-3 font-semibold text-foreground min-w-[220px] sticky left-0 bg-secondary/50 z-10">
-                        Quyền
+                        {t('rbac.table.permission')}
                       </th>
                       {roles.map((role) => (
                         <th

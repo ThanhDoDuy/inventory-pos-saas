@@ -10,16 +10,14 @@ import {
   useSuppliers,
   type SupplierItem,
 } from '@/hooks/use-suppliers';
-import {
-  formatDateTime,
-  formatPrice,
-  getPartyStatusLabel,
-} from '@/lib/format';
 import { FormField, inputClassName, selectClassName } from '@/components/form-field';
+import { useFormat, useTranslation } from '@/lib/i18n/use-translation';
 
 const emptyForm = { name: '', phone: '', email: '', address: '', tax_code: '' };
 
 export default function SuppliersPage() {
+  const { t } = useTranslation();
+  const { formatMoney, formatDateTime, getPartyStatusLabel } = useFormat();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [showModal, setShowModal] = useState(false);
@@ -57,7 +55,7 @@ export default function SuppliersPage() {
 
   const handleSubmit = async () => {
     if (!form.name.trim() || !form.phone.trim()) {
-      setFormError('Vui lòng nhập tên và số điện thoại');
+      setFormError(t('suppliers.error.requiredFields'));
       return;
     }
     setIsSubmitting(true);
@@ -78,19 +76,19 @@ export default function SuppliersPage() {
       await mutate();
       setShowModal(false);
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : 'Thao tác thất bại');
+      setFormError(err instanceof Error ? err.message : t('suppliers.error.actionFailed'));
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleDisable = async (supplier: SupplierItem) => {
-    if (!confirm(`Vô hiệu hóa nhà cung cấp "${supplier.name}"?`)) return;
+    if (!confirm(t('suppliers.confirm.disable', { name: supplier.name }))) return;
     try {
       await disableSupplier(supplier.id);
       await mutate();
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Không thể vô hiệu hóa');
+      alert(err instanceof Error ? err.message : t('suppliers.error.disableFailed'));
     }
   };
 
@@ -98,28 +96,28 @@ export default function SuppliersPage() {
     <div>
       <div className="mb-8 flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground mb-2">Nhà cung cấp</h1>
-          <p className="text-muted-foreground">Quản lý nhà cung cấp và lịch sử giao dịch</p>
+          <h1 className="text-3xl font-bold text-foreground mb-2">{t('suppliers.title')}</h1>
+          <p className="text-muted-foreground">{t('suppliers.subtitle')}</p>
         </div>
         <button
           onClick={openCreate}
           className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg font-semibold hover:bg-primary/90"
         >
           <Plus size={20} />
-          Thêm nhà cung cấp
+          {t('suppliers.add')}
         </button>
       </div>
 
       <div className="bg-card rounded-lg border border-border p-6 mb-6">
         <div className="flex flex-col md:flex-row gap-4">
           <div className="flex-1">
-            <FormField label="Tìm kiếm" htmlFor="supplier-search">
+            <FormField label={t('common.search')} htmlFor="supplier-search">
               <div className="flex items-center gap-2">
                 <Search size={20} className="text-muted-foreground shrink-0" />
                 <input
                   id="supplier-search"
                   type="text"
-                  placeholder="Tên, SĐT hoặc email..."
+                  placeholder={t('suppliers.searchPlaceholder')}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className={`${inputClassName} flex-1`}
@@ -128,16 +126,16 @@ export default function SuppliersPage() {
             </FormField>
           </div>
           <div className="md:w-48">
-            <FormField label="Trạng thái" htmlFor="supplier-status">
+            <FormField label={t('common.status')} htmlFor="supplier-status">
               <select
                 id="supplier-status"
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
                 className={selectClassName}
               >
-                <option value="all">Tất cả</option>
-                <option value="ACTIVE">Hoạt động</option>
-                <option value="DISABLED">Vô hiệu</option>
+                <option value="all">{t('suppliers.filter.all')}</option>
+                <option value="ACTIVE">{t('suppliers.filter.active')}</option>
+                <option value="DISABLED">{t('suppliers.filter.disabled')}</option>
               </select>
             </FormField>
           </div>
@@ -148,27 +146,27 @@ export default function SuppliersPage() {
         {isLoading ? (
           <div className="flex items-center justify-center gap-2 py-12 text-muted-foreground">
             <Loader2 className="animate-spin" size={20} />
-            Đang tải...
+            {t('common.loading')}
           </div>
         ) : error ? (
-          <p className="text-center py-12 text-destructive">Không tải được danh sách nhà cung cấp</p>
+          <p className="text-center py-12 text-destructive">{t('suppliers.error.loadFailed')}</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-secondary border-b border-border">
                 <tr>
-                  <th className="px-6 py-3 text-left text-sm font-semibold">Nhà cung cấp</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold">Liên hệ</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold">Mã số thuế</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold">Trạng thái</th>
-                  <th className="px-6 py-3 text-center text-sm font-semibold">Thao tác</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold">{t('suppliers.table.supplier')}</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold">{t('suppliers.table.contact')}</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold">{t('suppliers.table.taxCode')}</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold">{t('suppliers.table.status')}</th>
+                  <th className="px-6 py-3 text-center text-sm font-semibold">{t('suppliers.table.actions')}</th>
                 </tr>
               </thead>
               <tbody>
                 {suppliers.length === 0 ? (
                   <tr>
                     <td colSpan={5} className="px-6 py-8 text-center text-muted-foreground">
-                      Chưa có nhà cung cấp ({total})
+                      {t('suppliers.empty.noSuppliers', { total })}
                     </td>
                   </tr>
                 ) : (
@@ -194,7 +192,7 @@ export default function SuppliersPage() {
                         )}
                       </td>
                       <td className="px-6 py-4 text-sm text-muted-foreground">
-                        {supplier.tax_code || '—'}
+                        {supplier.tax_code || t('common.none')}
                       </td>
                       <td className="px-6 py-4">
                         <span
@@ -212,7 +210,7 @@ export default function SuppliersPage() {
                           <button
                             onClick={() => setHistoryId(supplier.id)}
                             className="p-2 hover:bg-secondary rounded-lg text-primary"
-                            title="Lịch sử đơn"
+                            title={t('suppliers.tooltip.history')}
                           >
                             <History size={16} />
                           </button>
@@ -221,14 +219,14 @@ export default function SuppliersPage() {
                               <button
                                 onClick={() => openEdit(supplier)}
                                 className="p-2 hover:bg-secondary rounded-lg"
-                                title="Sửa"
+                                title={t('suppliers.tooltip.edit')}
                               >
                                 <Edit2 size={16} />
                               </button>
                               <button
                                 onClick={() => handleDisable(supplier)}
                                 className="p-2 hover:bg-secondary rounded-lg text-destructive"
-                                title="Vô hiệu hóa"
+                                title={t('suppliers.tooltip.disable')}
                               >
                                 <Ban size={16} />
                               </button>
@@ -249,11 +247,11 @@ export default function SuppliersPage() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-card rounded-lg border border-border p-8 max-w-md w-full">
             <h2 className="text-xl font-bold mb-4">
-              {editing ? 'Sửa nhà cung cấp' : 'Thêm nhà cung cấp'}
+              {editing ? t('suppliers.modal.edit') : t('suppliers.modal.add')}
             </h2>
             {formError && <p className="text-destructive text-sm mb-4">{formError}</p>}
             <div className="space-y-4 mb-6">
-              <FormField label="Tên nhà cung cấp" htmlFor="supplier-name" required>
+              <FormField label={t('suppliers.form.name')} htmlFor="supplier-name" required>
                 <input
                   id="supplier-name"
                   value={form.name}
@@ -261,7 +259,7 @@ export default function SuppliersPage() {
                   className={inputClassName}
                 />
               </FormField>
-              <FormField label="Số điện thoại" htmlFor="supplier-phone" required>
+              <FormField label={t('suppliers.form.phone')} htmlFor="supplier-phone" required>
                 <input
                   id="supplier-phone"
                   value={form.phone}
@@ -269,7 +267,7 @@ export default function SuppliersPage() {
                   className={inputClassName}
                 />
               </FormField>
-              <FormField label="Email" htmlFor="supplier-email">
+              <FormField label={t('suppliers.form.email')} htmlFor="supplier-email">
                 <input
                   id="supplier-email"
                   type="email"
@@ -278,7 +276,7 @@ export default function SuppliersPage() {
                   className={inputClassName}
                 />
               </FormField>
-              <FormField label="Địa chỉ" htmlFor="supplier-address">
+              <FormField label={t('suppliers.form.address')} htmlFor="supplier-address">
                 <input
                   id="supplier-address"
                   value={form.address}
@@ -286,7 +284,7 @@ export default function SuppliersPage() {
                   className={inputClassName}
                 />
               </FormField>
-              <FormField label="Mã số thuế" htmlFor="supplier-tax">
+              <FormField label={t('suppliers.form.taxCode')} htmlFor="supplier-tax">
                 <input
                   id="supplier-tax"
                   value={form.tax_code}
@@ -300,14 +298,14 @@ export default function SuppliersPage() {
                 onClick={() => setShowModal(false)}
                 className="flex-1 py-2 border border-border rounded-lg font-semibold hover:bg-secondary"
               >
-                Hủy
+                {t('common.cancel')}
               </button>
               <button
                 onClick={handleSubmit}
                 disabled={isSubmitting}
                 className="flex-1 py-2 bg-primary text-primary-foreground rounded-lg font-semibold disabled:opacity-50"
               >
-                {isSubmitting ? 'Đang lưu...' : editing ? 'Cập nhật' : 'Thêm'}
+                {isSubmitting ? t('common.saving') : editing ? t('common.update') : t('common.add')}
               </button>
             </div>
           </div>
@@ -317,37 +315,37 @@ export default function SuppliersPage() {
       {historyId && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-card rounded-lg border border-border p-8 max-w-sm w-full">
-            <h2 className="text-xl font-bold mb-4">Lịch sử đơn mua</h2>
+            <h2 className="text-xl font-bold mb-4">{t('suppliers.history.title')}</h2>
             {historyLoading ? (
               <div className="flex items-center gap-2 text-muted-foreground py-4">
                 <Loader2 className="animate-spin" size={18} />
-                Đang tải...
+                {t('common.loading')}
               </div>
             ) : history ? (
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Số đơn mua</span>
+                  <span className="text-muted-foreground">{t('suppliers.history.orderCount')}</span>
                   <span className="font-semibold">{history.count}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Tổng giá trị</span>
-                  <span className="font-semibold">{formatPrice(history.total_amount)} đ</span>
+                  <span className="text-muted-foreground">{t('suppliers.history.totalAmount')}</span>
+                  <span className="font-semibold">{formatMoney(history.total_amount)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Đơn gần nhất</span>
+                  <span className="text-muted-foreground">{t('suppliers.history.lastOrder')}</span>
                   <span className="font-semibold">
                     {formatDateTime(history.last_order_at ?? undefined)}
                   </span>
                 </div>
               </div>
             ) : (
-              <p className="text-muted-foreground">Chưa có dữ liệu</p>
+              <p className="text-muted-foreground">{t('suppliers.history.noData')}</p>
             )}
             <button
               onClick={() => setHistoryId(null)}
               className="w-full mt-6 py-2 border border-border rounded-lg font-semibold hover:bg-secondary"
             >
-              Đóng
+              {t('common.close')}
             </button>
           </div>
         </div>

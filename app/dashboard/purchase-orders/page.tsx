@@ -21,13 +21,9 @@ import {
   usePurchaseOrders,
   type PurchaseOrder,
 } from '@/hooks/use-purchase-orders';
-import {
-  formatDateTime,
-  formatPrice,
-  getPoStatusColor,
-  getPoStatusLabel,
-} from '@/lib/format';
+import { getPoStatusColor } from '@/lib/format';
 import { FormField, inputClassName, selectClassName } from '@/components/form-field';
+import { useFormat, useTranslation } from '@/lib/i18n/use-translation';
 
 interface LineItem {
   productId: string;
@@ -37,7 +33,11 @@ interface LineItem {
 
 const emptyLine = (): LineItem => ({ productId: '', quantity: '1', costPrice: '0' });
 
+const PO_STATUSES = ['DRAFT', 'APPROVED', 'PARTIALLY_RECEIVED', 'RECEIVED', 'CANCELLED'] as const;
+
 export default function PurchaseOrdersPage() {
+  const { t } = useTranslation();
+  const { formatMoney, formatDateTime, getPoStatusLabel } = useFormat();
   const [statusFilter, setStatusFilter] = useState('all');
   const [showCreate, setShowCreate] = useState(false);
   const [detailId, setDetailId] = useState<string | null>(null);
@@ -74,7 +74,7 @@ export default function PurchaseOrdersPage() {
 
   const handleCreate = async () => {
     if (!createForm.supplierId) {
-      setFormError('Vui lòng chọn nhà cung cấp');
+      setFormError(t('purchaseOrders.error.supplierRequired'));
       return;
     }
     const items = createForm.items
@@ -85,11 +85,11 @@ export default function PurchaseOrdersPage() {
         costPrice: Number(i.costPrice),
       }));
     if (items.length === 0) {
-      setFormError('Thêm ít nhất một sản phẩm');
+      setFormError(t('purchaseOrders.error.itemsRequired'));
       return;
     }
     if (items.some((i) => !i.quantity || i.quantity < 1)) {
-      setFormError('Số lượng phải >= 1');
+      setFormError(t('purchaseOrders.error.quantityMin'));
       return;
     }
 
@@ -105,21 +105,21 @@ export default function PurchaseOrdersPage() {
       setShowCreate(false);
       setCreateForm({ supplierId: '', expectedDate: '', items: [emptyLine()] });
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : 'Không thể tạo đơn');
+      setFormError(err instanceof Error ? err.message : t('purchaseOrders.error.createFailed'));
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleApprove = async (id: string) => {
-    if (!confirm('Duyệt đơn nhập hàng này?')) return;
+    if (!confirm(t('purchaseOrders.confirm.approve'))) return;
     setIsSubmitting(true);
     try {
       await approvePurchaseOrder(id);
       await mutate();
       await mutateDetail();
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Duyệt thất bại');
+      alert(err instanceof Error ? err.message : t('purchaseOrders.error.approveFailed'));
     } finally {
       setIsSubmitting(false);
     }
@@ -135,7 +135,7 @@ export default function PurchaseOrdersPage() {
       .filter((i) => i.receivedQuantity > 0);
 
     if (items.length === 0) {
-      setFormError('Nhập số lượng nhận hàng');
+      setFormError(t('purchaseOrders.error.receiveQtyRequired'));
       return;
     }
 
@@ -147,14 +147,14 @@ export default function PurchaseOrdersPage() {
       await mutateDetail();
       setReceiveQty({});
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : 'Nhận hàng thất bại');
+      setFormError(err instanceof Error ? err.message : t('purchaseOrders.error.receiveFailed'));
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleCancel = async (id: string) => {
-    const reason = prompt('Lý do hủy đơn:');
+    const reason = prompt(t('purchaseOrders.prompt.cancelReason'));
     if (!reason?.trim()) return;
     setIsSubmitting(true);
     try {
@@ -162,7 +162,7 @@ export default function PurchaseOrdersPage() {
       await mutate();
       await mutateDetail();
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Hủy đơn thất bại');
+      alert(err instanceof Error ? err.message : t('purchaseOrders.error.cancelFailed'));
     } finally {
       setIsSubmitting(false);
     }
@@ -196,8 +196,8 @@ export default function PurchaseOrdersPage() {
     <div>
       <div className="mb-8 flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground mb-2">Nhập hàng</h1>
-          <p className="text-muted-foreground">Tạo, duyệt, nhận hàng và theo dõi đơn mua</p>
+          <h1 className="text-3xl font-bold text-foreground mb-2">{t('purchaseOrders.title')}</h1>
+          <p className="text-muted-foreground">{t('purchaseOrders.subtitle')}</p>
         </div>
         <button
           onClick={() => {
@@ -207,24 +207,24 @@ export default function PurchaseOrdersPage() {
           className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg font-semibold hover:bg-primary/90"
         >
           <Plus size={20} />
-          Tạo đơn nhập
+          {t('purchaseOrders.create')}
         </button>
       </div>
 
       <div className="bg-card rounded-lg border border-border p-6 mb-6">
-        <FormField label="Lọc trạng thái" htmlFor="po-status">
+        <FormField label={t('purchaseOrders.filter.status')} htmlFor="po-status">
           <select
             id="po-status"
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
             className={`${selectClassName} max-w-xs`}
           >
-            <option value="all">Tất cả</option>
-            <option value="DRAFT">Nháp</option>
-            <option value="APPROVED">Đã duyệt</option>
-            <option value="PARTIALLY_RECEIVED">Nhận một phần</option>
-            <option value="RECEIVED">Đã nhận</option>
-            <option value="CANCELLED">Đã hủy</option>
+            <option value="all">{t('purchaseOrders.status.all')}</option>
+            {PO_STATUSES.map((status) => (
+              <option key={status} value={status}>
+                {getPoStatusLabel(status)}
+              </option>
+            ))}
           </select>
         </FormField>
       </div>
@@ -233,28 +233,28 @@ export default function PurchaseOrdersPage() {
         {isLoading ? (
           <div className="flex items-center justify-center gap-2 py-12 text-muted-foreground">
             <Loader2 className="animate-spin" size={20} />
-            Đang tải...
+            {t('common.loading')}
           </div>
         ) : error ? (
-          <p className="text-center py-12 text-destructive">Không tải được danh sách đơn</p>
+          <p className="text-center py-12 text-destructive">{t('purchaseOrders.error.loadList')}</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-secondary border-b border-border">
                 <tr>
-                  <th className="px-6 py-3 text-left text-sm font-semibold">Mã đơn</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold">Nhà cung cấp</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold">Trạng thái</th>
-                  <th className="px-6 py-3 text-right text-sm font-semibold">Tổng tiền</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold">Ngày tạo</th>
-                  <th className="px-6 py-3 text-center text-sm font-semibold">Thao tác</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold">{t('purchaseOrders.table.poNumber')}</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold">{t('purchaseOrders.table.supplier')}</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold">{t('purchaseOrders.table.status')}</th>
+                  <th className="px-6 py-3 text-right text-sm font-semibold">{t('purchaseOrders.table.total')}</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold">{t('purchaseOrders.table.createdAt')}</th>
+                  <th className="px-6 py-3 text-center text-sm font-semibold">{t('purchaseOrders.table.actions')}</th>
                 </tr>
               </thead>
               <tbody>
                 {orders.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="px-6 py-8 text-center text-muted-foreground">
-                      Chưa có đơn nhập hàng ({total})
+                      {t('purchaseOrders.empty.noOrders', { total })}
                     </td>
                   </tr>
                 ) : (
@@ -262,7 +262,7 @@ export default function PurchaseOrdersPage() {
                     <tr key={order.id} className="border-b border-border hover:bg-secondary/50">
                       <td className="px-6 py-4 font-medium">{order.po_number}</td>
                       <td className="px-6 py-4 text-sm">
-                        {supplierMap.get(order.supplierId) ?? '—'}
+                        {supplierMap.get(order.supplierId) ?? t('common.none')}
                       </td>
                       <td className="px-6 py-4">
                         <span
@@ -272,7 +272,7 @@ export default function PurchaseOrdersPage() {
                         </span>
                       </td>
                       <td className="px-6 py-4 text-right text-sm font-semibold">
-                        {formatPrice(order.total_amount)} đ
+                        {formatMoney(order.total_amount)}
                       </td>
                       <td className="px-6 py-4 text-sm text-muted-foreground">
                         {formatDateTime(order.created_at)}
@@ -281,7 +281,7 @@ export default function PurchaseOrdersPage() {
                         <button
                           onClick={() => openDetail(order.id)}
                           className="p-2 hover:bg-secondary rounded-lg text-primary"
-                          title="Chi tiết"
+                          title={t('purchaseOrders.tooltip.detail')}
                         >
                           <Eye size={16} />
                         </button>
@@ -295,24 +295,23 @@ export default function PurchaseOrdersPage() {
         )}
       </div>
 
-      {/* Create modal */}
       {showCreate && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
           <div className="bg-card rounded-lg border border-border p-8 max-w-2xl w-full my-8">
             <div className="flex items-center gap-2 mb-4">
               <ClipboardList size={22} className="text-primary" />
-              <h2 className="text-xl font-bold">Tạo đơn nhập hàng</h2>
+              <h2 className="text-xl font-bold">{t('purchaseOrders.modal.create')}</h2>
             </div>
             {formError && <p className="text-destructive text-sm mb-4">{formError}</p>}
             <div className="space-y-4 mb-6">
-              <FormField label="Nhà cung cấp" htmlFor="po-supplier" required>
+              <FormField label={t('purchaseOrders.form.supplier')} htmlFor="po-supplier" required>
                 <select
                   id="po-supplier"
                   value={createForm.supplierId}
                   onChange={(e) => setCreateForm({ ...createForm, supplierId: e.target.value })}
                   className={selectClassName}
                 >
-                  <option value="">— Chọn nhà cung cấp —</option>
+                  <option value="">{t('purchaseOrders.placeholders.supplierSelect')}</option>
                   {suppliers.map((s) => (
                     <option key={s.id} value={s.id}>
                       {s.name}
@@ -320,7 +319,7 @@ export default function PurchaseOrdersPage() {
                   ))}
                 </select>
               </FormField>
-              <FormField label="Ngày dự kiến nhận" htmlFor="po-expected">
+              <FormField label={t('purchaseOrders.form.expectedDate')} htmlFor="po-expected">
                 <input
                   id="po-expected"
                   type="date"
@@ -332,19 +331,19 @@ export default function PurchaseOrdersPage() {
 
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium">Sản phẩm</span>
+                  <span className="text-sm font-medium">{t('purchaseOrders.form.products')}</span>
                   <button
                     type="button"
                     onClick={addLine}
                     className="text-sm text-primary hover:underline"
                   >
-                    + Thêm dòng
+                    {t('purchaseOrders.addLine')}
                   </button>
                 </div>
                 <div className="grid grid-cols-12 gap-2 mb-2 px-0.5">
-                  <div className="col-span-5 text-sm font-medium text-foreground">Sản phẩm</div>
-                  <div className="col-span-2 text-sm font-medium text-foreground">Số lượng</div>
-                  <div className="col-span-3 text-sm font-medium text-foreground">Giá nhập</div>
+                  <div className="col-span-5 text-sm font-medium text-foreground">{t('purchaseOrders.form.products')}</div>
+                  <div className="col-span-2 text-sm font-medium text-foreground">{t('purchaseOrders.form.quantity')}</div>
+                  <div className="col-span-3 text-sm font-medium text-foreground">{t('purchaseOrders.form.costPrice')}</div>
                   <div className="col-span-2" />
                 </div>
                 <div className="space-y-3">
@@ -356,7 +355,7 @@ export default function PurchaseOrdersPage() {
                           onChange={(e) => updateLine(index, { productId: e.target.value })}
                           className={selectClassName}
                         >
-                          <option value="">Sản phẩm</option>
+                          <option value="">{t('purchaseOrders.placeholders.productSelect')}</option>
                           {products.map((p) => (
                             <option key={p.id} value={p.id}>
                               {p.name}
@@ -368,8 +367,8 @@ export default function PurchaseOrdersPage() {
                         <input
                           type="number"
                           min={1}
-                          placeholder="1"
-                          aria-label="Số lượng"
+                          placeholder={t('purchaseOrders.placeholders.quantity')}
+                          aria-label={t('purchaseOrders.form.quantity')}
                           value={line.quantity}
                           onChange={(e) => updateLine(index, { quantity: e.target.value })}
                           className={inputClassName}
@@ -379,8 +378,8 @@ export default function PurchaseOrdersPage() {
                         <input
                           type="number"
                           min={0}
-                          placeholder="0"
-                          aria-label="Giá nhập"
+                          placeholder={t('purchaseOrders.placeholders.costPrice')}
+                          aria-label={t('purchaseOrders.form.costPrice')}
                           value={line.costPrice}
                           onChange={(e) => updateLine(index, { costPrice: e.target.value })}
                           className={inputClassName}
@@ -392,7 +391,7 @@ export default function PurchaseOrdersPage() {
                           onClick={() => removeLine(index)}
                           className="w-full py-2 text-sm text-destructive hover:bg-destructive/10 rounded-lg"
                         >
-                          Xóa
+                          {t('purchaseOrders.remove')}
                         </button>
                       </div>
                     </div>
@@ -405,28 +404,27 @@ export default function PurchaseOrdersPage() {
                 onClick={() => setShowCreate(false)}
                 className="flex-1 py-2 border border-border rounded-lg font-semibold hover:bg-secondary"
               >
-                Hủy
+                {t('common.cancel')}
               </button>
               <button
                 onClick={handleCreate}
                 disabled={isSubmitting}
                 className="flex-1 py-2 bg-primary text-primary-foreground rounded-lg font-semibold disabled:opacity-50"
               >
-                {isSubmitting ? 'Đang tạo...' : 'Tạo đơn'}
+                {isSubmitting ? t('purchaseOrders.creating') : t('purchaseOrders.create')}
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Detail modal */}
       {detailId && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
           <div className="bg-card rounded-lg border border-border p-8 max-w-2xl w-full my-8">
             {detailLoading || !detail ? (
               <div className="flex items-center gap-2 text-muted-foreground py-8">
                 <Loader2 className="animate-spin" size={20} />
-                Đang tải chi tiết...
+                {t('purchaseOrders.detail.loading')}
               </div>
             ) : (
               <>
@@ -451,11 +449,11 @@ export default function PurchaseOrdersPage() {
                   <table className="w-full text-sm">
                     <thead className="bg-secondary">
                       <tr>
-                        <th className="px-4 py-2 text-left">Sản phẩm</th>
-                        <th className="px-4 py-2 text-right">SL đặt</th>
-                        <th className="px-4 py-2 text-right">Đã nhận</th>
-                        <th className="px-4 py-2 text-right">Giá vốn</th>
-                        {canReceive && <th className="px-4 py-2 text-right">Nhận lần này</th>}
+                        <th className="px-4 py-2 text-left">{t('purchaseOrders.form.products')}</th>
+                        <th className="px-4 py-2 text-right">{t('purchaseOrders.detail.orderedQty')}</th>
+                        <th className="px-4 py-2 text-right">{t('purchaseOrders.detail.receivedQty')}</th>
+                        <th className="px-4 py-2 text-right">{t('purchaseOrders.detail.costPrice')}</th>
+                        {canReceive && <th className="px-4 py-2 text-right">{t('purchaseOrders.detail.receiveThisTime')}</th>}
                       </tr>
                     </thead>
                     <tbody>
@@ -467,7 +465,7 @@ export default function PurchaseOrdersPage() {
                           <td className="px-4 py-2 text-right">{item.quantity}</td>
                           <td className="px-4 py-2 text-right">{item.received_quantity}</td>
                           <td className="px-4 py-2 text-right">
-                            {formatPrice(item.cost_price)} đ
+                            {formatMoney(item.cost_price)}
                           </td>
                           {canReceive && item.remaining_quantity > 0 && (
                             <td className="px-4 py-2 text-right">
@@ -485,7 +483,7 @@ export default function PurchaseOrdersPage() {
                             </td>
                           )}
                           {canReceive && item.remaining_quantity <= 0 && (
-                            <td className="px-4 py-2 text-right text-muted-foreground">—</td>
+                            <td className="px-4 py-2 text-right text-muted-foreground">{t('common.none')}</td>
                           )}
                         </tr>
                       ))}
@@ -494,7 +492,7 @@ export default function PurchaseOrdersPage() {
                 </div>
 
                 <p className="text-right font-semibold mb-6">
-                  Tổng: {formatPrice(detail.total_amount)} đ
+                  {t('purchaseOrders.total', { amount: formatMoney(detail.total_amount) })}
                 </p>
 
                 <div className="flex flex-wrap gap-2">
@@ -505,7 +503,7 @@ export default function PurchaseOrdersPage() {
                       className="flex items-center gap-1 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold disabled:opacity-50"
                     >
                       <CheckCircle size={16} />
-                      Duyệt
+                      {t('purchaseOrders.approve')}
                     </button>
                   )}
                   {canReceive && (
@@ -515,7 +513,7 @@ export default function PurchaseOrdersPage() {
                       className="flex items-center gap-1 px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-semibold disabled:opacity-50"
                     >
                       <PackageCheck size={16} />
-                      Nhận hàng
+                      {t('purchaseOrders.receive')}
                     </button>
                   )}
                   {canCancel && (
@@ -525,14 +523,14 @@ export default function PurchaseOrdersPage() {
                       className="flex items-center gap-1 px-4 py-2 bg-destructive text-destructive-foreground rounded-lg text-sm font-semibold disabled:opacity-50"
                     >
                       <XCircle size={16} />
-                      Hủy đơn
+                      {t('purchaseOrders.cancelOrder')}
                     </button>
                   )}
                   <button
                     onClick={() => setDetailId(null)}
                     className="ml-auto px-4 py-2 border border-border rounded-lg text-sm font-semibold hover:bg-secondary"
                   >
-                    Đóng
+                    {t('common.close')}
                   </button>
                 </div>
               </>

@@ -3,8 +3,10 @@
 import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
 import { useEffect } from 'react';
+import { useTranslation } from '@/lib/i18n/use-translation';
 
 export default function InventoryProductRedirect() {
+  const { t } = useTranslation();
   const router = useRouter();
   const params = useParams();
   const productId = typeof params.id === 'string' ? params.id : (params.id?.[0] ?? '');
@@ -18,9 +20,9 @@ export default function InventoryProductRedirect() {
   if (!productId) {
     return (
       <p className="text-muted-foreground text-sm">
-        ID không hợp lệ.{' '}
+        {t('inventory.redirect.invalidId')}{' '}
         <Link href="/dashboard/products" className="text-primary underline">
-          Quay lại danh sách
+          {t('common.backToList')}
         </Link>
       </p>
     );
@@ -28,9 +30,9 @@ export default function InventoryProductRedirect() {
 
   return (
     <p className="text-muted-foreground text-sm">
-      Đang chuyển...{' '}
+      {t('inventory.redirect.redirecting')}{' '}
       <Link href={`/dashboard/products/${productId}`} className="text-primary underline">
-        Xem sản phẩm
+        {t('inventory.redirect.viewProduct')}
       </Link>
     </p>
   );

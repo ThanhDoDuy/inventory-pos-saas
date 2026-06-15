@@ -8,16 +8,14 @@ import {
   useInventoryTransactions,
   type AdjustmentReason,
 } from '@/hooks/use-inventory-adjustments';
-import {
-  formatDateTime,
-  getAdjustmentReasonLabel,
-  getTransactionTypeLabel,
-} from '@/lib/format';
 import { FormField, inputClassName, selectClassName } from '@/components/form-field';
+import { useFormat, useTranslation } from '@/lib/i18n/use-translation';
 
 const REASONS: AdjustmentReason[] = ['DAMAGE', 'LOSS', 'EXPIRED', 'CORRECTION'];
 
 export default function InventoryAdjustmentsPage() {
+  const { t } = useTranslation();
+  const { formatDateTime, getAdjustmentReasonLabel, getTransactionTypeLabel } = useFormat();
   const [showModal, setShowModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState('');
@@ -39,11 +37,11 @@ export default function InventoryAdjustmentsPage() {
   const handleSubmit = async () => {
     const quantity = Number(form.quantity);
     if (!form.productId) {
-      setFormError('Vui lòng chọn sản phẩm');
+      setFormError(t('adjustments.error.productRequired'));
       return;
     }
     if (!quantity || quantity === 0) {
-      setFormError('Số lượng phải khác 0 (dương = tăng, âm = giảm)');
+      setFormError(t('adjustments.error.quantityInvalid'));
       return;
     }
 
@@ -60,7 +58,7 @@ export default function InventoryAdjustmentsPage() {
       setShowModal(false);
       setForm({ productId: '', quantity: '', reason: 'CORRECTION', note: '' });
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : 'Điều chỉnh thất bại');
+      setFormError(err instanceof Error ? err.message : t('adjustments.error.submitFailed'));
     } finally {
       setIsSubmitting(false);
     }
@@ -70,10 +68,8 @@ export default function InventoryAdjustmentsPage() {
     <div>
       <div className="mb-8 flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground mb-2">Điều chỉnh kho</h1>
-          <p className="text-muted-foreground">
-            Điều chỉnh tồn kho có lý do (kiểm kê, hư hỏng, sai lệch)
-          </p>
+          <h1 className="text-3xl font-bold text-foreground mb-2">{t('adjustments.title')}</h1>
+          <p className="text-muted-foreground">{t('adjustments.subtitle')}</p>
         </div>
         <button
           onClick={() => {
@@ -83,7 +79,7 @@ export default function InventoryAdjustmentsPage() {
           className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg font-semibold hover:bg-primary/90"
         >
           <Plus size={20} />
-          Tạo điều chỉnh
+          {t('adjustments.create')}
         </button>
       </div>
 
@@ -91,28 +87,28 @@ export default function InventoryAdjustmentsPage() {
         {isLoading ? (
           <div className="flex items-center justify-center gap-2 py-12 text-muted-foreground">
             <Loader2 className="animate-spin" size={20} />
-            Đang tải...
+            {t('common.loading')}
           </div>
         ) : error ? (
-          <p className="text-center py-12 text-destructive">Không tải được lịch sử điều chỉnh</p>
+          <p className="text-center py-12 text-destructive">{t('adjustments.error.loadFailed')}</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-secondary border-b border-border">
                 <tr>
-                  <th className="px-6 py-3 text-left text-sm font-semibold">Thời gian</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold">Sản phẩm</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold">Loại</th>
-                  <th className="px-6 py-3 text-right text-sm font-semibold">Số lượng</th>
-                  <th className="px-6 py-3 text-right text-sm font-semibold">Tồn sau</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold">Ghi chú</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold">{t('adjustments.table.time')}</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold">{t('adjustments.table.product')}</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold">{t('adjustments.table.type')}</th>
+                  <th className="px-6 py-3 text-right text-sm font-semibold">{t('adjustments.table.quantity')}</th>
+                  <th className="px-6 py-3 text-right text-sm font-semibold">{t('adjustments.table.balanceAfter')}</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold">{t('adjustments.table.note')}</th>
                 </tr>
               </thead>
               <tbody>
                 {transactions.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="px-6 py-8 text-center text-muted-foreground">
-                      Chưa có điều chỉnh nào ({total})
+                      {t('adjustments.empty.noAdjustments', { total })}
                     </td>
                   </tr>
                 ) : (
@@ -137,7 +133,7 @@ export default function InventoryAdjustmentsPage() {
                       </td>
                       <td className="px-6 py-4 text-sm text-right">{tx.balance_after}</td>
                       <td className="px-6 py-4 text-sm text-muted-foreground max-w-xs truncate">
-                        {tx.note || '—'}
+                        {tx.note || t('common.none')}
                       </td>
                     </tr>
                   ))
@@ -153,30 +149,30 @@ export default function InventoryAdjustmentsPage() {
           <div className="bg-card rounded-lg border border-border p-8 max-w-md w-full">
             <div className="flex items-center gap-2 mb-4">
               <SlidersHorizontal size={22} className="text-primary" />
-              <h2 className="text-xl font-bold">Tạo điều chỉnh kho</h2>
+              <h2 className="text-xl font-bold">{t('adjustments.modal.title')}</h2>
             </div>
             {formError && <p className="text-destructive text-sm mb-4">{formError}</p>}
             <div className="space-y-4 mb-6">
-              <FormField label="Sản phẩm" htmlFor="adj-product" required>
+              <FormField label={t('adjustments.form.product')} htmlFor="adj-product" required>
                 <select
                   id="adj-product"
                   value={form.productId}
                   onChange={(e) => setForm({ ...form, productId: e.target.value })}
                   className={selectClassName}
                 >
-                  <option value="">— Chọn sản phẩm —</option>
+                  <option value="">{t('adjustments.placeholders.productSelect')}</option>
                   {products.map((p) => (
                     <option key={p.id} value={p.id}>
-                      {p.name} (tồn: {p.stock})
+                      {p.name} {t('adjustments.placeholders.stockInOption', { stock: p.stock })}
                     </option>
                   ))}
                 </select>
               </FormField>
               <FormField
-                label="Số lượng điều chỉnh"
+                label={t('adjustments.form.quantity')}
                 htmlFor="adj-quantity"
                 required
-                hint="Số dương = tăng tồn, số âm = giảm tồn"
+                hint={t('adjustments.form.quantityHint')}
               >
                 <input
                   id="adj-quantity"
@@ -184,10 +180,10 @@ export default function InventoryAdjustmentsPage() {
                   value={form.quantity}
                   onChange={(e) => setForm({ ...form, quantity: e.target.value })}
                   className={inputClassName}
-                  placeholder="VD: -5 hoặc 10"
+                  placeholder={t('adjustments.placeholders.quantity')}
                 />
               </FormField>
-              <FormField label="Lý do" htmlFor="adj-reason" required>
+              <FormField label={t('adjustments.form.reason')} htmlFor="adj-reason" required>
                 <select
                   id="adj-reason"
                   value={form.reason}
@@ -203,13 +199,13 @@ export default function InventoryAdjustmentsPage() {
                   ))}
                 </select>
               </FormField>
-              <FormField label="Ghi chú" htmlFor="adj-note">
+              <FormField label={t('adjustments.form.note')} htmlFor="adj-note">
                 <input
                   id="adj-note"
                   value={form.note}
                   onChange={(e) => setForm({ ...form, note: e.target.value })}
                   className={inputClassName}
-                  placeholder="Mô tả thêm (tuỳ chọn)"
+                  placeholder={t('adjustments.placeholders.note')}
                 />
               </FormField>
             </div>
@@ -218,14 +214,14 @@ export default function InventoryAdjustmentsPage() {
                 onClick={() => setShowModal(false)}
                 className="flex-1 py-2 border border-border rounded-lg font-semibold hover:bg-secondary"
               >
-                Hủy
+                {t('common.cancel')}
               </button>
               <button
                 onClick={handleSubmit}
                 disabled={isSubmitting}
                 className="flex-1 py-2 bg-primary text-primary-foreground rounded-lg font-semibold disabled:opacity-50"
               >
-                {isSubmitting ? 'Đang xử lý...' : 'Xác nhận'}
+                {isSubmitting ? t('common.processing') : t('common.confirm')}
               </button>
             </div>
           </div>

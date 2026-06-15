@@ -9,7 +9,6 @@ import {
   isNavActive,
   resolveAppRole,
 } from '@/lib/navigation';
-import { LanguageSwitcher } from '@/components/language-switcher';
 import { useTranslation } from '@/lib/i18n/use-translation';
 import { ChevronDown, LogOut, Menu, ShoppingCart, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -79,13 +78,13 @@ export function Sidebar() {
         }`}
       >
         <div className="p-4 border-b border-border shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center shrink-0">
               <ShoppingCart className="w-6 h-6 text-primary-foreground" />
             </div>
-            <div>
+            <div className="min-w-0">
               <h1 className="font-bold text-foreground text-sm">{t('app.title')}</h1>
-              <p className="text-xs text-muted-foreground">{t('app.subtitle')}</p>
+              <p className="text-xs text-muted-foreground truncate">{t('app.subtitle')}</p>
             </div>
           </div>
         </div>
@@ -154,7 +153,6 @@ export function Sidebar() {
         </nav>
 
         <div className="shrink-0 border-t border-border p-4 space-y-3">
-          <LanguageSwitcher showLabel className="justify-between" />
           <div className="p-3 bg-secondary rounded-lg">
             <p className="text-sm font-medium text-foreground truncate">{user?.username}</p>
             <p className="text-xs text-muted-foreground truncate">{user?.email}</p>

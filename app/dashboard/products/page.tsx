@@ -9,14 +9,19 @@ import {
   useCategories,
   useProducts,
 } from '@/hooks/use-inventory';
-import {
-  formatPrice,
-  getStockStatus,
-  getStockStatusColor,
-} from '@/lib/format';
+import { getStockStatusColor } from '@/lib/format';
 import { FormField, inputClassName, selectClassName } from '@/components/form-field';
+import { useFormat, useTranslation } from '@/lib/i18n/use-translation';
+
+function stockStatusColorKey(stock: number, minimumStock = 0) {
+  if (stock <= 0) return 'Out of Stock';
+  if (stock <= minimumStock) return 'Low Stock';
+  return 'In Stock';
+}
 
 export default function InventoryPage() {
+  const { t } = useTranslation();
+  const { formatMoney, getStockStatus } = useFormat();
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -37,9 +42,9 @@ export default function InventoryPage() {
     let lowStock = 0;
     let outOfStock = 0;
     for (const p of products) {
-      const status = getStockStatus(p.stock, p.minimum_stock ?? 0);
-      if (status === 'Low Stock') lowStock++;
-      if (status === 'Out of Stock') outOfStock++;
+      const min = p.minimum_stock ?? 0;
+      if (p.stock <= 0) outOfStock++;
+      else if (p.stock <= min) lowStock++;
     }
     return { total: total || products.length, lowStock, outOfStock };
   }, [products, total]);
@@ -47,7 +52,7 @@ export default function InventoryPage() {
   const handleCreate = async () => {
     setFormError('');
     if (!form.name || !form.sku || !form.selling_price) {
-      setFormError('Vui lòng điền tên, SKU và giá bán');
+      setFormError(t('products.error.requiredFields'));
       return;
     }
 
@@ -72,19 +77,19 @@ export default function InventoryPage() {
         minimum_stock: '0',
       });
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : 'Không thể tạo sản phẩm');
+      setFormError(err instanceof Error ? err.message : t('products.error.createFailed'));
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleDeactivate = async (productId: string, productName: string) => {
-    if (!confirm(`Ngừng bán sản phẩm "${productName}"?`)) return;
+    if (!confirm(t('products.confirm.deactivate', { name: productName }))) return;
     try {
       await deactivateProduct(productId);
       await mutate();
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Không thể ngừng bán sản phẩm');
+      alert(err instanceof Error ? err.message : t('products.error.deactivateFailed'));
     }
   };
 
@@ -92,41 +97,41 @@ export default function InventoryPage() {
     <div>
       <div className="mb-8 flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground mb-2">Sản phẩm</h1>
-          <p className="text-muted-foreground">Quản lý danh mục sản phẩm và giá bán</p>
+          <h1 className="text-3xl font-bold text-foreground mb-2">{t('products.title')}</h1>
+          <p className="text-muted-foreground">{t('products.subtitle')}</p>
         </div>
         <button
           onClick={() => setShowAddModal(true)}
           className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg font-semibold hover:bg-primary/90 transition-colors"
         >
           <Plus size={20} />
-          Thêm sản phẩm
+          {t('products.add')}
         </button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <div className="bg-card rounded-lg border border-border p-6">
-          <p className="text-muted-foreground text-sm mb-2">Tổng sản phẩm</p>
+          <p className="text-muted-foreground text-sm mb-2">{t('products.stats.total')}</p>
           <p className="text-3xl font-bold text-foreground">{stats.total}</p>
         </div>
         <div className="bg-card rounded-lg border border-border p-6">
-          <p className="text-muted-foreground text-sm mb-2">Sắp hết hàng</p>
+          <p className="text-muted-foreground text-sm mb-2">{t('products.stats.lowStock')}</p>
           <p className="text-3xl font-bold text-yellow-600">{stats.lowStock}</p>
         </div>
         <div className="bg-card rounded-lg border border-border p-6">
-          <p className="text-muted-foreground text-sm mb-2">Hết hàng</p>
+          <p className="text-muted-foreground text-sm mb-2">{t('products.stats.outOfStock')}</p>
           <p className="text-3xl font-bold text-red-600">{stats.outOfStock}</p>
         </div>
       </div>
 
       <div className="bg-card rounded-lg border border-border p-6 mb-6">
-        <FormField label="Tìm kiếm" htmlFor="product-search">
+        <FormField label={t('common.search')} htmlFor="product-search">
           <div className="flex items-center gap-2">
             <Search size={20} className="text-muted-foreground shrink-0" />
             <input
               id="product-search"
               type="text"
-              placeholder="Tên hoặc SKU..."
+              placeholder={t('products.searchPlaceholder')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className={`${inputClassName} flex-1`}
@@ -139,35 +144,37 @@ export default function InventoryPage() {
         {isLoading ? (
           <div className="flex items-center justify-center gap-2 py-12 text-muted-foreground">
             <Loader2 className="animate-spin" size={20} />
-            Đang tải...
+            {t('common.loading')}
           </div>
         ) : error ? (
-          <p className="text-center py-12 text-destructive">Không tải được danh sách sản phẩm</p>
+          <p className="text-center py-12 text-destructive">{t('products.error.loadFailed')}</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-secondary border-b border-border">
                 <tr>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Sản phẩm</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">SKU</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Danh mục</th>
-                  <th className="px-6 py-3 text-right text-sm font-semibold text-foreground">Tồn kho</th>
-                  <th className="px-6 py-3 text-right text-sm font-semibold text-foreground">Tối thiểu</th>
-                  <th className="px-6 py-3 text-right text-sm font-semibold text-foreground">Giá bán</th>
-                  <th className="px-6 py-3 text-center text-sm font-semibold text-foreground">Trạng thái</th>
-                  <th className="px-6 py-3 text-center text-sm font-semibold text-foreground">Thao tác</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">{t('products.table.product')}</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">{t('products.table.sku')}</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">{t('products.table.category')}</th>
+                  <th className="px-6 py-3 text-right text-sm font-semibold text-foreground">{t('products.table.stock')}</th>
+                  <th className="px-6 py-3 text-right text-sm font-semibold text-foreground">{t('products.table.minStock')}</th>
+                  <th className="px-6 py-3 text-right text-sm font-semibold text-foreground">{t('products.table.price')}</th>
+                  <th className="px-6 py-3 text-center text-sm font-semibold text-foreground">{t('products.table.status')}</th>
+                  <th className="px-6 py-3 text-center text-sm font-semibold text-foreground">{t('products.table.actions')}</th>
                 </tr>
               </thead>
               <tbody>
                 {products.length === 0 ? (
                   <tr>
                     <td colSpan={8} className="px-6 py-8 text-center text-muted-foreground">
-                      Không có sản phẩm
+                      {t('products.empty.noProducts')}
                     </td>
                   </tr>
                 ) : (
                   products.map((item) => {
-                    const status = getStockStatus(item.stock, item.minimum_stock ?? 0);
+                    const minStock = item.minimum_stock ?? 0;
+                    const statusLabel = getStockStatus(item.stock, minStock);
+                    const statusColorKey = stockStatusColorKey(item.stock, minStock);
                     return (
                       <tr key={item.id} className="border-b border-border hover:bg-secondary/50 transition-colors">
                         <td className="px-6 py-4">
@@ -180,20 +187,20 @@ export default function InventoryPage() {
                         </td>
                         <td className="px-6 py-4 text-sm text-muted-foreground">{item.sku}</td>
                         <td className="px-6 py-4 text-sm text-muted-foreground">
-                          {item.category?.name ?? '—'}
+                          {item.category?.name ?? t('common.none')}
                         </td>
                         <td className="px-6 py-4 text-right font-semibold text-foreground">{item.stock}</td>
                         <td className="px-6 py-4 text-right text-sm text-muted-foreground">
-                          {item.minimum_stock ?? 0}
+                          {minStock}
                         </td>
                         <td className="px-6 py-4 text-right font-medium text-foreground">
-                          {formatPrice(item.selling_price)}₫
+                          {formatMoney(item.selling_price)}
                         </td>
                         <td className="px-6 py-4 text-center">
                           <span
-                            className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${getStockStatusColor(status)}`}
+                            className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${getStockStatusColor(statusColorKey)}`}
                           >
-                            {status}
+                            {statusLabel}
                           </span>
                         </td>
                         <td className="px-6 py-4 text-center">
@@ -225,41 +232,41 @@ export default function InventoryPage() {
       {showAddModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-card rounded-lg border border-border p-8 max-w-md w-full max-h-[90vh] overflow-y-auto">
-            <h2 className="text-2xl font-bold text-foreground mb-6">Thêm sản phẩm</h2>
+            <h2 className="text-2xl font-bold text-foreground mb-6">{t('products.modal.add')}</h2>
             {formError && (
               <div className="mb-4 p-3 bg-destructive/10 border border-destructive rounded-lg text-destructive text-sm">
                 {formError}
               </div>
             )}
             <div className="space-y-4 mb-6">
-              <FormField label="Tên sản phẩm" htmlFor="product-name" required>
+              <FormField label={t('products.form.name')} htmlFor="product-name" required>
                 <input
                   id="product-name"
                   type="text"
-                  placeholder="Ví dụ: Pepsi"
+                  placeholder={t('products.placeholders.name')}
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
                   className={inputClassName}
                 />
               </FormField>
-              <FormField label="SKU" htmlFor="product-sku" required hint="Mã định danh duy nhất trong cửa hàng">
+              <FormField label={t('products.form.sku')} htmlFor="product-sku" required hint={t('products.form.skuHint')}>
                 <input
                   id="product-sku"
                   type="text"
-                  placeholder="Ví dụ: PSI"
+                  placeholder={t('products.placeholders.sku')}
                   value={form.sku}
                   onChange={(e) => setForm({ ...form, sku: e.target.value })}
                   className={inputClassName}
                 />
               </FormField>
-              <FormField label="Danh mục" htmlFor="product-category">
+              <FormField label={t('products.form.category')} htmlFor="product-category">
                 <select
                   id="product-category"
                   value={form.category_id}
                   onChange={(e) => setForm({ ...form, category_id: e.target.value })}
                   className={selectClassName}
                 >
-                  <option value="">— Không chọn —</option>
+                  <option value="">{t('products.placeholders.categoryNone')}</option>
                   {categories.map((cat) => (
                     <option key={cat.id} value={cat.id}>
                       {cat.name}
@@ -267,34 +274,34 @@ export default function InventoryPage() {
                   ))}
                 </select>
               </FormField>
-              <FormField label="Giá vốn (₫)" htmlFor="product-cost">
+              <FormField label={t('products.form.costPrice')} htmlFor="product-cost">
                 <input
                   id="product-cost"
                   type="number"
                   min={0}
-                  placeholder="20000"
+                  placeholder={t('products.placeholders.cost')}
                   value={form.cost_price}
                   onChange={(e) => setForm({ ...form, cost_price: e.target.value })}
                   className={inputClassName}
                 />
               </FormField>
-              <FormField label="Giá bán (₫)" htmlFor="product-price" required>
+              <FormField label={t('products.form.sellingPrice')} htmlFor="product-price" required>
                 <input
                   id="product-price"
                   type="number"
                   min={0}
-                  placeholder="30000"
+                  placeholder={t('products.placeholders.price')}
                   value={form.selling_price}
                   onChange={(e) => setForm({ ...form, selling_price: e.target.value })}
                   className={inputClassName}
                 />
               </FormField>
-              <FormField label="Tồn tối thiểu" htmlFor="product-min-stock" hint="Cảnh báo khi tồn kho ≤ giá trị này">
+              <FormField label={t('products.form.minStock')} htmlFor="product-min-stock" hint={t('products.form.minStockHint')}>
                 <input
                   id="product-min-stock"
                   type="number"
                   min={0}
-                  placeholder="0"
+                  placeholder={t('products.placeholders.minStock')}
                   value={form.minimum_stock}
                   onChange={(e) => setForm({ ...form, minimum_stock: e.target.value })}
                   className={inputClassName}
@@ -307,14 +314,14 @@ export default function InventoryPage() {
                 disabled={isSubmitting}
                 className="flex-1 py-2 px-4 border border-border rounded-lg font-semibold hover:bg-secondary transition-colors text-foreground"
               >
-                Hủy
+                {t('common.cancel')}
               </button>
               <button
                 onClick={handleCreate}
                 disabled={isSubmitting}
                 className="flex-1 py-2 px-4 bg-primary text-primary-foreground rounded-lg font-semibold hover:bg-primary/90 transition-colors disabled:opacity-50"
               >
-                {isSubmitting ? 'Đang lưu...' : 'Thêm'}
+                {isSubmitting ? t('common.saving') : t('common.add')}
               </button>
             </div>
           </div>

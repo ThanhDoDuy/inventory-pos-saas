@@ -5,8 +5,10 @@ import { useState } from 'react';
 import { useCategories } from '@/hooks/use-inventory';
 import { apiPost, extractErrorMessage } from '@/lib/api-client';
 import { FormField, inputClassName } from '@/components/form-field';
+import { useTranslation } from '@/lib/i18n/use-translation';
 
 export default function CategoriesPage() {
+  const { t } = useTranslation();
   const { categories, isLoading, error, mutate } = useCategories();
   const [showModal, setShowModal] = useState(false);
   const [name, setName] = useState('');
@@ -16,7 +18,7 @@ export default function CategoriesPage() {
 
   const handleCreate = async () => {
     if (!name.trim()) {
-      setFormError('Tên danh mục không được trống');
+      setFormError(t('categories.error.nameRequired'));
       return;
     }
     setIsSubmitting(true);
@@ -28,7 +30,7 @@ export default function CategoriesPage() {
       setName('');
       setDescription('');
     } catch (err) {
-      setFormError(extractErrorMessage(err, 'Không thể tạo danh mục'));
+      setFormError(extractErrorMessage(err, t('categories.error.createFailed')));
     } finally {
       setIsSubmitting(false);
     }
@@ -38,15 +40,15 @@ export default function CategoriesPage() {
     <div>
       <div className="mb-8 flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground mb-2">Danh mục sản phẩm</h1>
-          <p className="text-muted-foreground">Phân loại sản phẩm trong kho</p>
+          <h1 className="text-3xl font-bold text-foreground mb-2">{t('categories.title')}</h1>
+          <p className="text-muted-foreground">{t('categories.subtitle')}</p>
         </div>
         <button
           onClick={() => setShowModal(true)}
           className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg font-semibold hover:bg-primary/90"
         >
           <Plus size={20} />
-          Thêm danh mục
+          {t('categories.add')}
         </button>
       </div>
 
@@ -54,12 +56,12 @@ export default function CategoriesPage() {
         {isLoading ? (
           <div className="flex items-center justify-center gap-2 py-12 text-muted-foreground">
             <Loader2 className="animate-spin" size={20} />
-            Đang tải...
+            {t('common.loading')}
           </div>
         ) : error ? (
-          <p className="text-center py-12 text-destructive">Không tải được danh mục</p>
+          <p className="text-center py-12 text-destructive">{t('categories.error.loadFailed')}</p>
         ) : categories.length === 0 ? (
-          <p className="text-center py-12 text-muted-foreground">Chưa có danh mục</p>
+          <p className="text-center py-12 text-muted-foreground">{t('categories.empty.noCategories')}</p>
         ) : (
           <div className="divide-y divide-border">
             {categories.map((cat) => (
@@ -82,26 +84,26 @@ export default function CategoriesPage() {
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-card rounded-lg border border-border p-8 max-w-md w-full">
-            <h2 className="text-xl font-bold mb-4">Thêm danh mục</h2>
+            <h2 className="text-xl font-bold mb-4">{t('categories.modal.add')}</h2>
             {formError && (
               <p className="text-destructive text-sm mb-4">{formError}</p>
             )}
             <div className="space-y-4 mb-6">
-              <FormField label="Tên danh mục" htmlFor="category-name" required>
+              <FormField label={t('categories.form.name')} htmlFor="category-name" required>
                 <input
                   id="category-name"
                   type="text"
-                  placeholder="Ví dụ: Beverages"
+                  placeholder={t('categories.placeholders.name')}
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   className={inputClassName}
                 />
               </FormField>
-              <FormField label="Mô tả" htmlFor="category-description">
+              <FormField label={t('categories.form.description')} htmlFor="category-description">
                 <input
                   id="category-description"
                   type="text"
-                  placeholder="Mô tả ngắn (tuỳ chọn)"
+                  placeholder={t('categories.placeholders.description')}
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   className={inputClassName}
@@ -113,14 +115,14 @@ export default function CategoriesPage() {
                 onClick={() => setShowModal(false)}
                 className="flex-1 py-2 border border-border rounded-lg font-semibold hover:bg-secondary"
               >
-                Hủy
+                {t('common.cancel')}
               </button>
               <button
                 onClick={handleCreate}
                 disabled={isSubmitting}
                 className="flex-1 py-2 bg-primary text-primary-foreground rounded-lg font-semibold disabled:opacity-50"
               >
-                {isSubmitting ? 'Đang lưu...' : 'Thêm'}
+                {isSubmitting ? t('common.saving') : t('common.add')}
               </button>
             </div>
           </div>

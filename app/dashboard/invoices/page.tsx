@@ -4,10 +4,13 @@ import { FileText, Loader2, Printer } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { getInvoice, invoiceToReceiptData, useInvoices } from '@/hooks/use-invoices';
 import { useAuthStore } from '@/lib/auth-store';
-import { formatDateTime, formatPrice, getDateRange } from '@/lib/format';
+import { getDateRange } from '@/lib/format';
 import { printReceipt } from '@/lib/print-receipt';
+import { useFormat, useTranslation } from '@/lib/i18n/use-translation';
 
 export default function InvoicesPage() {
+  const { t } = useTranslation();
+  const { formatMoney, formatDateTime } = useFormat();
   const { from, to } = useMemo(() => getDateRange('month'), []);
   const { invoices, total, isLoading, error } = useInvoices(from, to, 50);
   const user = useAuthStore((state) => state.user);
@@ -19,7 +22,7 @@ export default function InvoicesPage() {
       const detail = await getInvoice(invoiceId);
       printReceipt(invoiceToReceiptData(detail, { storeName: user?.tenantName }));
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Không thể in hóa đơn');
+      alert(err instanceof Error ? err.message : t('invoices.error.printFailed'));
     } finally {
       setPrintingId(null);
     }
@@ -28,13 +31,13 @@ export default function InvoicesPage() {
   return (
     <div>
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-foreground mb-2">Hóa đơn</h1>
-        <p className="text-muted-foreground">Danh sách hóa đơn bán hàng (30 ngày gần nhất)</p>
+        <h1 className="text-3xl font-bold text-foreground mb-2">{t('invoices.title')}</h1>
+        <p className="text-muted-foreground">{t('invoices.subtitle')}</p>
       </div>
 
       <div className="bg-card rounded-lg border border-border p-6 mb-6">
         <p className="text-sm text-muted-foreground">
-          Tổng: <span className="font-semibold text-foreground">{total}</span> hóa đơn
+          {t('invoices.totalCount', { count: total })}
         </p>
       </div>
 
@@ -42,21 +45,21 @@ export default function InvoicesPage() {
         {isLoading ? (
           <div className="flex items-center justify-center gap-2 py-12 text-muted-foreground">
             <Loader2 className="animate-spin" size={20} />
-            Đang tải...
+            {t('common.loading')}
           </div>
         ) : error ? (
-          <p className="text-center py-12 text-destructive">Không tải được hóa đơn</p>
+          <p className="text-center py-12 text-destructive">{t('invoices.error.loadFailed')}</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-secondary border-b border-border">
                 <tr>
-                  <th className="px-6 py-3 text-left text-sm font-semibold">Mã HĐ</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold">Ngày</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold">Thanh toán</th>
-                  <th className="px-6 py-3 text-right text-sm font-semibold">Tổng tiền</th>
-                  <th className="px-6 py-3 text-center text-sm font-semibold">Trạng thái</th>
-                  <th className="px-6 py-3 text-center text-sm font-semibold">Thao tác</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold">{t('invoices.table.invoiceCode')}</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold">{t('invoices.table.date')}</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold">{t('invoices.table.payment')}</th>
+                  <th className="px-6 py-3 text-right text-sm font-semibold">{t('invoices.table.total')}</th>
+                  <th className="px-6 py-3 text-center text-sm font-semibold">{t('invoices.table.status')}</th>
+                  <th className="px-6 py-3 text-center text-sm font-semibold">{t('invoices.table.actions')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -64,7 +67,7 @@ export default function InvoicesPage() {
                   <tr>
                     <td colSpan={6} className="px-6 py-12 text-center text-muted-foreground">
                       <FileText className="mx-auto mb-2 opacity-50" size={32} />
-                      Chưa có hóa đơn
+                      {t('invoices.empty.noInvoices')}
                     </td>
                   </tr>
                 ) : (
@@ -76,9 +79,9 @@ export default function InvoicesPage() {
                       <td className="px-6 py-4 text-sm text-muted-foreground">
                         {formatDateTime(inv.created_at)}
                       </td>
-                      <td className="px-6 py-4 text-sm">{inv.payment_method ?? '—'}</td>
+                      <td className="px-6 py-4 text-sm">{inv.payment_method ?? t('common.none')}</td>
                       <td className="px-6 py-4 text-right font-semibold">
-                        {formatPrice(inv.total)}₫
+                        {formatMoney(inv.total)}
                       </td>
                       <td className="px-6 py-4 text-center">
                         <span
@@ -97,14 +100,14 @@ export default function InvoicesPage() {
                           onClick={() => handlePrint(inv.id)}
                           disabled={printingId === inv.id}
                           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium border border-primary/30 bg-primary/10 text-primary hover:bg-primary/15 disabled:opacity-50"
-                          title="In hóa đơn"
+                          title={t('invoices.printTitle')}
                         >
                           {printingId === inv.id ? (
                             <Loader2 className="animate-spin" size={16} />
                           ) : (
                             <Printer size={16} />
                           )}
-                          In
+                          {t('invoices.print')}
                         </button>
                       </td>
                     </tr>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   X,
   Banknote,
@@ -19,7 +19,7 @@ import {
   type CreateInvoiceItem,
   type InvoiceDetail,
 } from '@/hooks/use-invoices';
-import { formatMoney } from '@/lib/format';
+import { useFormat, useTranslation } from '@/lib/i18n/use-translation';
 import { printReceipt } from '@/lib/print-receipt';
 
 interface PaymentModalProps {
@@ -35,15 +35,6 @@ interface PaymentModalProps {
 
 type PaymentMethod = 'cash' | 'transfer';
 
-const PAYMENT_METHODS: {
-  id: PaymentMethod;
-  label: string;
-  icon: typeof Banknote;
-}[] = [
-  { id: 'cash', label: 'Tiền mặt', icon: Banknote },
-  { id: 'transfer', label: 'Chuyển khoản', icon: Building2 },
-];
-
 const QUICK_AMOUNTS = [0, 10000, 50000, 100000, 200000, 500000];
 
 export function PaymentModal({
@@ -56,6 +47,8 @@ export function PaymentModal({
   storeName,
   notes,
 }: PaymentModalProps) {
+  const { t } = useTranslation();
+  const { formatMoney } = useFormat();
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash');
   const [amountPaid, setAmountPaid] = useState(total);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -65,6 +58,15 @@ export function PaymentModal({
   const [changeAmount, setChangeAmount] = useState(0);
   const [createdInvoice, setCreatedInvoice] = useState<InvoiceDetail | null>(null);
   const [lastAmountPaid, setLastAmountPaid] = useState(0);
+
+  const paymentMethods = useMemo(
+    () =>
+      [
+        { id: 'cash' as const, label: t('pos.payment.cash'), icon: Banknote },
+        { id: 'transfer' as const, label: t('pos.payment.transfer'), icon: Building2 },
+      ],
+    [t],
+  );
 
   useEffect(() => {
     if (isOpen) {
@@ -101,18 +103,18 @@ export function PaymentModal({
         }),
       );
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Không thể in hóa đơn');
+      setError(err instanceof Error ? err.message : t('pos.payment.printFailed'));
     }
   };
 
   const handlePayment = async () => {
     if (!isValidPayment) {
-      setError('Số tiền khách trả phải lớn hơn hoặc bằng tổng tiền');
+      setError(t('pos.payment.insufficientPaid'));
       return;
     }
 
     if (items.length === 0) {
-      setError('Giỏ hàng trống');
+      setError(t('pos.payment.emptyCart'));
       return;
     }
 
@@ -132,7 +134,7 @@ export function PaymentModal({
       setChangeAmount(paymentMethod === 'cash' ? Math.max(0, change) : 0);
       setStep('success');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Thanh toán thất bại');
+      setError(err instanceof Error ? err.message : t('pos.payment.failed'));
     } finally {
       setIsProcessing(false);
     }
@@ -144,7 +146,7 @@ export function PaymentModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <button
         type="button"
-        aria-label="Đóng"
+        aria-label={t('pos.payment.close')}
         onClick={handleClose}
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
       />
@@ -155,24 +157,25 @@ export function PaymentModal({
             <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-green-100">
               <CheckCircle2 className="h-12 w-12 text-green-600" strokeWidth={2} />
             </div>
-            <h2 className="text-2xl font-bold text-foreground mb-2">Thanh toán thành công!</h2>
-            <p className="text-muted-foreground mb-6">Hóa đơn đã được tạo và ghi nhận doanh thu.</p>
+            <h2 className="text-2xl font-bold text-foreground mb-2">{t('pos.payment.success')}</h2>
+            <p className="text-muted-foreground mb-6">{t('pos.payment.successDesc')}</p>
 
             <div className="rounded-xl bg-green-50 border border-green-200 p-6 mb-4">
-              <p className="text-sm text-green-800 mb-1">Tổng thanh toán</p>
+              <p className="text-sm text-green-800 mb-1">{t('pos.payment.total')}</p>
               <p className="text-3xl font-bold text-green-700">{formatMoney(paidTotal)}</p>
             </div>
 
             {changeAmount > 0 && (
               <div className="rounded-xl bg-amber-50 border border-amber-200 p-4 mb-6">
-                <p className="text-sm text-amber-800">Tiền thừa trả khách</p>
+                <p className="text-sm text-amber-800">{t('pos.payment.changeToCustomer')}</p>
                 <p className="text-xl font-bold text-amber-900">{formatMoney(changeAmount)}</p>
               </div>
             )}
 
             {createdInvoice?.invoice_number && (
               <p className="text-sm text-muted-foreground mb-4">
-                Mã hóa đơn: <span className="font-semibold text-foreground">{createdInvoice.invoice_number}</span>
+                {t('pos.payment.invoiceCode')}{' '}
+                <span className="font-semibold text-foreground">{createdInvoice.invoice_number}</span>
               </p>
             )}
 
@@ -183,13 +186,13 @@ export function PaymentModal({
                 className="w-full py-3 px-4 flex items-center justify-center gap-2 rounded-xl font-semibold border border-primary/30 bg-primary/10 text-primary hover:bg-primary/15 transition-colors"
               >
                 <Printer size={20} />
-                In hóa đơn
+                {t('pos.payment.print')}
               </button>
               <button
                 onClick={handleDone}
                 className="w-full py-3 px-4 bg-primary text-primary-foreground rounded-xl font-semibold hover:bg-primary/90 transition-colors"
               >
-                Đơn mới
+                {t('pos.payment.newOrder')}
               </button>
             </div>
           </div>
@@ -201,8 +204,10 @@ export function PaymentModal({
                   <Receipt className="h-5 w-5 text-primary" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold text-foreground">Thanh toán</h2>
-                  <p className="text-xs text-muted-foreground">{items.length} sản phẩm</p>
+                  <h2 className="text-xl font-bold text-foreground">{t('pos.payment.title')}</h2>
+                  <p className="text-xs text-muted-foreground">
+                    {t('pos.payment.productCount', { count: items.length })}
+                  </p>
                 </div>
               </div>
               <button
@@ -222,21 +227,21 @@ export function PaymentModal({
               )}
 
               <div className="rounded-2xl bg-gradient-to-br from-primary/15 via-primary/5 to-transparent border border-primary/20 p-6 text-center">
-                <p className="text-sm text-muted-foreground mb-1">Tổng thanh toán</p>
+                <p className="text-sm text-muted-foreground mb-1">{t('pos.payment.total')}</p>
                 <p className="text-4xl font-bold text-primary tracking-tight">
                   {formatMoney(total)}
                 </p>
                 {discount > 0 && (
                   <span className="inline-block mt-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium">
-                    Giảm giá {discount}%
+                    {t('pos.payment.discount', { percent: discount })}
                   </span>
                 )}
               </div>
 
               <div>
-                <p className="text-sm font-semibold text-foreground mb-3">Phương thức thanh toán</p>
+                <p className="text-sm font-semibold text-foreground mb-3">{t('pos.payment.method')}</p>
                 <div className="grid grid-cols-2 gap-3">
-                  {PAYMENT_METHODS.map(({ id, label, icon: Icon }) => (
+                  {paymentMethods.map(({ id, label, icon: Icon }) => (
                     <button
                       key={id}
                       type="button"
@@ -256,7 +261,7 @@ export function PaymentModal({
 
               {paymentMethod === 'cash' && (
                 <div className="space-y-3">
-                  <p className="text-sm font-semibold text-foreground">Khách trả</p>
+                  <p className="text-sm font-semibold text-foreground">{t('pos.payment.amountPaid')}</p>
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
@@ -289,20 +294,20 @@ export function PaymentModal({
                         onClick={() => setAmountPaid(extra === 0 ? total : amountPaid + extra)}
                         className="px-3 py-1.5 text-xs font-medium rounded-lg border border-border hover:bg-primary/10 hover:border-primary/30 hover:text-primary transition-colors"
                       >
-                        {extra === 0 ? 'Đúng tiền' : `+${formatMoney(extra)}`}
+                        {extra === 0 ? t('pos.payment.exactAmount') : `+${formatMoney(extra)}`}
                       </button>
                     ))}
                   </div>
 
                   {change > 0 && (
                     <div className="flex items-center justify-between p-4 rounded-xl bg-green-50 border border-green-200">
-                      <span className="text-sm font-medium text-green-800">Tiền thừa</span>
+                      <span className="text-sm font-medium text-green-800">{t('pos.payment.change')}</span>
                       <span className="text-xl font-bold text-green-700">{formatMoney(change)}</span>
                     </div>
                   )}
                   {amountPaid < total && amountPaid > 0 && (
                     <p className="text-xs text-destructive">
-                      Còn thiếu {formatMoney(total - amountPaid)}
+                      {t('pos.payment.shortfall', { amount: formatMoney(total - amountPaid) })}
                     </p>
                   )}
                 </div>
@@ -310,7 +315,7 @@ export function PaymentModal({
 
               {paymentMethod === 'transfer' && (
                 <div className="rounded-xl bg-secondary/60 border border-border p-4 text-sm text-muted-foreground">
-                  Xác nhận khách đã chuyển khoản <strong className="text-foreground">{formatMoney(total)}</strong> trước khi hoàn tất.
+                  {t('pos.payment.transferConfirm', { amount: formatMoney(total) })}
                 </div>
               )}
             </div>
@@ -321,7 +326,7 @@ export function PaymentModal({
                 disabled={isProcessing}
                 className="flex-1 py-3 px-4 border border-border rounded-xl font-semibold text-foreground hover:bg-secondary transition-colors disabled:opacity-50"
               >
-                Hủy
+                {t('common.cancel')}
               </button>
               <button
                 onClick={handlePayment}
@@ -331,10 +336,10 @@ export function PaymentModal({
                 {isProcessing ? (
                   <>
                     <Loader2 className="animate-spin" size={18} />
-                    Đang xử lý...
+                    {t('common.processing')}
                   </>
                 ) : (
-                  `Thanh toán ${formatMoney(total)}`
+                  t('pos.payment.pay', { amount: formatMoney(total) })
                 )}
               </button>
             </div>

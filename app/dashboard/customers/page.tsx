@@ -10,16 +10,14 @@ import {
   useCustomers,
   type CustomerItem,
 } from '@/hooks/use-customers';
-import {
-  formatDateTime,
-  formatPrice,
-  getPartyStatusLabel,
-} from '@/lib/format';
 import { FormField, inputClassName, selectClassName } from '@/components/form-field';
+import { useFormat, useTranslation } from '@/lib/i18n/use-translation';
 
 const emptyForm = { name: '', phone: '', email: '', address: '' };
 
 export default function CustomersPage() {
+  const { t } = useTranslation();
+  const { formatMoney, formatDateTime, getPartyStatusLabel } = useFormat();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [showModal, setShowModal] = useState(false);
@@ -56,7 +54,7 @@ export default function CustomersPage() {
 
   const handleSubmit = async () => {
     if (!form.name.trim() || !form.phone.trim()) {
-      setFormError('Vui lòng nhập tên và số điện thoại');
+      setFormError(t('customers.error.requiredFields'));
       return;
     }
     setIsSubmitting(true);
@@ -76,19 +74,19 @@ export default function CustomersPage() {
       await mutate();
       setShowModal(false);
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : 'Thao tác thất bại');
+      setFormError(err instanceof Error ? err.message : t('customers.error.actionFailed'));
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleDisable = async (customer: CustomerItem) => {
-    if (!confirm(`Vô hiệu hóa khách hàng "${customer.name}"?`)) return;
+    if (!confirm(t('customers.confirm.disable', { name: customer.name }))) return;
     try {
       await disableCustomer(customer.id);
       await mutate();
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Không thể vô hiệu hóa');
+      alert(err instanceof Error ? err.message : t('customers.error.disableFailed'));
     }
   };
 
@@ -96,28 +94,28 @@ export default function CustomersPage() {
     <div>
       <div className="mb-8 flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground mb-2">Khách hàng</h1>
-          <p className="text-muted-foreground">Quản lý thông tin khách hàng và lịch sử mua hàng</p>
+          <h1 className="text-3xl font-bold text-foreground mb-2">{t('customers.title')}</h1>
+          <p className="text-muted-foreground">{t('customers.subtitle')}</p>
         </div>
         <button
           onClick={openCreate}
           className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg font-semibold hover:bg-primary/90"
         >
           <Plus size={20} />
-          Thêm khách hàng
+          {t('customers.add')}
         </button>
       </div>
 
       <div className="bg-card rounded-lg border border-border p-6 mb-6">
         <div className="flex flex-col md:flex-row gap-4">
           <div className="flex-1">
-            <FormField label="Tìm kiếm" htmlFor="customer-search">
+            <FormField label={t('common.search')} htmlFor="customer-search">
               <div className="flex items-center gap-2">
                 <Search size={20} className="text-muted-foreground shrink-0" />
                 <input
                   id="customer-search"
                   type="text"
-                  placeholder="Tên, SĐT hoặc email..."
+                  placeholder={t('customers.searchPlaceholder')}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className={`${inputClassName} flex-1`}
@@ -126,16 +124,16 @@ export default function CustomersPage() {
             </FormField>
           </div>
           <div className="md:w-48">
-            <FormField label="Trạng thái" htmlFor="customer-status">
+            <FormField label={t('common.status')} htmlFor="customer-status">
               <select
                 id="customer-status"
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
                 className={selectClassName}
               >
-                <option value="all">Tất cả</option>
-                <option value="ACTIVE">Hoạt động</option>
-                <option value="DISABLED">Vô hiệu</option>
+                <option value="all">{t('customers.filter.all')}</option>
+                <option value="ACTIVE">{t('customers.filter.active')}</option>
+                <option value="DISABLED">{t('customers.filter.disabled')}</option>
               </select>
             </FormField>
           </div>
@@ -146,27 +144,27 @@ export default function CustomersPage() {
         {isLoading ? (
           <div className="flex items-center justify-center gap-2 py-12 text-muted-foreground">
             <Loader2 className="animate-spin" size={20} />
-            Đang tải...
+            {t('common.loading')}
           </div>
         ) : error ? (
-          <p className="text-center py-12 text-destructive">Không tải được danh sách khách hàng</p>
+          <p className="text-center py-12 text-destructive">{t('customers.error.loadFailed')}</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-secondary border-b border-border">
                 <tr>
-                  <th className="px-6 py-3 text-left text-sm font-semibold">Khách hàng</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold">Liên hệ</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold">Trạng thái</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold">Mua gần nhất</th>
-                  <th className="px-6 py-3 text-center text-sm font-semibold">Thao tác</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold">{t('customers.table.customer')}</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold">{t('customers.table.contact')}</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold">{t('customers.table.status')}</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold">{t('customers.table.lastPurchase')}</th>
+                  <th className="px-6 py-3 text-center text-sm font-semibold">{t('customers.table.actions')}</th>
                 </tr>
               </thead>
               <tbody>
                 {customers.length === 0 ? (
                   <tr>
                     <td colSpan={5} className="px-6 py-8 text-center text-muted-foreground">
-                      Chưa có khách hàng ({total})
+                      {t('customers.empty.noCustomers', { total })}
                     </td>
                   </tr>
                 ) : (
@@ -210,7 +208,7 @@ export default function CustomersPage() {
                           <button
                             onClick={() => setHistoryId(customer.id)}
                             className="p-2 hover:bg-secondary rounded-lg text-primary"
-                            title="Lịch sử mua"
+                            title={t('customers.tooltip.history')}
                           >
                             <History size={16} />
                           </button>
@@ -219,14 +217,14 @@ export default function CustomersPage() {
                               <button
                                 onClick={() => openEdit(customer)}
                                 className="p-2 hover:bg-secondary rounded-lg"
-                                title="Sửa"
+                                title={t('customers.tooltip.edit')}
                               >
                                 <Edit2 size={16} />
                               </button>
                               <button
                                 onClick={() => handleDisable(customer)}
                                 className="p-2 hover:bg-secondary rounded-lg text-destructive"
-                                title="Vô hiệu hóa"
+                                title={t('customers.tooltip.disable')}
                               >
                                 <Ban size={16} />
                               </button>
@@ -247,11 +245,11 @@ export default function CustomersPage() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-card rounded-lg border border-border p-8 max-w-md w-full">
             <h2 className="text-xl font-bold mb-4">
-              {editing ? 'Sửa khách hàng' : 'Thêm khách hàng'}
+              {editing ? t('customers.modal.edit') : t('customers.modal.add')}
             </h2>
             {formError && <p className="text-destructive text-sm mb-4">{formError}</p>}
             <div className="space-y-4 mb-6">
-              <FormField label="Tên khách hàng" htmlFor="customer-name" required>
+              <FormField label={t('customers.form.name')} htmlFor="customer-name" required>
                 <input
                   id="customer-name"
                   value={form.name}
@@ -259,7 +257,7 @@ export default function CustomersPage() {
                   className={inputClassName}
                 />
               </FormField>
-              <FormField label="Số điện thoại" htmlFor="customer-phone" required>
+              <FormField label={t('customers.form.phone')} htmlFor="customer-phone" required>
                 <input
                   id="customer-phone"
                   value={form.phone}
@@ -267,7 +265,7 @@ export default function CustomersPage() {
                   className={inputClassName}
                 />
               </FormField>
-              <FormField label="Email" htmlFor="customer-email">
+              <FormField label={t('customers.form.email')} htmlFor="customer-email">
                 <input
                   id="customer-email"
                   type="email"
@@ -276,7 +274,7 @@ export default function CustomersPage() {
                   className={inputClassName}
                 />
               </FormField>
-              <FormField label="Địa chỉ" htmlFor="customer-address">
+              <FormField label={t('customers.form.address')} htmlFor="customer-address">
                 <input
                   id="customer-address"
                   value={form.address}
@@ -290,14 +288,14 @@ export default function CustomersPage() {
                 onClick={() => setShowModal(false)}
                 className="flex-1 py-2 border border-border rounded-lg font-semibold hover:bg-secondary"
               >
-                Hủy
+                {t('common.cancel')}
               </button>
               <button
                 onClick={handleSubmit}
                 disabled={isSubmitting}
                 className="flex-1 py-2 bg-primary text-primary-foreground rounded-lg font-semibold disabled:opacity-50"
               >
-                {isSubmitting ? 'Đang lưu...' : editing ? 'Cập nhật' : 'Thêm'}
+                {isSubmitting ? t('common.saving') : editing ? t('common.update') : t('common.add')}
               </button>
             </div>
           </div>
@@ -307,37 +305,37 @@ export default function CustomersPage() {
       {historyId && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-card rounded-lg border border-border p-8 max-w-sm w-full">
-            <h2 className="text-xl font-bold mb-4">Lịch sử mua hàng</h2>
+            <h2 className="text-xl font-bold mb-4">{t('customers.history.title')}</h2>
             {historyLoading ? (
               <div className="flex items-center gap-2 text-muted-foreground py-4">
                 <Loader2 className="animate-spin" size={18} />
-                Đang tải...
+                {t('common.loading')}
               </div>
             ) : history ? (
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Số đơn đã mua</span>
+                  <span className="text-muted-foreground">{t('customers.history.orderCount')}</span>
                   <span className="font-semibold">{history.count}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Tổng chi tiêu</span>
-                  <span className="font-semibold">{formatPrice(history.total_spent)} đ</span>
+                  <span className="text-muted-foreground">{t('customers.history.totalSpent')}</span>
+                  <span className="font-semibold">{formatMoney(history.total_spent)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Mua gần nhất</span>
+                  <span className="text-muted-foreground">{t('customers.history.lastPurchase')}</span>
                   <span className="font-semibold">
                     {formatDateTime(history.last_purchase_at ?? undefined)}
                   </span>
                 </div>
               </div>
             ) : (
-              <p className="text-muted-foreground">Chưa có dữ liệu</p>
+              <p className="text-muted-foreground">{t('customers.history.noData')}</p>
             )}
             <button
               onClick={() => setHistoryId(null)}
               className="w-full mt-6 py-2 border border-border rounded-lg font-semibold hover:bg-secondary"
             >
-              Đóng
+              {t('common.close')}
             </button>
           </div>
         </div>

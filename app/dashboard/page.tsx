@@ -3,37 +3,36 @@
 import Link from 'next/link';
 import { useAuthStore } from '@/lib/auth-store';
 import { useDashboard } from '@/hooks/use-analytics';
+import { useFormat, useTranslation } from '@/lib/i18n/use-translation';
 import { DollarSign, ShoppingCart, Package, AlertTriangle, Loader2 } from 'lucide-react';
-
-function formatPrice(value: number) {
-  return new Intl.NumberFormat('vi-VN').format(value);
-}
 
 export default function DashboardPage() {
   const user = useAuthStore((state) => state.user);
   const { dashboard, isLoading, error } = useDashboard();
+  const { t } = useTranslation();
+  const { formatMoney } = useFormat();
 
   const stats = [
     {
-      title: 'Doanh thu hôm nay',
-      value: dashboard ? `${formatPrice(dashboard.revenue_today)}₫` : '—',
+      title: t('dashboard.stats.revenueToday'),
+      value: dashboard ? formatMoney(dashboard.revenue_today) : '—',
       icon: DollarSign,
       color: 'bg-blue-100 text-blue-600',
     },
     {
-      title: 'Đơn hôm nay',
+      title: t('dashboard.stats.ordersToday'),
       value: dashboard ? String(dashboard.orders_today) : '—',
       icon: ShoppingCart,
       color: 'bg-green-100 text-green-600',
     },
     {
-      title: 'SP bán hôm nay',
+      title: t('dashboard.stats.productsSoldToday'),
       value: dashboard ? String(dashboard.products_sold_today) : '—',
       icon: Package,
       color: 'bg-purple-100 text-purple-600',
     },
     {
-      title: 'Sắp hết hàng',
+      title: t('dashboard.stats.lowStock'),
       value: dashboard ? String(dashboard.low_stock_count) : '—',
       icon: AlertTriangle,
       color: 'bg-orange-100 text-orange-600',
@@ -44,23 +43,24 @@ export default function DashboardPage() {
     <div>
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-foreground mb-2">
-          Xin chào, {user?.username}!
+          {t('dashboard.greeting', { username: user?.username ?? '' })}
         </h1>
         <p className="text-muted-foreground">
-          Tổng quan kinh doanh{user?.tenantName ? ` — ${user.tenantName}` : ''}
+          {t('dashboard.subtitle')}
+          {user?.tenantName ? ` — ${user.tenantName}` : ''}
         </p>
       </div>
 
       {isLoading && (
         <div className="flex items-center gap-2 text-muted-foreground mb-6">
           <Loader2 className="animate-spin" size={20} />
-          Đang tải dữ liệu...
+          {t('dashboard.loading')}
         </div>
       )}
 
       {error && (
         <div className="mb-6 p-4 bg-destructive/10 border border-destructive rounded-lg">
-          <p className="text-destructive text-sm">Không tải được dữ liệu dashboard</p>
+          <p className="text-destructive text-sm">{t('dashboard.error.loadFailed')}</p>
         </div>
       )}
 
@@ -86,10 +86,10 @@ export default function DashboardPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 bg-card rounded-lg border border-border p-6">
-          <h2 className="text-xl font-bold text-foreground mb-4">Top sản phẩm</h2>
+          <h2 className="text-xl font-bold text-foreground mb-4">{t('dashboard.topProducts')}</h2>
           {!dashboard?.top_products?.length ? (
             <div className="text-center py-12">
-              <p className="text-muted-foreground">Chưa có dữ liệu bán hàng</p>
+              <p className="text-muted-foreground">{t('dashboard.empty.noSalesData')}</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -103,11 +103,11 @@ export default function DashboardPage() {
                       {index + 1}. {product.product_name ?? product.sku ?? product.product_id}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      Đã bán: {product.quantity_sold}
+                      {t('dashboard.sold', { quantity: product.quantity_sold })}
                     </p>
                   </div>
                   <p className="font-semibold text-primary">
-                    {formatPrice(product.revenue)}₫
+                    {formatMoney(product.revenue)}
                   </p>
                 </div>
               ))}
@@ -116,33 +116,33 @@ export default function DashboardPage() {
         </div>
 
         <div className="bg-card rounded-lg border border-border p-6">
-          <h2 className="text-xl font-bold text-foreground mb-4">Thao tác nhanh</h2>
+          <h2 className="text-xl font-bold text-foreground mb-4">{t('dashboard.quickActions')}</h2>
           <div className="space-y-3">
             <Link
               href="/dashboard/pos"
               className="block w-full p-3 bg-primary text-primary-foreground rounded-lg font-semibold hover:bg-primary/90 transition-colors text-center"
             >
-              Bán hàng
+              {t('dashboard.actions.sell')}
             </Link>
             <Link
               href="/dashboard/products"
               className="block w-full p-3 border border-primary text-primary rounded-lg font-semibold hover:bg-primary/10 transition-colors text-center"
             >
-              Quản lý sản phẩm
+              {t('dashboard.actions.manageProducts')}
             </Link>
             <Link
               href="/dashboard/reports"
               className="block w-full p-3 border border-border text-foreground rounded-lg font-semibold hover:bg-secondary transition-colors text-center"
             >
-              Xem báo cáo
+              {t('dashboard.actions.viewReports')}
             </Link>
           </div>
 
           {dashboard && (
             <div className="mt-6 pt-6 border-t border-border">
-              <p className="text-sm text-muted-foreground mb-1">Doanh thu tháng</p>
+              <p className="text-sm text-muted-foreground mb-1">{t('dashboard.monthlyRevenue')}</p>
               <p className="text-xl font-bold text-foreground">
-                {formatPrice(dashboard.revenue_month)}₫
+                {formatMoney(dashboard.revenue_month)}
               </p>
             </div>
           )}

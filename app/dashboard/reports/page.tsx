@@ -12,9 +12,12 @@ import {
 } from '@/hooks/use-analytics';
 import { useInvoices } from '@/hooks/use-invoices';
 import type { DateRangePreset } from '@/lib/format';
-import { formatDateTime, formatPrice, getDateRange } from '@/lib/format';
+import { getDateRange } from '@/lib/format';
+import { useFormat, useTranslation } from '@/lib/i18n/use-translation';
 
 export default function ReportsPage() {
+  const { t } = useTranslation();
+  const { formatMoney, formatDateTime } = useFormat();
   const [dateRange, setDateRange] = useState<DateRangePreset>('month');
   const [isExporting, setIsExporting] = useState(false);
 
@@ -54,52 +57,59 @@ export default function ReportsPage() {
     try {
       await exportReport('REVENUE', { from, to });
     } catch {
-      alert('Xuất báo cáo thất bại');
+      alert(t('reports.error.exportFailed'));
     } finally {
       setIsExporting(false);
     }
   };
 
+  const presetLabels: Record<DateRangePreset, string> = {
+    week: t('reports.preset.week'),
+    month: t('reports.preset.month'),
+    quarter: t('reports.preset.quarter'),
+    year: t('reports.preset.year'),
+  };
+
   const reportSections = [
     {
-      title: 'Tổng quan bán hàng',
+      title: t('reports.salesOverview'),
       icon: TrendingUp,
       color: 'bg-blue-100 text-blue-600',
       loading: revenueLoading,
       stats: [
         {
-          label: 'Doanh thu',
-          value: revenue ? `${formatPrice(revenue.total_revenue)}₫` : '—',
+          label: t('reports.revenue'),
+          value: revenue ? formatMoney(revenue.total_revenue) : t('common.none'),
         },
         {
-          label: 'Đơn hàng',
+          label: t('reports.orders'),
           value: revenue
             ? String(revenue.daily.reduce((sum, d) => sum + d.orders, 0))
-            : '—',
+            : t('common.none'),
         },
         {
-          label: 'TB/đơn',
-          value: avgOrderValue ? `${formatPrice(Math.round(avgOrderValue))}₫` : '—',
+          label: t('reports.avgPerOrder'),
+          value: avgOrderValue ? formatMoney(Math.round(avgOrderValue)) : t('common.none'),
         },
       ],
     },
     {
-      title: 'Tồn kho',
+      title: t('reports.inventory'),
       icon: BarChart3,
       color: 'bg-green-100 text-green-600',
       loading: lowStockLoading,
       stats: [
         {
-          label: 'Sắp hết hàng',
+          label: t('reports.lowStock'),
           value: String(dashboard?.low_stock_count ?? lowStock.length),
         },
         {
-          label: 'SP bán hôm nay',
-          value: String(dashboard?.products_sold_today ?? '—'),
+          label: t('reports.productsSoldToday'),
+          value: String(dashboard?.products_sold_today ?? t('common.none')),
         },
         {
-          label: 'Doanh thu hôm nay',
-          value: dashboard ? `${formatPrice(dashboard.revenue_today)}₫` : '—',
+          label: t('reports.revenueToday'),
+          value: dashboard ? formatMoney(dashboard.revenue_today) : t('common.none'),
         },
       ],
     },
@@ -108,15 +118,15 @@ export default function ReportsPage() {
   return (
     <div>
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-foreground mb-2">Báo cáo & Phân tích</h1>
-        <p className="text-muted-foreground">Theo dõi hiệu suất kinh doanh</p>
+        <h1 className="text-3xl font-bold text-foreground mb-2">{t('reports.title')}</h1>
+        <p className="text-muted-foreground">{t('reports.subtitle')}</p>
       </div>
 
       <div className="bg-card rounded-lg border border-border p-6 mb-8">
         <div className="flex items-center gap-4 flex-wrap">
           <div className="flex items-center gap-2">
             <Calendar size={20} className="text-muted-foreground" />
-            <span className="font-medium text-foreground">Khoảng thời gian:</span>
+            <span className="font-medium text-foreground">{t('reports.dateRange')}</span>
           </div>
           <div className="flex gap-2 flex-wrap">
             {(['week', 'month', 'quarter', 'year'] as DateRangePreset[]).map((range) => (
@@ -129,13 +139,7 @@ export default function ReportsPage() {
                     : 'border border-input text-foreground hover:bg-secondary'
                 }`}
               >
-                {range === 'week'
-                  ? '7 ngày'
-                  : range === 'month'
-                    ? '1 tháng'
-                    : range === 'quarter'
-                      ? '3 tháng'
-                      : '1 năm'}
+                {presetLabels[range]}
               </button>
             ))}
           </div>
@@ -145,7 +149,7 @@ export default function ReportsPage() {
             className="ml-auto flex items-center gap-2 px-4 py-2 border border-input rounded-lg text-foreground hover:bg-secondary transition-colors disabled:opacity-50"
           >
             <Download size={20} />
-            {isExporting ? 'Đang xuất...' : 'Xuất CSV'}
+            {isExporting ? t('reports.exporting') : t('reports.exportCsv')}
           </button>
         </div>
       </div>
@@ -178,11 +182,11 @@ export default function ReportsPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-card rounded-lg border border-border p-6">
-          <h2 className="text-xl font-bold text-foreground mb-6">Xu hướng doanh thu</h2>
+          <h2 className="text-xl font-bold text-foreground mb-6">{t('reports.revenueTrend')}</h2>
           {revenueLoading ? (
             <div className="flex items-center justify-center py-16 text-muted-foreground">
               <Loader2 className="animate-spin mr-2" size={20} />
-              Đang tải...
+              {t('common.loading')}
             </div>
           ) : (
             <SalesChart data={salesChartData} />
@@ -190,11 +194,11 @@ export default function ReportsPage() {
         </div>
 
         <div className="bg-card rounded-lg border border-border p-6">
-          <h2 className="text-xl font-bold text-foreground mb-6">Top sản phẩm theo doanh thu</h2>
+          <h2 className="text-xl font-bold text-foreground mb-6">{t('reports.topProductsByRevenue')}</h2>
           {topLoading ? (
             <div className="flex items-center justify-center py-16 text-muted-foreground">
               <Loader2 className="animate-spin mr-2" size={20} />
-              Đang tải...
+              {t('common.loading')}
             </div>
           ) : (
             <CategoryBreakdown items={topProductsBreakdown} />
@@ -204,30 +208,30 @@ export default function ReportsPage() {
 
       <div className="mt-8 bg-card rounded-lg border border-border overflow-hidden">
         <div className="p-6 border-b border-border">
-          <h2 className="text-xl font-bold text-foreground">Giao dịch gần đây</h2>
+          <h2 className="text-xl font-bold text-foreground">{t('reports.recentTransactions')}</h2>
         </div>
         {invoicesLoading ? (
           <div className="flex items-center justify-center py-12 text-muted-foreground">
             <Loader2 className="animate-spin mr-2" size={20} />
-            Đang tải...
+            {t('common.loading')}
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-secondary border-b border-border">
                 <tr>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Ngày</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Mã HĐ</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Thanh toán</th>
-                  <th className="px-6 py-3 text-right text-sm font-semibold text-foreground">Số tiền</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Trạng thái</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">{t('reports.table.date')}</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">{t('reports.table.invoiceCode')}</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">{t('reports.table.payment')}</th>
+                  <th className="px-6 py-3 text-right text-sm font-semibold text-foreground">{t('reports.table.amount')}</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">{t('reports.table.status')}</th>
                 </tr>
               </thead>
               <tbody>
                 {invoices.length === 0 ? (
                   <tr>
                     <td colSpan={5} className="px-6 py-8 text-center text-muted-foreground">
-                      Không có giao dịch trong khoảng thời gian đã chọn
+                      {t('reports.empty.noTransactions')}
                     </td>
                   </tr>
                 ) : (
@@ -240,10 +244,10 @@ export default function ReportsPage() {
                         {inv.invoice_number ?? inv.id.slice(-8)}
                       </td>
                       <td className="px-6 py-4 text-sm text-muted-foreground">
-                        {inv.payment_method ?? '—'}
+                        {inv.payment_method ?? t('common.none')}
                       </td>
                       <td className="px-6 py-4 text-right font-semibold text-foreground">
-                        {formatPrice(inv.total)}₫
+                        {formatMoney(inv.total)}
                       </td>
                       <td className="px-6 py-4 text-sm">
                         <span
