@@ -28,7 +28,7 @@ export default function InventoryAdjustmentsPage() {
     note: '',
   });
 
-  const { products } = useProducts(undefined, 200);
+  const { products } = useProducts(undefined, { limit: 200 });
   const { transactions, total, isLoading, error, mutate } = useInventoryTransactions('ADJUST');
 
   const productMap = useMemo(

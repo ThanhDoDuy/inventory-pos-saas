@@ -53,7 +53,7 @@ export default function PurchaseOrdersPage() {
   const { orders, total, isLoading, error, mutate } = usePurchaseOrders(statusFilter);
   const { order: detail, isLoading: detailLoading, mutate: mutateDetail } = usePurchaseOrder(detailId);
   const { suppliers } = useSuppliers(undefined, 'ACTIVE');
-  const { products } = useProducts(undefined, 200);
+  const { products } = useProducts(undefined, { limit: 200 });
 
   const supplierMap = useMemo(
     () => new Map(suppliers.map((s) => [s.id, s.name])),

@@ -1,9 +1,11 @@
 import { useMemo } from 'react';
 import useSWR from 'swr';
-import { apiGet, apiPatch, apiPost, API_BASE_URL, extractErrorMessage } from '@/lib/api-client';
+import { apiGet, apiPatch, apiPost, extractErrorMessage } from '@/lib/api-client';
 import { stringifyId } from '@/lib/format';
 
-const fetcher = (url: string) => apiGet(url.replace(API_BASE_URL, ''));
+async function swrFetcher<T>(path: string): Promise<T> {
+  return apiGet<T>(path);
+}
 
 export interface ProductItem {
   id: string;
@@ -40,13 +42,32 @@ export interface CategoriesListResponse {
 }
 
 function mapProduct(raw: Record<string, unknown>): ProductItem {
+  const categoryRaw = raw.category as { id?: unknown; _id?: unknown; name?: string } | undefined;
+  const categoryIdRaw = raw.category_id as { id?: unknown; _id?: unknown; name?: string } | undefined;
+  const populatedCategory = categoryRaw ?? categoryIdRaw;
+
   return {
-    ...(raw as unknown as ProductItem),
     id: stringifyId(raw.id ?? raw._id),
-    category: raw.category
+    sku: String(raw.sku ?? ''),
+    name: String(raw.name ?? ''),
+    selling_price: Number(raw.selling_price ?? 0),
+    cost_price: raw.cost_price != null ? Number(raw.cost_price) : undefined,
+    stock: Number(raw.stock ?? 0),
+    minimum_stock: raw.minimum_stock != null ? Number(raw.minimum_stock) : undefined,
+    status: String(raw.status ?? 'ACTIVE'),
+    barcode: raw.barcode != null ? String(raw.barcode) : null,
+    category_id: raw.category_id
+      ? stringifyId(
+          typeof raw.category_id === 'object'
+            ? (raw.category_id as { id?: unknown; _id?: unknown }).id ??
+                (raw.category_id as { _id?: unknown })._id
+            : raw.category_id,
+        )
+      : null,
+    category: populatedCategory
       ? {
-          id: stringifyId((raw.category as { id?: unknown; _id?: unknown }).id ?? (raw.category as { _id?: unknown })._id),
-          name: String((raw.category as { name?: string }).name ?? ''),
+          id: stringifyId(populatedCategory.id ?? populatedCategory._id),
+          name: String(populatedCategory.name ?? ''),
         }
       : undefined,
   };
@@ -60,13 +81,20 @@ function mapCategory(raw: Record<string, unknown>): CategoryItem {
   };
 }
 
-export function useProducts(search?: string, limit = 100) {
+export function useProducts(
+  search?: string,
+  options?: { categoryId?: string; limit?: number },
+) {
+  const limit = options?.limit ?? 100;
   const params = new URLSearchParams({ limit: String(limit) });
   if (search) params.set('search', search);
+  if (options?.categoryId) params.set('category_id', options.categoryId);
+
+  const productsKey = `/products?${params.toString()}`;
 
   const { data, error, isLoading, mutate } = useSWR<ProductsListResponse>(
-    `${API_BASE_URL}/products?${params.toString()}`,
-    fetcher,
+    productsKey,
+    swrFetcher<ProductsListResponse>,
     { revalidateOnFocus: false },
   );
 
@@ -83,8 +111,8 @@ export function useProducts(search?: string, limit = 100) {
 
 export function useCategories() {
   const { data, error, isLoading, mutate } = useSWR<CategoriesListResponse>(
-    `${API_BASE_URL}/categories?limit=100`,
-    fetcher,
+    '/categories?limit=100',
+    swrFetcher<CategoriesListResponse>,
     { revalidateOnFocus: false },
   );
 
@@ -94,9 +122,11 @@ export function useCategories() {
 }
 
 export function useProduct(productId: string) {
+  const productKey = productId ? `/products/${productId}` : null;
+
   const { data, error, isLoading, mutate } = useSWR<Record<string, unknown>>(
-    productId ? `${API_BASE_URL}/products/${productId}` : null,
-    fetcher,
+    productKey,
+    swrFetcher<Record<string, unknown>>,
     { revalidateOnFocus: false },
   );
 
