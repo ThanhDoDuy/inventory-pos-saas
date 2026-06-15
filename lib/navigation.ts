@@ -190,3 +190,15 @@ export function isNavActive(pathname: string, href: string) {
   }
   return pathname === href || pathname.startsWith(`${href}/`);
 }
+
+export function getActiveSectionId(
+  pathname: string,
+  sections: NavSection[],
+): string | null {
+  for (const section of sections) {
+    if (section.items.some((item) => isNavActive(pathname, item.href))) {
+      return section.id;
+    }
+  }
+  return null;
+}

@@ -3,31 +3,61 @@
 import { useCartStore } from '@/lib/cart-store';
 import { useAuthStore } from '@/lib/auth-store';
 import { Plus, Minus, Search, X, Loader2 } from 'lucide-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { POSCart } from '@/components/pos-cart';
 import { PaymentModal } from '@/components/payment-modal';
-import { useProducts } from '@/hooks/use-inventory';
-import { FormField, inputClassName } from '@/components/form-field';
+import { useCategories, useProducts } from '@/hooks/use-inventory';
+import { FormField, inputClassName, selectClassName } from '@/components/form-field';
 import { formatMoney } from '@/lib/format';
 
 export default function POSPage() {
   const [selectedProduct, setSelectedProduct] = useState('');
   const [quantity, setQuantity] = useState(1);
   const [showPayment, setShowPayment] = useState(false);
+  const [selectedCategoryId, setSelectedCategoryId] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
 
   const cart = useCartStore();
   const user = useAuthStore((state) => state.user);
-  const { products, isLoading, error } = useProducts(searchTerm || undefined);
+  const { categories, isLoading: categoriesLoading } = useCategories();
+
+  const categoryId = selectedCategoryId !== 'all' ? selectedCategoryId : undefined;
+  const { products: categoryProducts, isLoading: productsLoading, error } = useProducts(
+    undefined,
+    { categoryId, limit: 100 },
+  );
+
+  const searchProducts = useMemo(() => {
+    const query = searchTerm.trim().toLowerCase();
+    if (!query) return categoryProducts;
+
+    return categoryProducts.filter(
+      (product) =>
+        product.name.toLowerCase().includes(query) ||
+        product.sku.toLowerCase().includes(query),
+    );
+  }, [categoryProducts, searchTerm]);
+
+  const selectedCategoryName = useMemo(
+    () => categories.find((category) => category.id === selectedCategoryId)?.name,
+    [categories, selectedCategoryId],
+  );
+
+  const handleCategoryChange = (nextCategoryId: string) => {
+    setSelectedCategoryId(nextCategoryId);
+    setSelectedProduct('');
+    setSearchTerm('');
+  };
 
   const handleAddProduct = () => {
     if (!selectedProduct || quantity <= 0) return;
 
-    const product = products.find((p) => p.id === selectedProduct);
+    const product = categoryProducts.find((item) => item.id === selectedProduct);
     if (!product) return;
 
-    if (product.stock < quantity) {
-      alert(`Chỉ còn ${product.stock} sản phẩm trong kho`);
+    const stock = product.stock ?? 0;
+    if (stock < quantity) {
+      alert(`Chỉ còn ${stock} sản phẩm trong kho`);
       return;
     }
 
@@ -44,6 +74,34 @@ export default function POSPage() {
 
     setSelectedProduct('');
     setQuantity(1);
+  };
+
+  const handleQuickAdd = (productId: string) => {
+    const product = categoryProducts.find((item) => item.id === productId);
+    if (!product) return;
+
+    const stock = product.stock ?? 0;
+    const existing = cart.items.find((item) => item.productId === productId);
+
+    if (existing) {
+      if (existing.quantity >= stock) {
+        alert(`Chỉ còn ${stock} sản phẩm trong kho`);
+        return;
+      }
+      cart.updateQuantity(productId, existing.quantity + 1);
+      return;
+    }
+
+    cart.addItem({
+      id: product.id,
+      productId: product.id,
+      name: product.name,
+      sku: product.sku,
+      quantity: 1,
+      unitPrice: product.selling_price,
+      tax: 0,
+      discount: 0,
+    });
   };
 
   const handleCheckout = () => {
@@ -73,38 +131,66 @@ export default function POSPage() {
         <div className="lg:col-span-2 space-y-6">
           <div className="bg-card rounded-lg border border-border p-6">
             <h2 className="text-xl font-bold text-foreground mb-4">Thêm sản phẩm</h2>
-            {isLoading ? (
+            {categoriesLoading ? (
               <div className="flex items-center gap-2 text-muted-foreground py-4">
                 <Loader2 className="animate-spin" size={20} />
-                Đang tải sản phẩm...
+                Đang tải danh mục...
               </div>
             ) : error ? (
               <p className="text-destructive text-sm">Không tải được danh sách sản phẩm</p>
             ) : (
               <div className="space-y-4">
-                <div>
-                  <label htmlFor="pos-product-select" className="block text-sm font-medium text-foreground mb-2">
-                    Chọn sản phẩm
-                  </label>
+                <FormField label="Danh mục" htmlFor="pos-category">
                   <select
-                    id="pos-product-select"
-                    value={selectedProduct}
-                    onChange={(e) => setSelectedProduct(e.target.value)}
-                    className="w-full px-4 py-2 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 bg-card text-foreground"
+                    id="pos-category"
+                    value={selectedCategoryId}
+                    onChange={(e) => handleCategoryChange(e.target.value)}
+                    className={selectClassName}
                   >
-                    <option value="">Chọn sản phẩm...</option>
-                    {products.map((p) => (
-                      <option key={p.id} value={p.id} disabled={p.stock <= 0}>
-                        {p.name} — {formatMoney(p.selling_price)} (Kho: {p.stock})
+                    <option value="all">Tất cả danh mục</option>
+                    {categories.map((category) => (
+                      <option key={category.id} value={category.id}>
+                        {category.name}
                       </option>
                     ))}
                   </select>
-                </div>
+                </FormField>
 
-                <div>
-                  <label htmlFor="pos-quantity" className="block text-sm font-medium text-foreground mb-2">
-                    Số lượng
-                  </label>
+                <FormField label="Chọn sản phẩm" htmlFor="pos-product-select">
+                  {productsLoading ? (
+                    <div className="flex items-center gap-2 text-muted-foreground py-2 text-sm">
+                      <Loader2 className="animate-spin" size={16} />
+                      Đang tải sản phẩm...
+                    </div>
+                  ) : (
+                    <select
+                      id="pos-product-select"
+                      value={selectedProduct}
+                      onChange={(e) => setSelectedProduct(e.target.value)}
+                      className={selectClassName}
+                      disabled={categoryProducts.length === 0}
+                    >
+                      <option value="">
+                        {categoryProducts.length === 0
+                          ? 'Không có sản phẩm phù hợp'
+                          : 'Chọn sản phẩm...'}
+                      </option>
+                      {categoryProducts.map((product) => (
+                        <option
+                          key={product.id}
+                          value={product.id}
+                          disabled={(product.stock ?? 0) <= 0}
+                        >
+                          {product.name}
+                          {product.category?.name ? ` (${product.category.name})` : ''} —{' '}
+                          {formatMoney(product.selling_price)} (Kho: {product.stock ?? 0})
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                </FormField>
+
+                <FormField label="Số lượng" htmlFor="pos-quantity">
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
@@ -118,7 +204,7 @@ export default function POSPage() {
                       id="pos-quantity"
                       type="number"
                       value={quantity}
-                      onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+                      onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value, 10) || 1))}
                       className="flex-1 px-4 py-2 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 bg-card text-foreground text-center"
                     />
                     <button
@@ -130,15 +216,21 @@ export default function POSPage() {
                       <Plus size={20} />
                     </button>
                   </div>
-                </div>
+                </FormField>
 
                 <button
+                  type="button"
                   onClick={handleAddProduct}
-                  disabled={!selectedProduct}
+                  disabled={!selectedProduct || productsLoading}
                   className="w-full py-2 px-4 bg-primary text-primary-foreground rounded-lg font-semibold hover:bg-primary/90 transition-colors disabled:opacity-50"
                 >
                   Thêm vào giỏ
                 </button>
+
+                <p className="text-xs text-muted-foreground">
+                  {categoryProducts.length} sản phẩm
+                  {selectedCategoryName ? ` trong "${selectedCategoryName}"` : ''}
+                </p>
               </div>
             )}
           </div>
@@ -156,52 +248,43 @@ export default function POSPage() {
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className={`${inputClassName} flex-1`}
                 />
-              {searchTerm && (
-                <button
-                  onClick={() => setSearchTerm('')}
-                  className="p-2 text-muted-foreground hover:text-foreground"
-                >
-                  <X size={20} />
-                </button>
-              )}
+                {searchTerm && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchTerm('')}
+                    className="p-2 text-muted-foreground hover:text-foreground"
+                    aria-label="Xóa tìm kiếm"
+                  >
+                    <X size={20} />
+                  </button>
+                )}
               </div>
             </FormField>
             <div className="grid grid-cols-2 gap-3">
-              {products.length === 0 ? (
+              {productsLoading ? (
+                <div className="col-span-2 flex items-center justify-center gap-2 text-muted-foreground py-4">
+                  <Loader2 className="animate-spin" size={18} />
+                  Đang tải...
+                </div>
+              ) : searchProducts.length === 0 ? (
                 <p className="col-span-2 text-center text-muted-foreground py-4">
-                  Không có sản phẩm
+                  Không có sản phẩm phù hợp
                 </p>
               ) : (
-                products.map((p) => (
+                searchProducts.map((product) => (
                   <button
-                    key={p.id}
-                    disabled={p.stock <= 0}
-                    onClick={() => {
-                      const existing = cart.items.find((i) => i.productId === p.id);
-                      if (existing) {
-                        if (existing.quantity >= p.stock) {
-                          alert(`Chỉ còn ${p.stock} sản phẩm trong kho`);
-                          return;
-                        }
-                        cart.updateQuantity(p.id, existing.quantity + 1);
-                      } else {
-                        cart.addItem({
-                          id: p.id,
-                          productId: p.id,
-                          name: p.name,
-                          sku: p.sku,
-                          quantity: 1,
-                          unitPrice: p.selling_price,
-                          tax: 0,
-                          discount: 0,
-                        });
-                      }
-                    }}
+                    key={product.id}
+                    type="button"
+                    disabled={(product.stock ?? 0) <= 0}
+                    onClick={() => handleQuickAdd(product.id)}
                     className="p-3 border border-input rounded-lg hover:bg-secondary transition-colors text-left disabled:opacity-50"
                   >
-                    <p className="font-semibold text-foreground text-sm">{p.name}</p>
-                    <p className="text-primary font-bold">{formatMoney(p.selling_price)}</p>
-                    <p className="text-xs text-muted-foreground">Kho: {p.stock}</p>
+                    <p className="font-semibold text-foreground text-sm">{product.name}</p>
+                    {product.category?.name && (
+                      <p className="text-xs text-muted-foreground">{product.category.name}</p>
+                    )}
+                    <p className="text-primary font-bold">{formatMoney(product.selling_price)}</p>
+                    <p className="text-xs text-muted-foreground">Kho: {product.stock ?? 0}</p>
                   </button>
                 ))
               )}
@@ -212,6 +295,7 @@ export default function POSPage() {
         <div>
           <POSCart />
           <button
+            type="button"
             onClick={handleCheckout}
             disabled={cart.items.length === 0}
             className="w-full mt-4 py-3 px-4 bg-primary text-primary-foreground rounded-lg font-bold hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-lg sticky bottom-4"
