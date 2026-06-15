@@ -9,12 +9,15 @@ import {
   isNavActive,
   resolveAppRole,
 } from '@/lib/navigation';
+import { LanguageSwitcher } from '@/components/language-switcher';
+import { useTranslation } from '@/lib/i18n/use-translation';
 import { ChevronDown, LogOut, Menu, ShoppingCart, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
   const user = useAuthStore((state) => state.user);
@@ -81,8 +84,8 @@ export function Sidebar() {
               <ShoppingCart className="w-6 h-6 text-primary-foreground" />
             </div>
             <div>
-              <h1 className="font-bold text-foreground text-sm">POS System</h1>
-              <p className="text-xs text-muted-foreground">Quản lý kho & bán hàng</p>
+              <h1 className="font-bold text-foreground text-sm">{t('app.title')}</h1>
+              <p className="text-xs text-muted-foreground">{t('app.subtitle')}</p>
             </div>
           </div>
         </div>
@@ -106,7 +109,7 @@ export function Sidebar() {
                   }`}
                 >
                   <span className="text-[11px] font-semibold uppercase tracking-wider">
-                    {section.label}
+                    {t(section.labelKey)}
                   </span>
                   <ChevronDown
                     size={16}
@@ -138,7 +141,7 @@ export function Sidebar() {
                             }`}
                           >
                             <Icon size={18} className="shrink-0" />
-                            <span className="truncate">{item.label}</span>
+                            <span className="truncate">{t(item.labelKey)}</span>
                           </Link>
                         );
                       })}
@@ -150,8 +153,9 @@ export function Sidebar() {
           })}
         </nav>
 
-        <div className="shrink-0 border-t border-border p-4">
-          <div className="mb-3 p-3 bg-secondary rounded-lg">
+        <div className="shrink-0 border-t border-border p-4 space-y-3">
+          <LanguageSwitcher showLabel className="justify-between" />
+          <div className="p-3 bg-secondary rounded-lg">
             <p className="text-sm font-medium text-foreground truncate">{user?.username}</p>
             <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
             {user?.tenantName && (
@@ -166,7 +170,7 @@ export function Sidebar() {
             className="w-full flex items-center gap-2 px-3 py-2 text-destructive hover:bg-destructive/10 rounded-lg text-sm font-medium transition-colors"
           >
             <LogOut size={18} />
-            <span>Đăng xuất</span>
+            <span>{t('common.logout')}</span>
           </button>
         </div>
       </aside>

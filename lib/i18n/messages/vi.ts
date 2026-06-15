@@ -1,0 +1,66 @@
+import type { Messages } from './types';
+
+export const vi: Messages = {
+  app: {
+    title: 'POS System',
+    subtitle: 'Quản lý kho & bán hàng',
+  },
+  common: {
+    logout: 'Đăng xuất',
+    language: 'Ngôn ngữ',
+  },
+  nav: {
+    section: {
+      overview: 'Tổng quan',
+      sales: 'Bán hàng',
+      warehouse: 'Kho hàng',
+      procurement: 'Mua hàng',
+      system: 'Hệ thống',
+    },
+    item: {
+      dashboard: 'Dashboard',
+      reports: 'Báo cáo',
+      pos: 'POS',
+      invoices: 'Hóa đơn',
+      customers: 'Khách hàng',
+      products: 'Sản phẩm',
+      categories: 'Danh mục',
+      inventory: 'Tồn kho',
+      adjustments: 'Điều chỉnh kho',
+      suppliers: 'Nhà cung cấp',
+      purchaseOrders: 'Nhập hàng',
+      users: 'Người dùng',
+      rbac: 'Vai trò & Quyền',
+      settings: 'Cài đặt',
+      auditLogs: 'Nhật ký audit',
+      notifications: 'Thông báo',
+    },
+  },
+  auth: {
+    loginTitle: 'POS System',
+    loginSubtitle: 'Quản lý kho & bán hàng',
+    email: 'Email',
+    password: 'Mật khẩu',
+    signIn: 'Đăng nhập',
+    signingIn: 'Đang đăng nhập...',
+    noAccount: 'Chưa có tài khoản?',
+    signUpLink: 'Đăng ký',
+    loginFailed: 'Đăng nhập thất bại',
+    signupTitle: 'Tạo tài khoản',
+    signupSubtitle: 'Bắt đầu với hệ thống POS',
+    storeName: 'Tên cửa hàng',
+    username: 'Tên đăng nhập',
+    confirmPassword: 'Xác nhận mật khẩu',
+    createAccount: 'Tạo tài khoản',
+    creating: 'Đang tạo...',
+    hasAccount: 'Đã có tài khoản?',
+    loginLink: 'Đăng nhập',
+    passwordMismatch: 'Mật khẩu không khớp',
+    signupFailed: 'Đăng ký thất bại. Vui lòng thử lại.',
+    storePlaceholder: 'Cửa hàng ABC',
+    usernamePlaceholder: 'admin',
+    emailPlaceholder: 'you@example.com',
+  },
+};
+
+export type { Messages } from './types';

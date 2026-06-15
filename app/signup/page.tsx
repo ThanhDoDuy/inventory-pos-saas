@@ -3,10 +3,14 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/lib/auth-store';
+import { extractErrorMessage } from '@/lib/api-client';
+import { LanguageSwitcher } from '@/components/language-switcher';
+import { useTranslation } from '@/lib/i18n/use-translation';
 import Link from 'next/link';
 
 export default function SignupPage() {
   const router = useRouter();
+  const { t } = useTranslation();
   const [tenantName, setTenantName] = useState('');
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
@@ -16,14 +20,13 @@ export default function SignupPage() {
   const [error, setError] = useState('');
 
   const signup = useAuthStore((state) => state.signup);
-  const authError = useAuthStore((state) => state.error);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
     if (password !== confirmPassword) {
-      setError('Mật khẩu không khớp');
+      setError(t('auth.passwordMismatch'));
       return;
     }
 
@@ -32,20 +35,24 @@ export default function SignupPage() {
     try {
       await signup({ tenantName, username, email, password });
       router.push('/dashboard');
-    } catch {
-      setError(authError || 'Đăng ký thất bại. Vui lòng thử lại.');
+    } catch (err) {
+      setError(extractErrorMessage(err, t('auth.signupFailed')));
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
+    <div className="min-h-screen flex items-center justify-center bg-background relative">
+      <div className="absolute top-4 right-4">
+        <LanguageSwitcher />
+      </div>
+
       <div className="w-full max-w-md">
         <div className="bg-card rounded-lg border border-border shadow-lg p-8">
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-foreground mb-2">Tạo tài khoản</h1>
-            <p className="text-muted-foreground">Bắt đầu với hệ thống POS</p>
+            <h1 className="text-3xl font-bold text-foreground mb-2">{t('auth.signupTitle')}</h1>
+            <p className="text-muted-foreground">{t('auth.signupSubtitle')}</p>
           </div>
 
           {error && (
@@ -57,7 +64,7 @@ export default function SignupPage() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label htmlFor="tenantName" className="block text-sm font-medium text-foreground mb-2">
-                Tên cửa hàng
+                {t('auth.storeName')}
               </label>
               <input
                 id="tenantName"
@@ -65,7 +72,7 @@ export default function SignupPage() {
                 value={tenantName}
                 onChange={(e) => setTenantName(e.target.value)}
                 className="w-full px-4 py-2 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 bg-card text-foreground"
-                placeholder="Cửa hàng ABC"
+                placeholder={t('auth.storePlaceholder')}
                 required
                 disabled={isLoading}
               />
@@ -73,7 +80,7 @@ export default function SignupPage() {
 
             <div>
               <label htmlFor="username" className="block text-sm font-medium text-foreground mb-2">
-                Tên đăng nhập
+                {t('auth.username')}
               </label>
               <input
                 id="username"
@@ -81,7 +88,7 @@ export default function SignupPage() {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 className="w-full px-4 py-2 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 bg-card text-foreground"
-                placeholder="admin"
+                placeholder={t('auth.usernamePlaceholder')}
                 required
                 disabled={isLoading}
               />
@@ -89,7 +96,7 @@ export default function SignupPage() {
 
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-foreground mb-2">
-                Email
+                {t('auth.email')}
               </label>
               <input
                 id="email"
@@ -97,7 +104,7 @@ export default function SignupPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full px-4 py-2 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 bg-card text-foreground"
-                placeholder="you@example.com"
+                placeholder={t('auth.emailPlaceholder')}
                 required
                 disabled={isLoading}
               />
@@ -105,7 +112,7 @@ export default function SignupPage() {
 
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-foreground mb-2">
-                Mật khẩu
+                {t('auth.password')}
               </label>
               <input
                 id="password"
@@ -122,7 +129,7 @@ export default function SignupPage() {
 
             <div>
               <label htmlFor="confirmPassword" className="block text-sm font-medium text-foreground mb-2">
-                Xác nhận mật khẩu
+                {t('auth.confirmPassword')}
               </label>
               <input
                 id="confirmPassword"
@@ -141,15 +148,15 @@ export default function SignupPage() {
               disabled={isLoading}
               className="w-full py-2 px-4 bg-primary text-primary-foreground rounded-lg font-semibold hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isLoading ? 'Đang tạo...' : 'Tạo tài khoản'}
+              {isLoading ? t('auth.creating') : t('auth.createAccount')}
             </button>
           </form>
 
           <div className="mt-6 text-center">
             <p className="text-muted-foreground text-sm">
-              Đã có tài khoản?{' '}
+              {t('auth.hasAccount')}{' '}
               <Link href="/login" className="text-primary hover:underline font-medium">
-                Đăng nhập
+                {t('auth.loginLink')}
               </Link>
             </p>
           </div>

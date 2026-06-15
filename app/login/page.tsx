@@ -3,17 +3,20 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/lib/auth-store';
+import { extractErrorMessage } from '@/lib/api-client';
+import { LanguageSwitcher } from '@/components/language-switcher';
+import { useTranslation } from '@/lib/i18n/use-translation';
 import Link from 'next/link';
 
 export default function LoginPage() {
   const router = useRouter();
+  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
   const login = useAuthStore((state) => state.login);
-  const authError = useAuthStore((state) => state.error);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,19 +27,23 @@ export default function LoginPage() {
       await login(email, password);
       router.push('/dashboard');
     } catch (err) {
-      setError(authError || 'Invalid credentials');
+      setError(extractErrorMessage(err, t('auth.loginFailed')));
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
+    <div className="min-h-screen flex items-center justify-center bg-background relative">
+      <div className="absolute top-4 right-4">
+        <LanguageSwitcher />
+      </div>
+
       <div className="w-full max-w-md">
         <div className="bg-card rounded-lg border border-border shadow-lg p-8">
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-foreground mb-2">POS System</h1>
-            <p className="text-muted-foreground">Inventory & Point of Sale Management</p>
+            <h1 className="text-3xl font-bold text-foreground mb-2">{t('auth.loginTitle')}</h1>
+            <p className="text-muted-foreground">{t('auth.loginSubtitle')}</p>
           </div>
 
           {error && (
@@ -48,7 +55,7 @@ export default function LoginPage() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-foreground mb-2">
-                Email Address
+                {t('auth.email')}
               </label>
               <input
                 id="email"
@@ -56,7 +63,7 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full px-4 py-2 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 bg-card text-foreground"
-                placeholder="you@example.com"
+                placeholder={t('auth.emailPlaceholder')}
                 required
                 disabled={isLoading}
               />
@@ -64,7 +71,7 @@ export default function LoginPage() {
 
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-foreground mb-2">
-                Password
+                {t('auth.password')}
               </label>
               <input
                 id="password"
@@ -83,15 +90,15 @@ export default function LoginPage() {
               disabled={isLoading}
               className="w-full py-2 px-4 bg-primary text-primary-foreground rounded-lg font-semibold hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isLoading ? 'Signing in...' : 'Sign In'}
+              {isLoading ? t('auth.signingIn') : t('auth.signIn')}
             </button>
           </form>
 
           <div className="mt-6 text-center">
             <p className="text-muted-foreground text-sm">
-              Don&apos;t have an account?{' '}
+              {t('auth.noAccount')}{' '}
               <Link href="/signup" className="text-primary hover:underline font-medium">
-                Sign up here
+                {t('auth.signUpLink')}
               </Link>
             </p>
           </div>

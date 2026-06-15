@@ -1,7 +1,7 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
+import { API_BASE_URL } from './app-config';
 
-export const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
+export { API_BASE_URL };
 
 export interface ApiErrorBody {
   errorCode?: number;

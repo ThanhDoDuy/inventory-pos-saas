@@ -22,31 +22,31 @@ export type AppRole = 'ADMIN' | 'MANAGER' | 'STAFF';
 
 export interface NavItem {
   href: string;
-  label: string;
+  labelKey: string;
   icon: LucideIcon;
   roles: AppRole[];
 }
 
 export interface NavSection {
   id: string;
-  label: string;
+  labelKey: string;
   items: NavItem[];
 }
 
 export const NAV_SECTIONS: NavSection[] = [
   {
     id: 'overview',
-    label: 'Tổng quan',
+    labelKey: 'nav.section.overview',
     items: [
       {
         href: '/dashboard',
-        label: 'Dashboard',
+        labelKey: 'nav.item.dashboard',
         icon: LayoutDashboard,
         roles: ['ADMIN', 'MANAGER'],
       },
       {
         href: '/dashboard/reports',
-        label: 'Báo cáo',
+        labelKey: 'nav.item.reports',
         icon: BarChart3,
         roles: ['ADMIN', 'MANAGER'],
       },
@@ -54,23 +54,23 @@ export const NAV_SECTIONS: NavSection[] = [
   },
   {
     id: 'sales',
-    label: 'Bán hàng',
+    labelKey: 'nav.section.sales',
     items: [
       {
         href: '/dashboard/pos',
-        label: 'POS',
+        labelKey: 'nav.item.pos',
         icon: ShoppingCart,
         roles: ['ADMIN', 'MANAGER', 'STAFF'],
       },
       {
         href: '/dashboard/invoices',
-        label: 'Hóa đơn',
+        labelKey: 'nav.item.invoices',
         icon: FileText,
         roles: ['ADMIN', 'MANAGER', 'STAFF'],
       },
       {
         href: '/dashboard/customers',
-        label: 'Khách hàng',
+        labelKey: 'nav.item.customers',
         icon: UserCircle,
         roles: ['ADMIN', 'MANAGER'],
       },
@@ -78,29 +78,29 @@ export const NAV_SECTIONS: NavSection[] = [
   },
   {
     id: 'warehouse',
-    label: 'Kho hàng',
+    labelKey: 'nav.section.warehouse',
     items: [
       {
         href: '/dashboard/products',
-        label: 'Sản phẩm',
+        labelKey: 'nav.item.products',
         icon: Package,
         roles: ['ADMIN', 'MANAGER', 'STAFF'],
       },
       {
         href: '/dashboard/categories',
-        label: 'Danh mục',
+        labelKey: 'nav.item.categories',
         icon: Tags,
         roles: ['ADMIN', 'MANAGER'],
       },
       {
         href: '/dashboard/inventory',
-        label: 'Tồn kho',
+        labelKey: 'nav.item.inventory',
         icon: Warehouse,
         roles: ['ADMIN', 'MANAGER', 'STAFF'],
       },
       {
         href: '/dashboard/inventory/adjustments',
-        label: 'Điều chỉnh kho',
+        labelKey: 'nav.item.adjustments',
         icon: SlidersHorizontal,
         roles: ['ADMIN', 'MANAGER'],
       },
@@ -108,17 +108,17 @@ export const NAV_SECTIONS: NavSection[] = [
   },
   {
     id: 'procurement',
-    label: 'Mua hàng',
+    labelKey: 'nav.section.procurement',
     items: [
       {
         href: '/dashboard/suppliers',
-        label: 'Nhà cung cấp',
+        labelKey: 'nav.item.suppliers',
         icon: Truck,
         roles: ['ADMIN', 'MANAGER'],
       },
       {
         href: '/dashboard/purchase-orders',
-        label: 'Nhập hàng',
+        labelKey: 'nav.item.purchaseOrders',
         icon: ClipboardList,
         roles: ['ADMIN', 'MANAGER', 'STAFF'],
       },
@@ -126,35 +126,35 @@ export const NAV_SECTIONS: NavSection[] = [
   },
   {
     id: 'system',
-    label: 'Hệ thống',
+    labelKey: 'nav.section.system',
     items: [
       {
         href: '/dashboard/users',
-        label: 'Người dùng',
+        labelKey: 'nav.item.users',
         icon: Users,
         roles: ['ADMIN'],
       },
       {
         href: '/dashboard/rbac',
-        label: 'Vai trò & Quyền',
+        labelKey: 'nav.item.rbac',
         icon: Shield,
         roles: ['ADMIN'],
       },
       {
         href: '/dashboard/settings',
-        label: 'Cài đặt',
+        labelKey: 'nav.item.settings',
         icon: Settings,
         roles: ['ADMIN'],
       },
       {
         href: '/dashboard/audit-logs',
-        label: 'Nhật ký audit',
+        labelKey: 'nav.item.auditLogs',
         icon: ScrollText,
         roles: ['ADMIN', 'MANAGER'],
       },
       {
         href: '/dashboard/notifications',
-        label: 'Thông báo',
+        labelKey: 'nav.item.notifications',
         icon: Bell,
         roles: ['ADMIN', 'MANAGER', 'STAFF'],
       },
