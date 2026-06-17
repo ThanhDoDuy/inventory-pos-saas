@@ -5,6 +5,11 @@ import { useState } from 'react';
 import { useAuthStore } from '@/lib/auth-store';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from '@/lib/i18n/use-translation';
+import {
+  createPriceTier,
+  updatePriceTier,
+  usePriceTiers,
+} from '@/hooks/use-price-tiers';
 
 export default function SettingsPage() {
   const { t } = useTranslation();
@@ -12,10 +17,59 @@ export default function SettingsPage() {
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
   const router = useRouter();
+  const { tiers, mutate: mutateTiers } = usePriceTiers();
+  const [customCode, setCustomCode] = useState('');
+  const [customLabel, setCustomLabel] = useState('');
+  const [tierMessage, setTierMessage] = useState('');
+  const [tierError, setTierError] = useState('');
+  const [isSavingTier, setIsSavingTier] = useState(false);
+  const [editingLabels, setEditingLabels] = useState<Record<string, string>>({});
+
+  const customTiers = tiers.filter((tier) => !tier.is_system);
+  const canAddCustom = customTiers.length === 0;
 
   const handleLogout = () => {
     logout();
     router.push('/login');
+  };
+
+  const handleSaveCustomTier = async () => {
+    setTierError('');
+    setTierMessage('');
+    if (!customCode.trim() || !customLabel.trim()) return;
+
+    setIsSavingTier(true);
+    try {
+      await createPriceTier({
+        code: customCode.trim().toUpperCase(),
+        label: customLabel.trim(),
+      });
+      await mutateTiers();
+      setCustomCode('');
+      setCustomLabel('');
+      setTierMessage(t('settings.priceTiers.saved'));
+    } catch (err) {
+      setTierError(err instanceof Error ? err.message : t('settings.priceTiers.error'));
+    } finally {
+      setIsSavingTier(false);
+    }
+  };
+
+  const handleUpdateTierLabel = async (code: string) => {
+    const label = editingLabels[code]?.trim();
+    if (!label) return;
+
+    setIsSavingTier(true);
+    setTierError('');
+    try {
+      await updatePriceTier(code, { label });
+      await mutateTiers();
+      setTierMessage(t('settings.priceTiers.saved'));
+    } catch (err) {
+      setTierError(err instanceof Error ? err.message : t('settings.priceTiers.error'));
+    } finally {
+      setIsSavingTier(false);
+    }
   };
 
   const tabs = [
@@ -122,6 +176,107 @@ export default function SettingsPage() {
             <button className="px-6 py-2 bg-primary text-primary-foreground rounded-lg font-semibold hover:bg-primary/90 transition-colors">
               {t('settings.buttons.saveChanges')}
             </button>
+          </div>
+
+          <div className="bg-card rounded-lg border border-border p-6">
+            <h2 className="text-xl font-bold text-foreground mb-2">{t('settings.priceTiers.title')}</h2>
+            <p className="text-muted-foreground text-sm mb-6">{t('settings.priceTiers.subtitle')}</p>
+
+            {tierMessage && (
+              <p className="mb-4 text-sm text-green-700 bg-green-50 border border-green-200 rounded-lg p-3">
+                {tierMessage}
+              </p>
+            )}
+            {tierError && (
+              <p className="mb-4 text-sm text-destructive bg-destructive/10 border border-destructive/30 rounded-lg p-3">
+                {tierError}
+              </p>
+            )}
+
+            <div className="space-y-3 mb-6">
+              {tiers.map((tier) => (
+                <div
+                  key={tier.code}
+                  className="flex flex-col md:flex-row md:items-center gap-3 p-4 border border-border rounded-lg"
+                >
+                  <div className="flex-1">
+                    <p className="font-semibold text-foreground">{tier.code}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {tier.is_system ? t('settings.priceTiers.system') : t('settings.priceTiers.custom')}
+                    </p>
+                  </div>
+                  {tier.is_system ? (
+                    <p className="text-foreground font-medium">{tier.label}</p>
+                  ) : (
+                    <div className="flex items-center gap-2 flex-1">
+                      <input
+                        type="text"
+                        defaultValue={tier.label}
+                        onChange={(e) =>
+                          setEditingLabels((prev) => ({
+                            ...prev,
+                            [tier.code]: e.target.value,
+                          }))
+                        }
+                        className="flex-1 px-3 py-2 border border-input rounded-lg bg-background text-foreground"
+                      />
+                      <button
+                        type="button"
+                        disabled={isSavingTier}
+                        onClick={() => handleUpdateTierLabel(tier.code)}
+                        className="px-4 py-2 bg-primary text-primary-foreground rounded-lg font-semibold hover:bg-primary/90 disabled:opacity-50"
+                      >
+                        {t('settings.priceTiers.save')}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {canAddCustom ? (
+              <div className="space-y-4 border-t border-border pt-6">
+                <h3 className="font-semibold text-foreground">{t('settings.priceTiers.addCustom')}</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-2">
+                      {t('settings.priceTiers.code')}
+                    </label>
+                    <input
+                      type="text"
+                      value={customCode}
+                      onChange={(e) => setCustomCode(e.target.value.toUpperCase())}
+                      placeholder={t('settings.priceTiers.codePlaceholder')}
+                      className="w-full px-4 py-2 border border-input rounded-lg bg-background text-foreground"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-2">
+                      {t('settings.priceTiers.label')}
+                    </label>
+                    <input
+                      type="text"
+                      value={customLabel}
+                      onChange={(e) => setCustomLabel(e.target.value)}
+                      placeholder={t('settings.priceTiers.labelPlaceholder')}
+                      className="w-full px-4 py-2 border border-input rounded-lg bg-background text-foreground"
+                    />
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  disabled={isSavingTier || !customCode.trim() || !customLabel.trim()}
+                  onClick={handleSaveCustomTier}
+                  className="px-6 py-2 bg-primary text-primary-foreground rounded-lg font-semibold hover:bg-primary/90 disabled:opacity-50"
+                >
+                  {t('settings.priceTiers.addCustom')}
+                </button>
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground border-t border-border pt-4">
+                {t('settings.priceTiers.limitReached')}
+              </p>
+            )}
           </div>
         </div>
       )}

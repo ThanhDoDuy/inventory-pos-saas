@@ -229,6 +229,11 @@ export const en: Messages = {
       notesPlaceholder: 'Notes for this order...',
       clear: 'Clear cart',
     },
+    priceTier: {
+      title: 'Select price type',
+      qty: 'Qty: {count}',
+      close: 'Close',
+    },
   },
   invoices: {
     title: 'Invoices',
@@ -386,6 +391,7 @@ export const en: Messages = {
       sellingPrice: 'Selling price (VND)',
       minStock: 'Minimum stock',
       minStockHint: 'Alert when stock is at or below this value',
+      tierPrices: 'Tier prices',
     },
     modal: {
       add: 'Add product',
@@ -739,6 +745,21 @@ export const en: Messages = {
       phone: 'Phone Number',
       city: 'City',
       state: 'State/Province',
+    },
+    priceTiers: {
+      title: 'Price tiers',
+      subtitle: 'Manage wholesale, VIP, retail and one custom tier',
+      code: 'Code',
+      label: 'Display name',
+      system: 'System',
+      custom: 'Custom',
+      addCustom: 'Add custom price tier',
+      codePlaceholder: 'e.g. AGENCY',
+      labelPlaceholder: 'e.g. Agency price',
+      limitReached: 'Maximum of 1 custom tier reached',
+      save: 'Save',
+      saved: 'Price tier saved',
+      error: 'Could not save price tier',
     },
     billing: {
       title: 'Billing Information',

@@ -25,6 +25,8 @@ import { printReceipt } from '@/lib/print-receipt';
 interface PaymentModalProps {
   total: number;
   discount: number;
+  discountAmount?: number;
+  taxPercent?: number;
   items: CreateInvoiceItem[];
   isOpen: boolean;
   onClose: () => void;
@@ -40,6 +42,8 @@ const QUICK_AMOUNTS = [0, 10000, 50000, 100000, 200000, 500000];
 export function PaymentModal({
   total,
   discount,
+  discountAmount = 0,
+  taxPercent = 0,
   items,
   isOpen,
   onClose,
@@ -124,7 +128,9 @@ export function PaymentModal({
     try {
       const invoice = await createInvoice({
         items,
-        discount: discount > 0 ? discount : undefined,
+        discountPercent: discount > 0 ? discount : undefined,
+        discountAmount: discountAmount > 0 ? discountAmount : undefined,
+        taxPercent: taxPercent > 0 ? taxPercent : undefined,
         paymentMethod: mapPaymentMethod(paymentMethod),
       });
 

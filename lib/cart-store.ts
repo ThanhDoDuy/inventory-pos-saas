@@ -7,6 +7,8 @@ export interface CartItem {
   sku: string;
   quantity: number;
   unitPrice: number;
+  priceTierCode: string;
+  priceTierLabel: string;
   tax: number;
   discount: number;
   total: number;
@@ -19,16 +21,14 @@ export interface CartState {
   taxPercentage: number;
   notes: string;
 
-  // Calculations
   subtotal: number;
   totalDiscount: number;
   totalTax: number;
   grandTotal: number;
 
-  // Actions
   addItem: (item: Omit<CartItem, 'total'>) => void;
-  removeItem: (productId: string) => void;
-  updateQuantity: (productId: string, quantity: number) => void;
+  removeItem: (lineId: string) => void;
+  updateQuantity: (lineId: string, quantity: number) => void;
   updateDiscount: (discountPercentage: number) => void;
   setCustomDiscount: (amount: number) => void;
   updateTaxPercentage: (tax: number) => void;
@@ -36,7 +36,7 @@ export interface CartState {
   clearCart: () => void;
 }
 
-export const useCartStore = create<CartState>((set, get) => ({
+export const useCartStore = create<CartState>((set) => ({
   items: [],
   discountPercentage: 0,
   customDiscountAmount: 0,
@@ -50,65 +50,95 @@ export const useCartStore = create<CartState>((set, get) => ({
 
   addItem: (newItem) => {
     set((state) => {
-      const existingItem = state.items.find(
-        (item) => item.productId === newItem.productId
-      );
+      const existingItem = state.items.find((item) => item.id === newItem.id);
 
       let updatedItems;
       if (existingItem) {
         updatedItems = state.items.map((item) =>
-          item.productId === newItem.productId
-            ? {
-                ...item,
-                quantity: item.quantity + newItem.quantity,
-              }
-            : item
+          item.id === newItem.id
+            ? { ...item, quantity: item.quantity + newItem.quantity }
+            : item,
         );
       } else {
         updatedItems = [...state.items, newItem as CartItem];
       }
 
-      return calculateTotals(updatedItems, state.discountPercentage, state.customDiscountAmount, state.taxPercentage);
+      return calculateTotals(
+        updatedItems,
+        state.discountPercentage,
+        state.customDiscountAmount,
+        state.taxPercentage,
+      );
     });
   },
 
-  removeItem: (productId) => {
+  removeItem: (lineId) => {
     set((state) => {
-      const updatedItems = state.items.filter((item) => item.productId !== productId);
-      return calculateTotals(updatedItems, state.discountPercentage, state.customDiscountAmount, state.taxPercentage);
+      const updatedItems = state.items.filter((item) => item.id !== lineId);
+      return calculateTotals(
+        updatedItems,
+        state.discountPercentage,
+        state.customDiscountAmount,
+        state.taxPercentage,
+      );
     });
   },
 
-  updateQuantity: (productId, quantity) => {
+  updateQuantity: (lineId, quantity) => {
     set((state) => {
       if (quantity <= 0) {
-        const updatedItems = state.items.filter((item) => item.productId !== productId);
-        return calculateTotals(updatedItems, state.discountPercentage, state.customDiscountAmount, state.taxPercentage);
+        const updatedItems = state.items.filter((item) => item.id !== lineId);
+        return calculateTotals(
+          updatedItems,
+          state.discountPercentage,
+          state.customDiscountAmount,
+          state.taxPercentage,
+        );
       }
 
       const updatedItems = state.items.map((item) =>
-        item.productId === productId ? { ...item, quantity } : item
+        item.id === lineId ? { ...item, quantity } : item,
       );
-      return calculateTotals(updatedItems, state.discountPercentage, state.customDiscountAmount, state.taxPercentage);
+      return calculateTotals(
+        updatedItems,
+        state.discountPercentage,
+        state.customDiscountAmount,
+        state.taxPercentage,
+      );
     });
   },
 
   updateDiscount: (discountPercentage) => {
-    set((state) => {
-      return calculateTotals(state.items, discountPercentage, state.customDiscountAmount, state.taxPercentage);
-    });
+    set((state) =>
+      calculateTotals(
+        state.items,
+        discountPercentage,
+        state.customDiscountAmount,
+        state.taxPercentage,
+      ),
+    );
   },
 
   setCustomDiscount: (amount) => {
-    set((state) => {
-      return calculateTotals(state.items, state.discountPercentage, amount, state.taxPercentage);
-    });
+    set((state) =>
+      calculateTotals(
+        state.items,
+        state.discountPercentage,
+        amount,
+        state.taxPercentage,
+      ),
+    );
   },
 
   updateTaxPercentage: (taxPercentage) => {
-    set((state) => {
-      return calculateTotals(state.items, state.discountPercentage, state.customDiscountAmount, taxPercentage);
-    });
+    set((state) =>
+      calculateTotals(
+        state.items,
+        state.discountPercentage,
+        state.customDiscountAmount,
+        taxPercentage,
+      ),
+    );
   },
 
   setNotes: (notes) => {
@@ -134,7 +164,7 @@ function calculateTotals(
   items: CartItem[],
   discountPercentage: number,
   customDiscountAmount: number,
-  taxPercentage: number
+  taxPercentage: number,
 ) {
   const subtotal = items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
 

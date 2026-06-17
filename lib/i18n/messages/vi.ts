@@ -229,6 +229,11 @@ export const vi: Messages = {
       notesPlaceholder: 'Ghi chú cho đơn hàng này...',
       clear: 'Xóa giỏ hàng',
     },
+    priceTier: {
+      title: 'Chọn loại giá',
+      qty: 'SL: {count}',
+      close: 'Đóng',
+    },
   },
   invoices: {
     title: 'Hóa đơn',
@@ -386,6 +391,7 @@ export const vi: Messages = {
       sellingPrice: 'Giá bán (₫)',
       minStock: 'Tồn tối thiểu',
       minStockHint: 'Cảnh báo khi tồn kho ≤ giá trị này',
+      tierPrices: 'Bảng giá theo loại',
     },
     modal: {
       add: 'Thêm sản phẩm',
@@ -739,6 +745,21 @@ export const vi: Messages = {
       phone: 'Số điện thoại',
       city: 'Thành phố',
       state: 'Tỉnh/Thành',
+    },
+    priceTiers: {
+      title: 'Loại giá bán',
+      subtitle: 'Quản lý giá sỉ, VIP, lẻ và 1 loại giá tùy chỉnh',
+      code: 'Mã',
+      label: 'Tên hiển thị',
+      system: 'Hệ thống',
+      custom: 'Tùy chỉnh',
+      addCustom: 'Thêm loại giá tùy chỉnh',
+      codePlaceholder: 'VD: AGENCY',
+      labelPlaceholder: 'VD: Giá đại lý',
+      limitReached: 'Đã đạt tối đa 1 loại giá tùy chỉnh',
+      save: 'Lưu',
+      saved: 'Đã lưu loại giá',
+      error: 'Không thể lưu loại giá',
     },
     billing: {
       title: 'Thông tin thanh toán',

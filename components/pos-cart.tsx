@@ -26,15 +26,16 @@ export function POSCart() {
       ) : (
         <div className="space-y-4 mb-6 max-h-96 overflow-y-auto">
           {cart.items.map((item) => (
-            <div key={item.productId} className="flex items-center justify-between gap-2 p-3 bg-secondary rounded-lg">
+            <div key={item.id} className="flex items-center justify-between gap-2 p-3 bg-secondary rounded-lg">
               <div className="flex-1 min-w-0">
                 <p className="font-semibold text-foreground text-sm truncate">{item.name}</p>
+                <p className="text-xs text-primary">{item.priceTierLabel}</p>
                 <p className="text-xs text-muted-foreground">
                   {item.quantity} × {formatMoney(item.unitPrice)} = {formatMoney(item.quantity * item.unitPrice)}
                 </p>
               </div>
               <button
-                onClick={() => cart.removeItem(item.productId)}
+                onClick={() => cart.removeItem(item.id)}
                 className="p-1 text-destructive hover:bg-destructive/10 rounded flex-shrink-0"
               >
                 <Trash2 size={16} />

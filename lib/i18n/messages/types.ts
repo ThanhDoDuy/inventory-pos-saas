@@ -227,6 +227,11 @@ export interface Messages {
       notesPlaceholder: string;
       clear: string;
     };
+    priceTier: {
+      title: string;
+      qty: string;
+      close: string;
+    };
   };
   invoices: {
     title: string;
@@ -384,6 +389,7 @@ export interface Messages {
       sellingPrice: string;
       minStock: string;
       minStockHint: string;
+      tierPrices: string;
     };
     modal: {
       add: string;
@@ -736,6 +742,21 @@ export interface Messages {
       phone: string;
       city: string;
       state: string;
+    };
+    priceTiers: {
+      title: string;
+      subtitle: string;
+      code: string;
+      label: string;
+      system: string;
+      custom: string;
+      addCustom: string;
+      codePlaceholder: string;
+      labelPlaceholder: string;
+      limitReached: string;
+      save: string;
+      saved: string;
+      error: string;
     };
     billing: {
       title: string;

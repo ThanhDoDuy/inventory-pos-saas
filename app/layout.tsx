@@ -47,8 +47,12 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="vi" className={`${geistSans.variable} ${geistMono.variable} bg-background`}>
-      <body className="font-sans antialiased">
+    <html
+      lang="vi"
+      className={`${geistSans.variable} ${geistMono.variable} bg-background`}
+      suppressHydrationWarning
+    >
+      <body className="font-sans antialiased" suppressHydrationWarning>
         <LocaleProvider>
           <AuthProvider>
             {children}

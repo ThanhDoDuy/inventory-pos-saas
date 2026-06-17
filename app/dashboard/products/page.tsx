@@ -9,6 +9,7 @@ import {
   useCategories,
   useProducts,
 } from '@/hooks/use-inventory';
+import { usePriceTiers } from '@/hooks/use-price-tiers';
 import { getStockStatusColor } from '@/lib/format';
 import { FormField, inputClassName, selectClassName } from '@/components/form-field';
 import { useFormat, useTranslation } from '@/lib/i18n/use-translation';
@@ -34,9 +35,11 @@ export default function InventoryPage() {
     selling_price: '',
     minimum_stock: '0',
   });
+  const [tierPrices, setTierPrices] = useState<Record<string, string>>({});
 
   const { products, total, isLoading, error, mutate } = useProducts(searchTerm || undefined);
   const { categories } = useCategories();
+  const { tiers } = usePriceTiers();
 
   const stats = useMemo(() => {
     let lowStock = 0;
@@ -58,11 +61,20 @@ export default function InventoryPage() {
 
     setIsSubmitting(true);
     try {
+      const retail = Number(form.selling_price);
+      const prices = Object.fromEntries(
+        tiers.map((tier) => [
+          tier.code,
+          Number(tierPrices[tier.code] || retail),
+        ]),
+      );
+
       await createProduct({
         name: form.name,
         sku: form.sku,
         cost_price: Number(form.cost_price) || 0,
-        selling_price: Number(form.selling_price),
+        selling_price: retail,
+        prices,
         minimum_stock: Number(form.minimum_stock) || 0,
         ...(form.category_id ? { category_id: form.category_id } : {}),
       });
@@ -76,6 +88,7 @@ export default function InventoryPage() {
         selling_price: '',
         minimum_stock: '0',
       });
+      setTierPrices({});
     } catch (err) {
       setFormError(err instanceof Error ? err.message : t('products.error.createFailed'));
     } finally {
@@ -292,10 +305,39 @@ export default function InventoryPage() {
                   min={0}
                   placeholder={t('products.placeholders.price')}
                   value={form.selling_price}
-                  onChange={(e) => setForm({ ...form, selling_price: e.target.value })}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setForm({ ...form, selling_price: value });
+                    setTierPrices((prev) => ({
+                      ...prev,
+                      RETAIL: value,
+                    }));
+                  }}
                   className={inputClassName}
                 />
               </FormField>
+              {tiers.length > 0 && (
+                <div className="space-y-3 pt-2 border-t border-border">
+                  <p className="text-sm font-medium text-foreground">{t('products.form.tierPrices')}</p>
+                  {tiers.map((tier) => (
+                    <FormField key={tier.code} label={tier.label} htmlFor={`tier-${tier.code}`}>
+                      <input
+                        id={`tier-${tier.code}`}
+                        type="number"
+                        min={0}
+                        value={tierPrices[tier.code] ?? form.selling_price}
+                        onChange={(e) =>
+                          setTierPrices((prev) => ({
+                            ...prev,
+                            [tier.code]: e.target.value,
+                          }))
+                        }
+                        className={inputClassName}
+                      />
+                    </FormField>
+                  ))}
+                </div>
+              )}
               <FormField label={t('products.form.minStock')} htmlFor="product-min-stock" hint={t('products.form.minStockHint')}>
                 <input
                   id="product-min-stock"

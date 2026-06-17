@@ -11,12 +11,16 @@ export interface CreateInvoiceItem {
   productId: string;
   quantity: number;
   unitPrice?: number;
+  priceTierCode?: string;
 }
 
 export interface CreateInvoicePayload {
   items: CreateInvoiceItem[];
   customerId?: string;
   discount?: number;
+  discountPercent?: number;
+  discountAmount?: number;
+  taxPercent?: number;
   paymentMethod: PaymentMethod;
 }
 
@@ -37,6 +41,8 @@ export interface InvoiceDetailItem {
   quantity: number;
   unit_price: number;
   total: number;
+  price_tier_code?: string;
+  price_tier_label?: string;
 }
 
 export interface InvoiceDetail extends InvoiceItem {
@@ -100,6 +106,8 @@ function mapInvoiceDetail(raw: Record<string, unknown>): InvoiceDetail {
       quantity: Number(item.quantity ?? 0),
       unit_price: Number(item.unit_price ?? 0),
       total: Number(item.total ?? 0),
+      price_tier_code: item.price_tier_code ? String(item.price_tier_code) : undefined,
+      price_tier_label: item.price_tier_label ? String(item.price_tier_label) : undefined,
     })),
   };
 }
@@ -122,6 +130,7 @@ export function invoiceToReceiptData(
       quantity: item.quantity,
       unitPrice: item.unit_price,
       total: item.total,
+      priceTierLabel: item.price_tier_label,
     })),
     subtotal: invoice.subtotal,
     discountPercent: invoice.discount,

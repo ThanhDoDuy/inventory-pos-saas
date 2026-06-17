@@ -8,6 +8,7 @@ import {
   updateProduct,
   useProduct,
 } from '@/hooks/use-inventory';
+import { usePriceTiers } from '@/hooks/use-price-tiers';
 import { getStockStatusColor } from '@/lib/format';
 import { useFormat, useTranslation } from '@/lib/i18n/use-translation';
 
@@ -25,6 +26,7 @@ export default function ProductDetailPage() {
   const productId = typeof params.id === 'string' ? params.id : (params.id?.[0] ?? '');
 
   const { product, isLoading, error, mutate } = useProduct(productId);
+  const { tiers } = usePriceTiers();
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [editData, setEditData] = useState({
@@ -33,15 +35,22 @@ export default function ProductDetailPage() {
     selling_price: 0,
     minimum_stock: 0,
   });
+  const [tierPrices, setTierPrices] = useState<Record<string, number>>({});
 
   const startEditing = () => {
     if (!product) return;
+    const prices = product.prices ?? {
+      RETAIL: product.selling_price,
+      WHOLESALE: product.selling_price,
+      VIP: product.selling_price,
+    };
     setEditData({
       name: product.name,
       cost_price: product.cost_price ?? 0,
       selling_price: product.selling_price,
       minimum_stock: product.minimum_stock ?? 0,
     });
+    setTierPrices(prices);
     setIsEditing(true);
   };
 
@@ -99,6 +108,7 @@ export default function ProductDetailPage() {
         name: editData.name,
         cost_price: editData.cost_price,
         selling_price: editData.selling_price,
+        prices: tierPrices,
         minimum_stock: editData.minimum_stock,
       });
       await mutate();
@@ -225,46 +235,83 @@ export default function ProductDetailPage() {
           <div className="bg-card rounded-lg border border-border p-6">
             <h2 className="text-xl font-bold text-foreground mb-6">{t('products.detail.pricing')}</h2>
             {!isEditing ? (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="p-4 border border-border rounded-lg">
-                  <p className="text-muted-foreground text-sm mb-1">{t('products.detail.costPrice')}</p>
-                  <p className="font-bold text-foreground text-lg">{formatMoney(product.cost_price ?? 0)}</p>
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="p-4 border border-border rounded-lg">
+                    <p className="text-muted-foreground text-sm mb-1">{t('products.detail.costPrice')}</p>
+                    <p className="font-bold text-foreground text-lg">{formatMoney(product.cost_price ?? 0)}</p>
+                  </div>
+                  <div className="p-4 border border-border rounded-lg">
+                    <p className="text-muted-foreground text-sm mb-1">{t('products.detail.sellingPrice')}</p>
+                    <p className="font-bold text-foreground text-lg">{formatMoney(product.selling_price)}</p>
+                  </div>
+                  <div className="p-4 bg-green-100 border border-green-200 rounded-lg">
+                    <p className="text-green-800 text-sm mb-1">{t('products.detail.profitMargin')}</p>
+                    <p className="font-bold text-green-800 text-lg">{profitMargin}%</p>
+                  </div>
                 </div>
-                <div className="p-4 border border-border rounded-lg">
-                  <p className="text-muted-foreground text-sm mb-1">{t('products.detail.sellingPrice')}</p>
-                  <p className="font-bold text-foreground text-lg">{formatMoney(product.selling_price)}</p>
-                </div>
-                <div className="p-4 bg-green-100 border border-green-200 rounded-lg">
-                  <p className="text-green-800 text-sm mb-1">{t('products.detail.profitMargin')}</p>
-                  <p className="font-bold text-green-800 text-lg">{profitMargin}%</p>
-                </div>
+                {tiers.length > 0 && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {tiers.map((tier) => (
+                      <div key={tier.code} className="p-3 border border-border rounded-lg">
+                        <p className="text-muted-foreground text-sm mb-1">{tier.label}</p>
+                        <p className="font-semibold text-foreground">
+                          {formatMoney(product.prices?.[tier.code] ?? product.selling_price)}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label htmlFor="edit-cost-price" className="block text-sm font-medium text-foreground mb-2">{t('products.detail.form.costPrice')}</label>
-                  <input
-                    id="edit-cost-price"
-                    type="number"
-                    value={editData.cost_price}
-                    onChange={(e) =>
-                      setEditData({ ...editData, cost_price: parseFloat(e.target.value) || 0 })
-                    }
-                    className="w-full px-4 py-2 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 bg-background text-foreground"
-                  />
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="edit-cost-price" className="block text-sm font-medium text-foreground mb-2">{t('products.detail.form.costPrice')}</label>
+                    <input
+                      id="edit-cost-price"
+                      type="number"
+                      value={editData.cost_price}
+                      onChange={(e) =>
+                        setEditData({ ...editData, cost_price: parseFloat(e.target.value) || 0 })
+                      }
+                      className="w-full px-4 py-2 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 bg-background text-foreground"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="edit-selling-price" className="block text-sm font-medium text-foreground mb-2">{t('products.detail.form.sellingPrice')}</label>
+                    <input
+                      id="edit-selling-price"
+                      type="number"
+                      value={editData.selling_price}
+                      onChange={(e) => {
+                        const value = parseFloat(e.target.value) || 0;
+                        setEditData({ ...editData, selling_price: value });
+                        setTierPrices((prev) => ({ ...prev, RETAIL: value }));
+                      }}
+                      className="w-full px-4 py-2 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 bg-background text-foreground"
+                    />
+                  </div>
                 </div>
-                <div>
-                  <label htmlFor="edit-selling-price" className="block text-sm font-medium text-foreground mb-2">{t('products.detail.form.sellingPrice')}</label>
-                  <input
-                    id="edit-selling-price"
-                    type="number"
-                    value={editData.selling_price}
-                    onChange={(e) =>
-                      setEditData({ ...editData, selling_price: parseFloat(e.target.value) || 0 })
-                    }
-                    className="w-full px-4 py-2 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 bg-background text-foreground"
-                  />
-                </div>
+                {tiers.map((tier) => (
+                  <div key={tier.code}>
+                    <label htmlFor={`edit-tier-${tier.code}`} className="block text-sm font-medium text-foreground mb-2">
+                      {tier.label}
+                    </label>
+                    <input
+                      id={`edit-tier-${tier.code}`}
+                      type="number"
+                      value={tierPrices[tier.code] ?? editData.selling_price}
+                      onChange={(e) =>
+                        setTierPrices((prev) => ({
+                          ...prev,
+                          [tier.code]: parseFloat(e.target.value) || 0,
+                        }))
+                      }
+                      className="w-full px-4 py-2 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 bg-background text-foreground"
+                    />
+                  </div>
+                ))}
               </div>
             )}
           </div>

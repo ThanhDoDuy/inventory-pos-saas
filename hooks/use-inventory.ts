@@ -12,6 +12,7 @@ export interface ProductItem {
   sku: string;
   name: string;
   selling_price: number;
+  prices?: Record<string, number>;
   cost_price?: number;
   stock: number;
   minimum_stock?: number;
@@ -51,6 +52,15 @@ function mapProduct(raw: Record<string, unknown>): ProductItem {
     sku: String(raw.sku ?? ''),
     name: String(raw.name ?? ''),
     selling_price: Number(raw.selling_price ?? 0),
+    prices:
+      raw.prices && typeof raw.prices === 'object'
+        ? Object.fromEntries(
+            Object.entries(raw.prices as Record<string, unknown>).map(([k, v]) => [
+              k,
+              Number(v),
+            ]),
+          )
+        : undefined,
     cost_price: raw.cost_price != null ? Number(raw.cost_price) : undefined,
     stock: Number(raw.stock ?? 0),
     minimum_stock: raw.minimum_stock != null ? Number(raw.minimum_stock) : undefined,
