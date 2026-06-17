@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Package, Plus, Search, Edit2, Trash2, Loader2 } from 'lucide-react';
+import { Package, Plus, Search, Edit2, Trash2, Loader2, Download, FileSpreadsheet, Upload } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import {
   createProduct,
@@ -9,9 +9,14 @@ import {
   useCategories,
   useProducts,
 } from '@/hooks/use-inventory';
+import {
+  downloadProductsExport,
+  downloadProductsTemplate,
+} from '@/hooks/use-import-export';
 import { usePriceTiers } from '@/hooks/use-price-tiers';
 import { getStockStatusColor } from '@/lib/format';
 import { FormField, inputClassName, selectClassName } from '@/components/form-field';
+import { ProductImportModal } from '@/components/product-import-modal';
 import { useFormat, useTranslation } from '@/lib/i18n/use-translation';
 
 function stockStatusColorKey(stock: number, minimumStock = 0) {
@@ -36,6 +41,8 @@ export default function InventoryPage() {
     minimum_stock: '0',
   });
   const [tierPrices, setTierPrices] = useState<Record<string, string>>({});
+  const [isExporting, setIsExporting] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
 
   const { products, total, isLoading, error, mutate } = useProducts(searchTerm || undefined);
   const { categories } = useCategories();
@@ -106,6 +113,28 @@ export default function InventoryPage() {
     }
   };
 
+  const handleExport = async () => {
+    setIsExporting(true);
+    try {
+      await downloadProductsExport({ search: searchTerm || undefined });
+    } catch (err) {
+      alert(err instanceof Error ? err.message : t('importExport.error.exportFailed'));
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleDownloadTemplate = async () => {
+    setIsExporting(true);
+    try {
+      await downloadProductsTemplate();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : t('importExport.error.templateFailed'));
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return (
     <div>
       <div className="mb-8 flex items-center justify-between">
@@ -113,13 +142,41 @@ export default function InventoryPage() {
           <h1 className="text-3xl font-bold text-foreground mb-2">{t('products.title')}</h1>
           <p className="text-muted-foreground">{t('products.subtitle')}</p>
         </div>
-        <button
-          onClick={() => setShowAddModal(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg font-semibold hover:bg-primary/90 transition-colors"
-        >
-          <Plus size={20} />
-          {t('products.add')}
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setShowImportModal(true)}
+            className="flex items-center gap-2 px-4 py-2 border border-border rounded-lg font-semibold hover:bg-secondary transition-colors"
+          >
+            <Upload size={18} />
+            {t('importExport.importCsv')}
+          </button>
+          <button
+            type="button"
+            onClick={handleDownloadTemplate}
+            disabled={isExporting}
+            className="flex items-center gap-2 px-4 py-2 border border-border rounded-lg font-semibold hover:bg-secondary transition-colors disabled:opacity-50"
+          >
+            <FileSpreadsheet size={18} />
+            {t('importExport.downloadTemplate')}
+          </button>
+          <button
+            type="button"
+            onClick={handleExport}
+            disabled={isExporting}
+            className="flex items-center gap-2 px-4 py-2 border border-border rounded-lg font-semibold hover:bg-secondary transition-colors disabled:opacity-50"
+          >
+            {isExporting ? <Loader2 className="animate-spin" size={18} /> : <Download size={18} />}
+            {t('importExport.exportCsv')}
+          </button>
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg font-semibold hover:bg-primary/90 transition-colors"
+          >
+            <Plus size={20} />
+            {t('products.add')}
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -369,6 +426,12 @@ export default function InventoryPage() {
           </div>
         </div>
       )}
+
+      <ProductImportModal
+        isOpen={showImportModal}
+        onClose={() => setShowImportModal(false)}
+        onSuccess={() => mutate()}
+      />
     </div>
   );
 }

@@ -126,6 +126,18 @@ export async function apiPost<T>(url: string, body?: unknown): Promise<T> {
   return response.data.data;
 }
 
+export async function apiPostForm<T>(
+  url: string,
+  formData: FormData,
+  params?: Record<string, string>,
+): Promise<T> {
+  const response = await apiClient.post<ApiResponse<T>>(url, formData, {
+    params,
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return response.data.data;
+}
+
 export async function apiPatch<T>(url: string, body?: unknown): Promise<T> {
   const response = await apiClient.patch<ApiResponse<T>>(url, body);
   return response.data.data;

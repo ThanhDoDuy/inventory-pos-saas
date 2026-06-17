@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Truck, Plus, Search, Edit2, History, Ban, Loader2 } from 'lucide-react';
+import { Truck, Plus, Search, Edit2, History, Ban, Loader2, Download, FileSpreadsheet, Upload } from 'lucide-react';
 import {
   createSupplier,
   disableSupplier,
@@ -10,7 +10,12 @@ import {
   useSuppliers,
   type SupplierItem,
 } from '@/hooks/use-suppliers';
+import {
+  downloadSuppliersExport,
+  downloadSuppliersTemplate,
+} from '@/hooks/use-import-export';
 import { FormField, inputClassName, selectClassName } from '@/components/form-field';
+import { SupplierImportModal } from '@/components/supplier-import-modal';
 import { useFormat, useTranslation } from '@/lib/i18n/use-translation';
 
 const emptyForm = { name: '', phone: '', email: '', address: '', tax_code: '' };
@@ -26,6 +31,8 @@ export default function SuppliersPage() {
   const [form, setForm] = useState(emptyForm);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState('');
+  const [isExporting, setIsExporting] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
 
   const { suppliers, total, isLoading, error, mutate } = useSuppliers(
     searchTerm || undefined,
@@ -92,6 +99,31 @@ export default function SuppliersPage() {
     }
   };
 
+  const handleExport = async () => {
+    setIsExporting(true);
+    try {
+      await downloadSuppliersExport({
+        search: searchTerm || undefined,
+        status: statusFilter,
+      });
+    } catch (err) {
+      alert(err instanceof Error ? err.message : t('importExport.error.exportFailed'));
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleDownloadTemplate = async () => {
+    setIsExporting(true);
+    try {
+      await downloadSuppliersTemplate();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : t('importExport.error.templateFailed'));
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return (
     <div>
       <div className="mb-8 flex items-center justify-between">
@@ -99,13 +131,41 @@ export default function SuppliersPage() {
           <h1 className="text-3xl font-bold text-foreground mb-2">{t('suppliers.title')}</h1>
           <p className="text-muted-foreground">{t('suppliers.subtitle')}</p>
         </div>
-        <button
-          onClick={openCreate}
-          className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg font-semibold hover:bg-primary/90"
-        >
-          <Plus size={20} />
-          {t('suppliers.add')}
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setShowImportModal(true)}
+            className="flex items-center gap-2 px-4 py-2 border border-border rounded-lg font-semibold hover:bg-secondary transition-colors"
+          >
+            <Upload size={18} />
+            {t('importExport.importCsv')}
+          </button>
+          <button
+            type="button"
+            onClick={handleDownloadTemplate}
+            disabled={isExporting}
+            className="flex items-center gap-2 px-4 py-2 border border-border rounded-lg font-semibold hover:bg-secondary transition-colors disabled:opacity-50"
+          >
+            <FileSpreadsheet size={18} />
+            {t('importExport.downloadTemplate')}
+          </button>
+          <button
+            type="button"
+            onClick={handleExport}
+            disabled={isExporting}
+            className="flex items-center gap-2 px-4 py-2 border border-border rounded-lg font-semibold hover:bg-secondary transition-colors disabled:opacity-50"
+          >
+            {isExporting ? <Loader2 className="animate-spin" size={18} /> : <Download size={18} />}
+            {t('importExport.exportCsv')}
+          </button>
+          <button
+            onClick={openCreate}
+            className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg font-semibold hover:bg-primary/90"
+          >
+            <Plus size={20} />
+            {t('suppliers.add')}
+          </button>
+        </div>
       </div>
 
       <div className="bg-card rounded-lg border border-border p-6 mb-6">
@@ -350,6 +410,12 @@ export default function SuppliersPage() {
           </div>
         </div>
       )}
+
+      <SupplierImportModal
+        isOpen={showImportModal}
+        onClose={() => setShowImportModal(false)}
+        onSuccess={() => mutate()}
+      />
     </div>
   );
 }

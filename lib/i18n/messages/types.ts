@@ -811,6 +811,77 @@ export interface Messages {
       logout: string;
     };
   };
+  importExport: {
+    exportCsv: string;
+    downloadTemplate: string;
+    importCsv: string;
+    error: {
+      exportFailed: string;
+      templateFailed: string;
+      previewFailed: string;
+      importFailed: string;
+      invalidFileType: string;
+    };
+    products: {
+      title: string;
+      mode: string;
+      modeUpsert: string;
+      modeCreateOnly: string;
+      selectFile: string;
+      categoryHint: string;
+      preview: string;
+      confirm: string;
+      done: string;
+      created: string;
+      updated: string;
+      skipped: string;
+      failed: string;
+      total: string;
+      valid: string;
+      errors: string;
+      newCategories: string;
+      colName: string;
+      colCategory: string;
+    };
+    suppliers: {
+      title: string;
+      mode: string;
+      modeUpsert: string;
+      modeCreateOnly: string;
+      selectFile: string;
+      preview: string;
+      confirm: string;
+      done: string;
+      created: string;
+      updated: string;
+      skipped: string;
+      failed: string;
+      total: string;
+      valid: string;
+      errors: string;
+      colName: string;
+      colPhone: string;
+    };
+    purchaseOrders: {
+      title: string;
+      selectFile: string;
+      hint: string;
+      preview: string;
+      confirm: string;
+      done: string;
+      created: string;
+      skipped: string;
+      failed: string;
+      total: string;
+      valid: string;
+      errors: string;
+      ordersToCreate: string;
+      colGroup: string;
+      colPhone: string;
+      colSku: string;
+      colQty: string;
+    };
+  };
   status: {
     po: {
       DRAFT: string;

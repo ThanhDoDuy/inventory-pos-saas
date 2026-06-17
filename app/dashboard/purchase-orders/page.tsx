@@ -9,6 +9,8 @@ import {
   PackageCheck,
   XCircle,
   Loader2,
+  Upload,
+  FileSpreadsheet,
 } from 'lucide-react';
 import { useProducts } from '@/hooks/use-inventory';
 import { useSuppliers } from '@/hooks/use-suppliers';
@@ -23,7 +25,10 @@ import {
 } from '@/hooks/use-purchase-orders';
 import { getPoStatusColor } from '@/lib/format';
 import { FormField, inputClassName, selectClassName } from '@/components/form-field';
+import { PurchaseOrderImportModal } from '@/components/purchase-order-import-modal';
+import { downloadPurchaseOrdersTemplate } from '@/hooks/use-import-export';
 import { useFormat, useTranslation } from '@/lib/i18n/use-translation';
+import { ConfirmDialog } from '@/components/confirm-dialog';
 
 interface LineItem {
   productId: string;
@@ -43,6 +48,9 @@ export default function PurchaseOrdersPage() {
   const [detailId, setDetailId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState('');
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [isTemplateLoading, setIsTemplateLoading] = useState(false);
+  const [approveId, setApproveId] = useState<string | null>(null);
 
   const [createForm, setCreateForm] = useState({
     supplierId: '',
@@ -112,7 +120,6 @@ export default function PurchaseOrdersPage() {
   };
 
   const handleApprove = async (id: string) => {
-    if (!confirm(t('purchaseOrders.confirm.approve'))) return;
     setIsSubmitting(true);
     try {
       await approvePurchaseOrder(id);
@@ -123,6 +130,16 @@ export default function PurchaseOrdersPage() {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const requestApprove = (id: string) => {
+    setApproveId(id);
+  };
+
+  const confirmApprove = async () => {
+    if (!approveId) return;
+    await handleApprove(approveId);
+    setApproveId(null);
   };
 
   const handleReceive = async (order: PurchaseOrder) => {
@@ -192,6 +209,17 @@ export default function PurchaseOrdersPage() {
   const canCancel =
     detail?.status === 'DRAFT' || detail?.status === 'APPROVED';
 
+  const handleDownloadTemplate = async () => {
+    setIsTemplateLoading(true);
+    try {
+      await downloadPurchaseOrdersTemplate();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : t('importExport.error.templateFailed'));
+    } finally {
+      setIsTemplateLoading(false);
+    }
+  };
+
   return (
     <div>
       <div className="mb-8 flex items-center justify-between">
@@ -199,16 +227,35 @@ export default function PurchaseOrdersPage() {
           <h1 className="text-3xl font-bold text-foreground mb-2">{t('purchaseOrders.title')}</h1>
           <p className="text-muted-foreground">{t('purchaseOrders.subtitle')}</p>
         </div>
-        <button
-          onClick={() => {
-            setFormError('');
-            setShowCreate(true);
-          }}
-          className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg font-semibold hover:bg-primary/90"
-        >
-          <Plus size={20} />
-          {t('purchaseOrders.create')}
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={handleDownloadTemplate}
+            disabled={isTemplateLoading}
+            className="flex items-center gap-2 px-4 py-2 border border-border rounded-lg font-semibold hover:bg-secondary transition-colors disabled:opacity-50"
+          >
+            <FileSpreadsheet size={18} />
+            {t('importExport.downloadTemplate')}
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowImportModal(true)}
+            className="flex items-center gap-2 px-4 py-2 border border-border rounded-lg font-semibold hover:bg-secondary transition-colors"
+          >
+            <Upload size={18} />
+            {t('importExport.importCsv')}
+          </button>
+          <button
+            onClick={() => {
+              setFormError('');
+              setShowCreate(true);
+            }}
+            className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg font-semibold hover:bg-primary/90"
+          >
+            <Plus size={20} />
+            {t('purchaseOrders.create')}
+          </button>
+        </div>
       </div>
 
       <div className="bg-card rounded-lg border border-border p-6 mb-6">
@@ -498,7 +545,7 @@ export default function PurchaseOrdersPage() {
                 <div className="flex flex-wrap gap-2">
                   {canApprove && (
                     <button
-                      onClick={() => handleApprove(detail.id)}
+                      onClick={() => requestApprove(detail.id)}
                       disabled={isSubmitting}
                       className="flex items-center gap-1 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold disabled:opacity-50"
                     >
@@ -538,6 +585,23 @@ export default function PurchaseOrdersPage() {
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        isOpen={approveId !== null}
+        title={t('common.confirm')}
+        message={t('purchaseOrders.confirm.approve')}
+        cancelText={t('common.cancel')}
+        confirmText={t('common.confirm')}
+        isLoading={isSubmitting}
+        onCancel={() => (isSubmitting ? null : setApproveId(null))}
+        onConfirm={confirmApprove}
+      />
+
+      <PurchaseOrderImportModal
+        isOpen={showImportModal}
+        onClose={() => setShowImportModal(false)}
+        onSuccess={() => mutate()}
+      />
     </div>
   );
 }
