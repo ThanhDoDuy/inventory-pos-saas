@@ -1,8 +1,6 @@
 import useSWR from 'swr';
-import { apiDelete, apiGet, apiPatch, apiPost, API_BASE_URL } from '@/lib/api-client';
+import { apiDelete, apiGet, apiPatch, apiPost, API_BASE_URL, swrFetcher as fetcher } from '@/lib/api-client';
 import { stringifyId } from '@/lib/format';
-
-const fetcher = (url: string) => apiGet(url.replace(API_BASE_URL, ''));
 
 export interface RoleItem {
   id: string;

@@ -1,10 +1,8 @@
 import { useMemo } from 'react';
 import useSWR from 'swr';
-import { apiGet, API_BASE_URL, downloadFile } from '@/lib/api-client';
+import { apiGet, API_BASE_URL, downloadFile, swrFetcher as fetcher } from '@/lib/api-client';
 import type { DateRangePreset } from '@/lib/format';
 import { getDateRange } from '@/lib/format';
-
-const fetcher = (url: string) => apiGet(url.replace(API_BASE_URL, ''));
 
 export interface DashboardData {
   revenue_today: number;
