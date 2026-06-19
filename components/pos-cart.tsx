@@ -1,17 +1,27 @@
 'use client';
 
-import { useCartStore } from '@/lib/cart-store';
+import type { CartState } from '@/lib/cart-store';
 import { useFormat, useTranslation } from '@/lib/i18n/use-translation';
 import { ShoppingCart, Trash2 } from 'lucide-react';
 
 interface POSCartProps {
+  cart: CartState;
+  variant?: 'retail' | 'business';
   onCheckout: () => void;
+  checkoutLabel?: string;
+  disabled?: boolean;
 }
 
-export function POSCart({ onCheckout }: POSCartProps) {
-  const cart = useCartStore();
+export function POSCart({
+  cart,
+  variant = 'business',
+  onCheckout,
+  checkoutLabel,
+  disabled = false,
+}: POSCartProps) {
   const { t } = useTranslation();
   const { formatMoney } = useFormat();
+  const isRetail = variant === 'retail';
 
   return (
     <div className="bg-card rounded-lg border border-border p-6 h-fit sticky top-4">
@@ -54,13 +64,13 @@ export function POSCart({ onCheckout }: POSCartProps) {
           <span className="text-muted-foreground">{t('pos.cart.subtotal')}</span>
           <span className="font-semibold text-foreground">{formatMoney(cart.subtotal)}</span>
         </div>
-        {cart.totalDiscount > 0 && (
+        {!isRetail && cart.totalDiscount > 0 && (
           <div className="flex justify-between text-green-600">
             <span>{t('pos.cart.discount')}</span>
             <span>-{formatMoney(cart.totalDiscount)}</span>
           </div>
         )}
-        {cart.totalTax > 0 && (
+        {!isRetail && cart.totalTax > 0 && (
           <div className="flex justify-between">
             <span className="text-muted-foreground">{t('pos.cart.tax')}</span>
             <span className="font-semibold text-foreground">{formatMoney(cart.totalTax)}</span>
@@ -72,58 +82,62 @@ export function POSCart({ onCheckout }: POSCartProps) {
         </div>
       </div>
 
-      <div className="mt-4 pt-4 border-t border-border space-y-3">
-        <div>
-          <label htmlFor="cart-discount-pct" className="block text-xs font-medium text-foreground mb-1">
-            {t('pos.cart.discountPct')}
-          </label>
-          <input
-            id="cart-discount-pct"
-            type="number"
-            value={cart.discountPercentage}
-            onChange={(e) => cart.updateDiscount(Math.max(0, parseFloat(e.target.value) || 0))}
-            className="w-full px-2 py-1 border border-input rounded text-sm focus:outline-none focus:ring-1 focus:ring-primary/50 bg-card text-foreground"
-          />
-        </div>
-        <div>
-          <label htmlFor="cart-discount-amount" className="block text-xs font-medium text-foreground mb-1">
-            {t('pos.cart.discountFixed')}
-          </label>
-          <input
-            id="cart-discount-amount"
-            type="number"
-            value={cart.customDiscountAmount}
-            onChange={(e) => cart.setCustomDiscount(Math.max(0, parseFloat(e.target.value) || 0))}
-            className="w-full px-2 py-1 border border-input rounded text-sm focus:outline-none focus:ring-1 focus:ring-primary/50 bg-card text-foreground"
-          />
-        </div>
-        <div>
-          <label htmlFor="cart-tax" className="block text-xs font-medium text-foreground mb-1">
-            {t('pos.cart.taxPct')}
-          </label>
-          <input
-            id="cart-tax"
-            type="number"
-            value={cart.taxPercentage}
-            onChange={(e) => cart.updateTaxPercentage(Math.max(0, parseFloat(e.target.value) || 0))}
-            className="w-full px-2 py-1 border border-input rounded text-sm focus:outline-none focus:ring-1 focus:ring-primary/50 bg-card text-foreground"
-          />
-        </div>
-      </div>
+      {!isRetail && (
+        <>
+          <div className="mt-4 pt-4 border-t border-border space-y-3">
+            <div>
+              <label htmlFor="cart-discount-pct" className="block text-xs font-medium text-foreground mb-1">
+                {t('pos.cart.discountPct')}
+              </label>
+              <input
+                id="cart-discount-pct"
+                type="number"
+                value={cart.discountPercentage}
+                onChange={(e) => cart.updateDiscount(Math.max(0, parseFloat(e.target.value) || 0))}
+                className="w-full px-2 py-1 border border-input rounded text-sm focus:outline-none focus:ring-1 focus:ring-primary/50 bg-card text-foreground"
+              />
+            </div>
+            <div>
+              <label htmlFor="cart-discount-amount" className="block text-xs font-medium text-foreground mb-1">
+                {t('pos.cart.discountFixed')}
+              </label>
+              <input
+                id="cart-discount-amount"
+                type="number"
+                value={cart.customDiscountAmount}
+                onChange={(e) => cart.setCustomDiscount(Math.max(0, parseFloat(e.target.value) || 0))}
+                className="w-full px-2 py-1 border border-input rounded text-sm focus:outline-none focus:ring-1 focus:ring-primary/50 bg-card text-foreground"
+              />
+            </div>
+            <div>
+              <label htmlFor="cart-tax" className="block text-xs font-medium text-foreground mb-1">
+                {t('pos.cart.taxPct')}
+              </label>
+              <input
+                id="cart-tax"
+                type="number"
+                value={cart.taxPercentage}
+                onChange={(e) => cart.updateTaxPercentage(Math.max(0, parseFloat(e.target.value) || 0))}
+                className="w-full px-2 py-1 border border-input rounded text-sm focus:outline-none focus:ring-1 focus:ring-primary/50 bg-card text-foreground"
+              />
+            </div>
+          </div>
 
-      <div className="mt-4 pt-4 border-t border-border">
-        <label htmlFor="cart-notes" className="block text-xs font-medium text-foreground mb-2">
-          {t('pos.cart.notes')}
-        </label>
-        <textarea
-          id="cart-notes"
-          value={cart.notes}
-          onChange={(e) => cart.setNotes(e.target.value)}
-          placeholder={t('pos.cart.notesPlaceholder')}
-          className="w-full px-2 py-2 border border-input rounded text-sm focus:outline-none focus:ring-1 focus:ring-primary/50 bg-card text-foreground resize-none"
-          rows={3}
-        />
-      </div>
+          <div className="mt-4 pt-4 border-t border-border">
+            <label htmlFor="cart-notes" className="block text-xs font-medium text-foreground mb-2">
+              {t('pos.cart.notes')}
+            </label>
+            <textarea
+              id="cart-notes"
+              value={cart.notes}
+              onChange={(e) => cart.setNotes(e.target.value)}
+              placeholder={t('pos.cart.notesPlaceholder')}
+              className="w-full px-2 py-2 border border-input rounded text-sm focus:outline-none focus:ring-1 focus:ring-primary/50 bg-card text-foreground resize-none"
+              rows={3}
+            />
+          </div>
+        </>
+      )}
 
       <div className="mt-4 pt-4 border-t border-border space-y-2">
         <button
@@ -137,10 +151,10 @@ export function POSCart({ onCheckout }: POSCartProps) {
         <button
           type="button"
           onClick={onCheckout}
-          disabled={cart.items.length === 0}
+          disabled={disabled || cart.items.length === 0}
           className="w-full py-3 px-4 bg-primary text-primary-foreground rounded-lg font-bold hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-lg"
         >
-          {t('pos.checkout')}
+          {checkoutLabel ?? t('pos.checkout')}
         </button>
       </div>
     </div>

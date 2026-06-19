@@ -2,6 +2,7 @@ import type { LucideIcon } from 'lucide-react';
 import {
   LayoutDashboard,
   ShoppingCart,
+  Building2,
   FileText,
   Package,
   Tags,
@@ -58,9 +59,15 @@ export const NAV_SECTIONS: NavSection[] = [
     items: [
       {
         href: '/dashboard/pos',
-        labelKey: 'nav.item.pos',
+        labelKey: 'nav.item.posRetail',
         icon: ShoppingCart,
-        roles: ['ADMIN', 'MANAGER', 'STAFF'],
+        roles: ['ADMIN', 'STAFF'],
+      },
+      {
+        href: '/dashboard/pos/business',
+        labelKey: 'nav.item.posBusiness',
+        icon: Building2,
+        roles: ['ADMIN', 'MANAGER'],
       },
       {
         href: '/dashboard/invoices',
@@ -179,6 +186,9 @@ export function getVisibleNavSections(role: AppRole): NavSection[] {
 
 export function isNavActive(pathname: string, href: string) {
   if (href === '/dashboard') {
+    return pathname === href;
+  }
+  if (href === '/dashboard/pos') {
     return pathname === href;
   }
   if (href === '/dashboard/inventory') {

@@ -53,6 +53,8 @@ export interface Messages {
       dashboard: string;
       reports: string;
       pos: string;
+      posRetail: string;
+      posBusiness: string;
       invoices: string;
       customers: string;
       products: string;
@@ -231,6 +233,31 @@ export interface Messages {
       title: string;
       qty: string;
       close: string;
+    };
+    retail: {
+      title: string;
+      subtitle: string;
+      confirmTitle: string;
+      confirmPay: string;
+      successDesc: string;
+    };
+    business: {
+      title: string;
+      subtitle: string;
+      customerTitle: string;
+      customerSubtitle: string;
+      customerRequired: string;
+      selectExisting: string;
+      createNew: string;
+      searchCustomer: string;
+      searchPlaceholder: string;
+      noCustomers: string;
+      typeCompany: string;
+      typeGroup: string;
+      sellingTo: string;
+      changeCustomer: string;
+      saveAndSelect: string;
+      createFailed: string;
     };
   };
   invoices: {
