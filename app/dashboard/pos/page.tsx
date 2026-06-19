@@ -8,6 +8,7 @@ import { POSCart } from '@/components/pos-cart';
 import { PaymentModal } from '@/components/payment-modal';
 import { PriceTierModal } from '@/components/price-tier-modal';
 import { useCategories, useProducts, type ProductItem } from '@/hooks/use-inventory';
+import { useDebouncedValue } from '@/hooks/use-debounced-value';
 import { usePriceTiers } from '@/hooks/use-price-tiers';
 import { FormField, inputClassName, selectClassName } from '@/components/form-field';
 import { useFormat, useTranslation } from '@/lib/i18n/use-translation';
@@ -45,21 +46,15 @@ export default function POSPage() {
   const { tiers, isLoading: tiersLoading } = usePriceTiers();
 
   const categoryId = selectedCategoryId !== 'all' ? selectedCategoryId : undefined;
+  const debouncedSearch = useDebouncedValue(searchTerm, 300);
   const { products: categoryProducts, isLoading: productsLoading, error } = useProducts(
     undefined,
     { categoryId, limit: 100 },
   );
-
-  const searchProducts = useMemo(() => {
-    const query = searchTerm.trim().toLowerCase();
-    if (!query) return categoryProducts;
-
-    return categoryProducts.filter(
-      (product) =>
-        product.name.toLowerCase().includes(query) ||
-        product.sku.toLowerCase().includes(query),
-    );
-  }, [categoryProducts, searchTerm]);
+  const {
+    products: searchProducts,
+    isLoading: searchLoading,
+  } = useProducts(debouncedSearch.trim() || undefined, { categoryId, limit: 100 });
 
   const selectedCategoryName = useMemo(
     () => categories.find((category) => category.id === selectedCategoryId)?.name,
@@ -124,7 +119,7 @@ export default function POSPage() {
   };
 
   const handleQuickAdd = (productId: string) => {
-    const product = categoryProducts.find((item) => item.id === productId);
+    const product = searchProducts.find((item) => item.id === productId);
     if (!product) return;
     openPriceTierPicker(product, 1);
   };
@@ -285,7 +280,11 @@ export default function POSPage() {
               </div>
             </FormField>
             <div className="grid grid-cols-2 gap-3">
-              {productsLoading ? (
+              {!debouncedSearch.trim() ? (
+                <p className="col-span-2 text-center text-muted-foreground py-4">
+                  {t('pos.searchPlaceholder')}
+                </p>
+              ) : searchLoading ? (
                 <div className="col-span-2 flex items-center justify-center gap-2 text-muted-foreground py-4">
                   <Loader2 className="animate-spin" size={18} />
                   {t('common.loading')}

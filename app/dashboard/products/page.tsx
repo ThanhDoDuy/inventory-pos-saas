@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { Package, Plus, Search, Edit2, Trash2, Loader2, Download, FileSpreadsheet, Upload } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import { useDebouncedValue } from '@/hooks/use-debounced-value';
 import {
   createProduct,
   deactivateProduct,
@@ -44,7 +45,10 @@ export default function InventoryPage() {
   const [isExporting, setIsExporting] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
 
-  const { products, total, isLoading, error, mutate } = useProducts(searchTerm || undefined);
+  const debouncedSearch = useDebouncedValue(searchTerm, 300);
+  const { products, total, isLoading, error, mutate } = useProducts(
+    debouncedSearch.trim() || undefined,
+  );
   const { categories } = useCategories();
   const { tiers } = usePriceTiers();
 

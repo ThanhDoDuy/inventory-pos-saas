@@ -105,7 +105,7 @@ export function useProducts(
   const { data, error, isLoading, mutate } = useSWR<ProductsListResponse>(
     productsKey,
     swrFetcher<ProductsListResponse>,
-    { revalidateOnFocus: false },
+    { revalidateOnFocus: false, dedupingInterval: search ? 300 : 0 },
   );
 
   const products = (data?.items ?? []).map((item) => mapProduct(item as unknown as Record<string, unknown>));
