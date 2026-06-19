@@ -1,8 +1,9 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { SlidersHorizontal, Plus, Loader2 } from 'lucide-react';
+import { SlidersHorizontal, Plus, Loader2, Download } from 'lucide-react';
 import { useProducts } from '@/hooks/use-inventory';
+import { downloadInventoryTransactionsExport } from '@/hooks/use-import-export';
 import {
   createAdjustment,
   useInventoryTransactions,
@@ -18,6 +19,7 @@ export default function InventoryAdjustmentsPage() {
   const { formatDateTime, getAdjustmentReasonLabel, getTransactionTypeLabel } = useFormat();
   const [showModal, setShowModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
   const [formError, setFormError] = useState('');
   const [form, setForm] = useState({
     productId: '',
@@ -64,6 +66,17 @@ export default function InventoryAdjustmentsPage() {
     }
   };
 
+  const handleExport = async () => {
+    setIsExporting(true);
+    try {
+      await downloadInventoryTransactionsExport({ type: 'ADJUST' });
+    } catch (err) {
+      alert(err instanceof Error ? err.message : t('importExport.error.exportFailed'));
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return (
     <div>
       <div className="mb-8 flex items-center justify-between">
@@ -71,16 +84,27 @@ export default function InventoryAdjustmentsPage() {
           <h1 className="text-3xl font-bold text-foreground mb-2">{t('adjustments.title')}</h1>
           <p className="text-muted-foreground">{t('adjustments.subtitle')}</p>
         </div>
-        <button
-          onClick={() => {
-            setFormError('');
-            setShowModal(true);
-          }}
-          className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg font-semibold hover:bg-primary/90"
-        >
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={handleExport}
+            disabled={isExporting}
+            className="flex items-center gap-2 px-4 py-2 border border-border rounded-lg font-semibold hover:bg-secondary transition-colors disabled:opacity-50"
+          >
+            {isExporting ? <Loader2 className="animate-spin" size={18} /> : <Download size={18} />}
+            {t('importExport.exportTransactions')}
+          </button>
+          <button
+            onClick={() => {
+              setFormError('');
+              setShowModal(true);
+            }}
+            className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg font-semibold hover:bg-primary/90"
+          >
           <Plus size={20} />
           {t('adjustments.create')}
         </button>
+        </div>
       </div>
 
       <div className="bg-card rounded-lg border border-border overflow-hidden">

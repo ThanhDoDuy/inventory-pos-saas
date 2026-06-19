@@ -857,6 +857,10 @@ export const en: Messages = {
   },
   importExport: {
     exportCsv: 'Export CSV',
+    exportSummary: 'Export summary CSV',
+    exportDetail: 'Export line items CSV',
+    exportBalances: 'Export stock CSV',
+    exportTransactions: 'Export transactions CSV',
     downloadTemplate: 'Download Excel template',
     importCsv: 'Import CSV/Excel',
     error: {

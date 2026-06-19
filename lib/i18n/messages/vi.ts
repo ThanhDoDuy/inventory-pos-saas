@@ -857,6 +857,10 @@ export const vi: Messages = {
   },
   importExport: {
     exportCsv: 'Xuất CSV',
+    exportSummary: 'Xuất CSV tổng hợp',
+    exportDetail: 'Xuất CSV chi tiết dòng',
+    exportBalances: 'Xuất CSV tồn kho',
+    exportTransactions: 'Xuất CSV giao dịch',
     downloadTemplate: 'Tải mẫu Excel',
     importCsv: 'Nhập CSV/Excel',
     error: {

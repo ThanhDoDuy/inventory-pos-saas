@@ -1,9 +1,10 @@
 'use client';
 
-import { Search, Loader2, AlertTriangle } from 'lucide-react';
+import { Search, Loader2, AlertTriangle, Download } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { useProducts } from '@/hooks/use-inventory';
+import { downloadInventoryBalancesExport } from '@/hooks/use-import-export';
 import { getStockStatusColor } from '@/lib/format';
 import { FormField, inputClassName } from '@/components/form-field';
 import { useFormat, useTranslation } from '@/lib/i18n/use-translation';
@@ -18,6 +19,7 @@ export default function InventoryStockPage() {
   const { t } = useTranslation();
   const { formatMoney, getStockStatus } = useFormat();
   const [searchTerm, setSearchTerm] = useState('');
+  const [isExporting, setIsExporting] = useState(false);
   const { products, isLoading, error } = useProducts(searchTerm || undefined);
 
   const stats = useMemo(() => {
@@ -33,11 +35,35 @@ export default function InventoryStockPage() {
     return { low, out, totalValue };
   }, [products]);
 
+  const handleExport = async () => {
+    setIsExporting(true);
+    try {
+      await downloadInventoryBalancesExport({
+        search: searchTerm || undefined,
+      });
+    } catch (err) {
+      alert(err instanceof Error ? err.message : t('importExport.error.exportFailed'));
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return (
     <div>
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-foreground mb-2">{t('inventory.title')}</h1>
-        <p className="text-muted-foreground">{t('inventory.subtitle')}</p>
+      <div className="mb-8 flex items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground mb-2">{t('inventory.title')}</h1>
+          <p className="text-muted-foreground">{t('inventory.subtitle')}</p>
+        </div>
+        <button
+          type="button"
+          onClick={handleExport}
+          disabled={isExporting}
+          className="flex items-center gap-2 px-4 py-2 border border-border rounded-lg font-semibold hover:bg-secondary transition-colors disabled:opacity-50"
+        >
+          {isExporting ? <Loader2 className="animate-spin" size={18} /> : <Download size={18} />}
+          {t('importExport.exportBalances')}
+        </button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">

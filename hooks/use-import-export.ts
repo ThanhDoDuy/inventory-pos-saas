@@ -275,3 +275,83 @@ export async function confirmPurchaseOrdersImport(previewToken: string) {
     throw new Error(extractErrorMessage(error, 'Không thể import đơn mua hàng'));
   }
 }
+
+export async function downloadInvoicesExport(params?: {
+  from?: string;
+  to?: string;
+  status?: string;
+  export_type?: 'summary' | 'detail';
+}) {
+  const query: Record<string, string> = {};
+  if (params?.from) query.from = params.from;
+  if (params?.to) query.to = params.to;
+  if (params?.status && params.status !== 'all') query.status = params.status;
+  if (params?.export_type) query.export_type = params.export_type;
+
+  const suffix = params?.export_type === 'detail' ? 'detail' : 'summary';
+  await downloadFile(
+    '/invoices/export',
+    `invoices-export-${suffix}-${dateStamp()}.csv`,
+    query,
+  );
+}
+
+export async function downloadPurchaseOrdersExport(params?: {
+  status?: string;
+  supplierId?: string;
+  from?: string;
+  to?: string;
+  export_type?: 'summary' | 'detail';
+}) {
+  const query: Record<string, string> = {};
+  if (params?.status && params.status !== 'all') query.status = params.status;
+  if (params?.supplierId) query.supplierId = params.supplierId;
+  if (params?.from) query.from = params.from;
+  if (params?.to) query.to = params.to;
+  if (params?.export_type) query.export_type = params.export_type;
+
+  const suffix = params?.export_type === 'detail' ? 'detail' : 'summary';
+  await downloadFile(
+    '/purchase-orders/export',
+    `purchase-orders-export-${suffix}-${dateStamp()}.csv`,
+    query,
+  );
+}
+
+export async function downloadInventoryBalancesExport(params?: {
+  search?: string;
+  category_id?: string;
+  status?: string;
+  low_stock_only?: boolean;
+}) {
+  const query: Record<string, string> = {};
+  if (params?.search) query.search = params.search;
+  if (params?.category_id) query.category_id = params.category_id;
+  if (params?.status && params.status !== 'all') query.status = params.status;
+  if (params?.low_stock_only) query.low_stock_only = 'true';
+
+  await downloadFile(
+    '/inventory/export/balances',
+    `inventory-balances-export-${dateStamp()}.csv`,
+    query,
+  );
+}
+
+export async function downloadInventoryTransactionsExport(params?: {
+  productId?: string;
+  type?: string;
+  from?: string;
+  to?: string;
+}) {
+  const query: Record<string, string> = {};
+  if (params?.productId) query.productId = params.productId;
+  if (params?.type) query.type = params.type;
+  if (params?.from) query.from = params.from;
+  if (params?.to) query.to = params.to;
+
+  await downloadFile(
+    '/inventory/export/transactions',
+    `inventory-transactions-export-${dateStamp()}.csv`,
+    query,
+  );
+}

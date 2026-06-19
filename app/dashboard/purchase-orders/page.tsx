@@ -11,6 +11,7 @@ import {
   Loader2,
   Upload,
   FileSpreadsheet,
+  Download,
 } from 'lucide-react';
 import { useProducts } from '@/hooks/use-inventory';
 import { useSuppliers } from '@/hooks/use-suppliers';
@@ -26,7 +27,7 @@ import {
 import { getPoStatusColor } from '@/lib/format';
 import { FormField, inputClassName, selectClassName } from '@/components/form-field';
 import { PurchaseOrderImportModal } from '@/components/purchase-order-import-modal';
-import { downloadPurchaseOrdersTemplate } from '@/hooks/use-import-export';
+import { downloadPurchaseOrdersExport, downloadPurchaseOrdersTemplate } from '@/hooks/use-import-export';
 import { useFormat, useTranslation } from '@/lib/i18n/use-translation';
 import { ConfirmDialog } from '@/components/confirm-dialog';
 
@@ -50,6 +51,7 @@ export default function PurchaseOrdersPage() {
   const [formError, setFormError] = useState('');
   const [showImportModal, setShowImportModal] = useState(false);
   const [isTemplateLoading, setIsTemplateLoading] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
   const [approveId, setApproveId] = useState<string | null>(null);
 
   const [createForm, setCreateForm] = useState({
@@ -220,6 +222,20 @@ export default function PurchaseOrdersPage() {
     }
   };
 
+  const handleExport = async (exportType: 'summary' | 'detail') => {
+    setIsExporting(true);
+    try {
+      await downloadPurchaseOrdersExport({
+        status: statusFilter,
+        export_type: exportType,
+      });
+    } catch (err) {
+      alert(err instanceof Error ? err.message : t('importExport.error.exportFailed'));
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return (
     <div>
       <div className="mb-8 flex items-center justify-between">
@@ -228,6 +244,24 @@ export default function PurchaseOrdersPage() {
           <p className="text-muted-foreground">{t('purchaseOrders.subtitle')}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => handleExport('summary')}
+            disabled={isExporting}
+            className="flex items-center gap-2 px-4 py-2 border border-border rounded-lg font-semibold hover:bg-secondary transition-colors disabled:opacity-50"
+          >
+            {isExporting ? <Loader2 className="animate-spin" size={18} /> : <Download size={18} />}
+            {t('importExport.exportSummary')}
+          </button>
+          <button
+            type="button"
+            onClick={() => handleExport('detail')}
+            disabled={isExporting}
+            className="flex items-center gap-2 px-4 py-2 border border-border rounded-lg font-semibold hover:bg-secondary transition-colors disabled:opacity-50"
+          >
+            {isExporting ? <Loader2 className="animate-spin" size={18} /> : <Download size={18} />}
+            {t('importExport.exportDetail')}
+          </button>
           <button
             type="button"
             onClick={handleDownloadTemplate}

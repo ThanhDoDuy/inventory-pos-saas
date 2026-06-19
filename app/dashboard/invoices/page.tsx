@@ -1,8 +1,9 @@
 'use client';
 
-import { FileText, Loader2, Printer } from 'lucide-react';
+import { Download, FileText, Loader2, Printer } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { getInvoice, invoiceToReceiptData, useInvoices } from '@/hooks/use-invoices';
+import { downloadInvoicesExport } from '@/hooks/use-import-export';
 import { useAuthStore } from '@/lib/auth-store';
 import { getDateRange } from '@/lib/format';
 import { printReceipt } from '@/lib/print-receipt';
@@ -15,6 +16,7 @@ export default function InvoicesPage() {
   const { invoices, total, isLoading, error } = useInvoices(from, to, 50);
   const user = useAuthStore((state) => state.user);
   const [printingId, setPrintingId] = useState<string | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
 
   const handlePrint = async (invoiceId: string) => {
     setPrintingId(invoiceId);
@@ -28,11 +30,44 @@ export default function InvoicesPage() {
     }
   };
 
+  const handleExport = async (exportType: 'summary' | 'detail') => {
+    setIsExporting(true);
+    try {
+      await downloadInvoicesExport({ from, to, export_type: exportType });
+    } catch (err) {
+      alert(err instanceof Error ? err.message : t('importExport.error.exportFailed'));
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return (
     <div>
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-foreground mb-2">{t('invoices.title')}</h1>
-        <p className="text-muted-foreground">{t('invoices.subtitle')}</p>
+      <div className="mb-8 flex items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground mb-2">{t('invoices.title')}</h1>
+          <p className="text-muted-foreground">{t('invoices.subtitle')}</p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => handleExport('summary')}
+            disabled={isExporting}
+            className="flex items-center gap-2 px-4 py-2 border border-border rounded-lg font-semibold hover:bg-secondary transition-colors disabled:opacity-50"
+          >
+            {isExporting ? <Loader2 className="animate-spin" size={18} /> : <Download size={18} />}
+            {t('importExport.exportSummary')}
+          </button>
+          <button
+            type="button"
+            onClick={() => handleExport('detail')}
+            disabled={isExporting}
+            className="flex items-center gap-2 px-4 py-2 border border-border rounded-lg font-semibold hover:bg-secondary transition-colors disabled:opacity-50"
+          >
+            {isExporting ? <Loader2 className="animate-spin" size={18} /> : <Download size={18} />}
+            {t('importExport.exportDetail')}
+          </button>
+        </div>
       </div>
 
       <div className="bg-card rounded-lg border border-border p-6 mb-6">

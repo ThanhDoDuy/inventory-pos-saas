@@ -854,6 +854,10 @@ export interface Messages {
   };
   importExport: {
     exportCsv: string;
+    exportSummary: string;
+    exportDetail: string;
+    exportBalances: string;
+    exportTransactions: string;
     downloadTemplate: string;
     importCsv: string;
     error: {
