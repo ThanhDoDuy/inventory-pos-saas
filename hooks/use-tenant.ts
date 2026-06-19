@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import useSWR from 'swr';
 import {
   apiGet,
@@ -38,10 +39,16 @@ export function useTenant() {
   const { data, error, isLoading, mutate } = useSWR<Record<string, unknown>>(
     `${API_BASE_URL}/tenants/me`,
     fetcher,
+    { revalidateOnFocus: false },
+  );
+
+  const tenant = useMemo(
+    () => (data ? mapTenant(data) : null),
+    [data],
   );
 
   return {
-    tenant: data ? mapTenant(data) : null,
+    tenant,
     isLoading,
     error,
     mutate,

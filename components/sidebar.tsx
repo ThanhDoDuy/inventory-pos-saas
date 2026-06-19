@@ -11,7 +11,7 @@ import {
 import { useUserPermissions } from '@/hooks/use-user-permissions';
 import { useTranslation } from '@/lib/i18n/use-translation';
 import { ChevronDown, LogOut, Menu, ShoppingCart, X } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -23,7 +23,10 @@ export function Sidebar() {
   const logout = useAuthStore((state) => state.logout);
   const { permissionSource, isLoading: permissionsLoading } = useUserPermissions();
 
-  const sections = getVisibleNavSections(permissionSource);
+  const sections = useMemo(
+    () => getVisibleNavSections(permissionSource),
+    [permissionSource],
+  );
 
   useEffect(() => {
     const activeSectionId = getActiveSectionId(pathname, sections);

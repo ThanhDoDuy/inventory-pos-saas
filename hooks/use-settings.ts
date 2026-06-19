@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import useSWR from 'swr';
 import {
   apiPatch,
@@ -33,15 +34,28 @@ export const POLICY_SETTING_KEYS = [
   'sales.max_discount_manager',
 ] as const;
 
+const EMPTY_SETTINGS: SettingItem[] = [];
+const EMPTY_FEATURE_FLAGS: FeatureFlagItem[] = [];
+
 export function useSettings() {
   const { data, error, isLoading, mutate } = useSWR<SettingsListResponse>(
     `${API_BASE_URL}/settings`,
     fetcher,
+    { revalidateOnFocus: false },
+  );
+
+  const settings = useMemo(
+    () => data?.settings ?? EMPTY_SETTINGS,
+    [data?.settings],
+  );
+  const featureFlags = useMemo(
+    () => data?.feature_flags ?? EMPTY_FEATURE_FLAGS,
+    [data?.feature_flags],
   );
 
   return {
-    settings: data?.settings ?? [],
-    featureFlags: data?.feature_flags ?? [],
+    settings,
+    featureFlags,
     isLoading,
     error,
     mutate,

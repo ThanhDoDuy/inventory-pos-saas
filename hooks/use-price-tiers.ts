@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import useSWR from 'swr';
 import { apiGet, apiPatch, apiPost, extractErrorMessage } from '@/lib/api-client';
 import { stringifyId } from '@/lib/format';
@@ -29,7 +30,10 @@ export function usePriceTiers() {
     { revalidateOnFocus: false },
   );
 
-  const tiers = (data ?? []).map((item) => mapPriceTier(item));
+  const tiers = useMemo(
+    () => (data ?? []).map((item) => mapPriceTier(item)),
+    [data],
+  );
 
   return { tiers, isLoading, error, mutate };
 }
