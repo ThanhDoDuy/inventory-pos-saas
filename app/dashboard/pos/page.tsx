@@ -318,15 +318,7 @@ export default function POSPage() {
         </div>
 
         <div>
-          <POSCart />
-          <button
-            type="button"
-            onClick={handleCheckout}
-            disabled={cart.items.length === 0}
-            className="w-full mt-4 py-3 px-4 bg-primary text-primary-foreground rounded-lg font-bold hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-lg sticky bottom-4"
-          >
-            {t('pos.checkout')}
-          </button>
+          <POSCart onCheckout={handleCheckout} />
         </div>
       </div>
 

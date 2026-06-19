@@ -264,9 +264,20 @@ export interface Messages {
       all: string;
       active: string;
       disabled: string;
+      typeAll: string;
+      typeIndividual: string;
+      typeCompany: string;
+      typeGroup: string;
+    };
+    type: {
+      label: string;
+      individual: string;
+      company: string;
+      group: string;
     };
     table: {
       customer: string;
+      type: string;
       contact: string;
       status: string;
       lastPurchase: string;
@@ -277,6 +288,8 @@ export interface Messages {
       phone: string;
       email: string;
       address: string;
+      taxCode: string;
+      contactPerson: string;
     };
     modal: {
       add: string;
@@ -303,6 +316,7 @@ export interface Messages {
     error: {
       loadFailed: string;
       requiredFields: string;
+      taxCodeRequired: string;
       actionFailed: string;
       disableFailed: string;
     };
@@ -861,6 +875,27 @@ export interface Messages {
       errors: string;
       colName: string;
       colPhone: string;
+    };
+    customers: {
+      title: string;
+      mode: string;
+      modeUpsert: string;
+      modeCreateOnly: string;
+      selectFile: string;
+      preview: string;
+      confirm: string;
+      done: string;
+      created: string;
+      updated: string;
+      skipped: string;
+      failed: string;
+      total: string;
+      valid: string;
+      errors: string;
+      colType: string;
+      colName: string;
+      colPhone: string;
+      colTaxCode: string;
     };
     purchaseOrders: {
       title: string;

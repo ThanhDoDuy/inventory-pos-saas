@@ -42,6 +42,28 @@ export async function downloadSuppliersTemplate() {
   );
 }
 
+export async function downloadCustomersExport(params?: {
+  search?: string;
+  status?: string;
+  customer_type?: string;
+}) {
+  const query: Record<string, string> = { format: 'csv' };
+  if (params?.search) query.search = params.search;
+  if (params?.status && params.status !== 'all') query.status = params.status;
+  if (params?.customer_type && params.customer_type !== 'all') {
+    query.customer_type = params.customer_type;
+  }
+
+  await downloadFile('/customers/export', `customers-export-${dateStamp()}.csv`, query);
+}
+
+export async function downloadCustomersTemplate() {
+  await downloadFile(
+    '/customers/export/template',
+    'customers-import-template.xlsx',
+  );
+}
+
 const IMPORT_FILE_EXTENSIONS = ['.csv', '.xlsx'];
 
 export function isAllowedImportFile(file: File): boolean {
@@ -147,6 +169,55 @@ export async function confirmSuppliersImport(previewToken: string) {
     }>('/suppliers/import/confirm', { previewToken });
   } catch (error) {
     throw new Error(extractErrorMessage(error, 'Không thể import nhà cung cấp'));
+  }
+}
+
+export interface CustomerImportPreviewRow {
+  line: number;
+  customer_type: string;
+  phone: string;
+  name: string;
+  tax_code?: string;
+  action?: 'CREATE' | 'UPDATE';
+  status: 'OK' | 'ERROR';
+  errors: string[];
+}
+
+export interface CustomerImportPreviewResult {
+  previewToken: string;
+  expiresInSeconds: number;
+  summary: { total: number; valid: number; errors: number };
+  rows: CustomerImportPreviewRow[];
+}
+
+export async function previewCustomersImport(
+  file: File,
+  mode: 'create_only' | 'upsert' = 'upsert',
+) {
+  const formData = new FormData();
+  formData.append('file', file);
+  try {
+    return await apiPostForm<CustomerImportPreviewResult>(
+      '/customers/import/preview',
+      formData,
+      { mode },
+    );
+  } catch (error) {
+    throw new Error(extractErrorMessage(error, 'Không thể xem trước file import'));
+  }
+}
+
+export async function confirmCustomersImport(previewToken: string) {
+  try {
+    return await apiPost<{
+      created: number;
+      updated: number;
+      failed: number;
+      skipped: number;
+      failures: Array<{ line: number; phone: string; message: string }>;
+    }>('/customers/import/confirm', { previewToken });
+  } catch (error) {
+    throw new Error(extractErrorMessage(error, 'Không thể import khách hàng'));
   }
 }
 

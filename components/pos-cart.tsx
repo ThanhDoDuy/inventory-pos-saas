@@ -4,7 +4,11 @@ import { useCartStore } from '@/lib/cart-store';
 import { useFormat, useTranslation } from '@/lib/i18n/use-translation';
 import { ShoppingCart, Trash2 } from 'lucide-react';
 
-export function POSCart() {
+interface POSCartProps {
+  onCheckout: () => void;
+}
+
+export function POSCart({ onCheckout }: POSCartProps) {
   const cart = useCartStore();
   const { t } = useTranslation();
   const { formatMoney } = useFormat();
@@ -123,11 +127,20 @@ export function POSCart() {
 
       <div className="mt-4 pt-4 border-t border-border space-y-2">
         <button
+          type="button"
           onClick={() => cart.clearCart()}
           disabled={cart.items.length === 0}
           className="w-full py-2 px-4 border border-destructive text-destructive rounded-lg font-semibold hover:bg-destructive/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {t('pos.cart.clear')}
+        </button>
+        <button
+          type="button"
+          onClick={onCheckout}
+          disabled={cart.items.length === 0}
+          className="w-full py-3 px-4 bg-primary text-primary-foreground rounded-lg font-bold hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-lg"
+        >
+          {t('pos.checkout')}
         </button>
       </div>
     </div>

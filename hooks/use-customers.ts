@@ -2,12 +2,17 @@ import useSWR from 'swr';
 import { apiGet, apiPatch, apiPost, API_BASE_URL, extractErrorMessage, swrFetcher as fetcher } from '@/lib/api-client';
 import { stringifyId } from '@/lib/format';
 
+export type CustomerType = 'INDIVIDUAL' | 'COMPANY' | 'GROUP';
+
 export interface CustomerItem {
   id: string;
+  customer_type: CustomerType;
   name: string;
   phone: string;
   email?: string;
   address?: string;
+  tax_code?: string;
+  contact_person?: string;
   status: string;
   last_purchase_at?: string;
   created_at?: string;
@@ -29,20 +34,30 @@ interface ListResponse {
 function mapCustomer(raw: Record<string, unknown>): CustomerItem {
   return {
     id: stringifyId(raw.id ?? raw._id),
+    customer_type: (raw.customer_type as CustomerType) ?? 'INDIVIDUAL',
     name: String(raw.name ?? ''),
     phone: String(raw.phone ?? ''),
     email: raw.email ? String(raw.email) : undefined,
     address: raw.address ? String(raw.address) : undefined,
+    tax_code: raw.tax_code ? String(raw.tax_code) : undefined,
+    contact_person: raw.contact_person ? String(raw.contact_person) : undefined,
     status: String(raw.status ?? 'ACTIVE'),
     last_purchase_at: raw.last_purchase_at ? String(raw.last_purchase_at) : undefined,
     created_at: raw.created_at ? String(raw.created_at) : undefined,
   };
 }
 
-export function useCustomers(search?: string, status?: string) {
+export function useCustomers(
+  search?: string,
+  status?: string,
+  customerType?: string,
+) {
   const params = new URLSearchParams({ limit: '50' });
   if (search) params.set('search', search);
   if (status && status !== 'all') params.set('status', status);
+  if (customerType && customerType !== 'all') {
+    params.set('customer_type', customerType);
+  }
 
   const { data, error, isLoading, mutate } = useSWR<ListResponse>(
     `${API_BASE_URL}/customers?${params.toString()}`,
@@ -70,10 +85,13 @@ export function useCustomerHistory(customerId: string | null) {
 }
 
 export async function createCustomer(data: {
+  customer_type: CustomerType;
   name: string;
   phone: string;
   email?: string;
   address?: string;
+  tax_code?: string;
+  contact_person?: string;
 }) {
   try {
     return await apiPost('/customers', data);
@@ -84,7 +102,15 @@ export async function createCustomer(data: {
 
 export async function updateCustomer(
   id: string,
-  data: { name?: string; phone?: string; email?: string; address?: string },
+  data: {
+    customer_type?: CustomerType;
+    name?: string;
+    phone?: string;
+    email?: string;
+    address?: string;
+    tax_code?: string;
+    contact_person?: string;
+  },
 ) {
   try {
     return await apiPatch(`/customers/${id}`, data);
