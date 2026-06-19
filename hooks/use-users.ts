@@ -16,6 +16,7 @@ export interface UserProfile {
   role?: { id: string; code: string; name: string };
   status: string;
   last_login_at?: string;
+  is_owner?: boolean;
 }
 
 interface UsersListResponse {
@@ -40,6 +41,7 @@ function mapUser(raw: Record<string, unknown>): UserProfile {
           name: String(role.name ?? ''),
         }
       : undefined,
+    is_owner: Boolean(raw.is_owner),
   };
 }
 

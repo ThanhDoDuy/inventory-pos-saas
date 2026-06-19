@@ -99,6 +99,23 @@ export const vi: Messages = {
     storePlaceholder: 'Cửa hàng ABC',
     usernamePlaceholder: 'admin',
     emailPlaceholder: 'you@example.com',
+    forgotPasswordLink: 'Quên mật khẩu?',
+    forgotPasswordTitle: 'Quên mật khẩu',
+    forgotPasswordSubtitle: 'Nhập email để nhận link đặt lại mật khẩu',
+    sendResetLink: 'Gửi link đặt lại',
+    sendingResetLink: 'Đang gửi...',
+    resetLinkSent:
+      'Nếu email tồn tại trong hệ thống, chúng tôi đã gửi link đặt lại mật khẩu. Vui lòng kiểm tra hộp thư.',
+    backToLogin: 'Quay lại đăng nhập',
+    resetPasswordTitle: 'Đặt lại mật khẩu',
+    resetPasswordSubtitle: 'Chọn mật khẩu mới cho tài khoản của bạn',
+    newPassword: 'Mật khẩu mới',
+    confirmNewPassword: 'Xác nhận mật khẩu mới',
+    resetPasswordSubmit: 'Đặt lại mật khẩu',
+    resettingPassword: 'Đang đặt lại...',
+    resetPasswordSuccess: 'Mật khẩu đã được đặt lại. Đang chuyển đến trang đăng nhập...',
+    invalidResetToken: 'Link đặt lại không hợp lệ hoặc đã hết hạn. Vui lòng yêu cầu link mới.',
+    passwordResetFailed: 'Không thể đặt lại mật khẩu. Vui lòng thử lại.',
   },
   dashboard: {
     greeting: 'Xin chào, {username}!',
@@ -751,6 +768,7 @@ export const vi: Messages = {
       password: 'Mật khẩu tạm',
       newPassword: 'Mật khẩu mới',
       passwordHint: 'Tối thiểu 8 ký tự',
+      ownerRoleLocked: 'Không thể đổi vai trò của chủ cửa hàng',
     },
     modal: {
       add: 'Thêm người dùng',
@@ -767,6 +785,9 @@ export const vi: Messages = {
     },
     status: {
       active: 'Hoạt động',
+    },
+    badge: {
+      owner: 'Chủ cửa hàng',
     },
     tooltip: {
       disable: 'Vô hiệu hóa',

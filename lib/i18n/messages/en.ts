@@ -99,6 +99,23 @@ export const en: Messages = {
     storePlaceholder: 'ABC Store',
     usernamePlaceholder: 'admin',
     emailPlaceholder: 'you@example.com',
+    forgotPasswordLink: 'Forgot password?',
+    forgotPasswordTitle: 'Forgot password',
+    forgotPasswordSubtitle: 'Enter your email and we will send you a reset link',
+    sendResetLink: 'Send reset link',
+    sendingResetLink: 'Sending...',
+    resetLinkSent:
+      'If an account with that email exists, we have sent a password reset link. Please check your inbox.',
+    backToLogin: 'Back to sign in',
+    resetPasswordTitle: 'Reset password',
+    resetPasswordSubtitle: 'Choose a new password for your account',
+    newPassword: 'New password',
+    confirmNewPassword: 'Confirm new password',
+    resetPasswordSubmit: 'Reset password',
+    resettingPassword: 'Resetting...',
+    resetPasswordSuccess: 'Your password has been reset. Redirecting to sign in...',
+    invalidResetToken: 'This reset link is invalid or has expired. Please request a new one.',
+    passwordResetFailed: 'Password reset failed. Please try again.',
   },
   dashboard: {
     greeting: 'Hello, {username}!',
@@ -751,6 +768,7 @@ export const en: Messages = {
       password: 'Temporary password',
       newPassword: 'New password',
       passwordHint: 'Minimum 8 characters',
+      ownerRoleLocked: 'Store owner role cannot be changed',
     },
     modal: {
       add: 'Add user',
@@ -767,6 +785,9 @@ export const en: Messages = {
     },
     status: {
       active: 'Active',
+    },
+    badge: {
+      owner: 'Owner',
     },
     tooltip: {
       disable: 'Disable',

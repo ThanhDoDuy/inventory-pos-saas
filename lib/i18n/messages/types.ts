@@ -97,6 +97,22 @@ export interface Messages {
     storePlaceholder: string;
     usernamePlaceholder: string;
     emailPlaceholder: string;
+    forgotPasswordLink: string;
+    forgotPasswordTitle: string;
+    forgotPasswordSubtitle: string;
+    sendResetLink: string;
+    sendingResetLink: string;
+    resetLinkSent: string;
+    backToLogin: string;
+    resetPasswordTitle: string;
+    resetPasswordSubtitle: string;
+    newPassword: string;
+    confirmNewPassword: string;
+    resetPasswordSubmit: string;
+    resettingPassword: string;
+    resetPasswordSuccess: string;
+    invalidResetToken: string;
+    passwordResetFailed: string;
   };
   dashboard: {
     greeting: string;
@@ -748,6 +764,7 @@ export interface Messages {
       password: string;
       newPassword: string;
       passwordHint: string;
+      ownerRoleLocked: string;
     };
     modal: {
       add: string;
@@ -764,6 +781,9 @@ export interface Messages {
     };
     status: {
       active: string;
+    };
+    badge: {
+      owner: string;
     };
     tooltip: {
       disable: string;

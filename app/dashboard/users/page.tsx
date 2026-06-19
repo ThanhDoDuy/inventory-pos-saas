@@ -99,7 +99,7 @@ export default function UsersPage() {
 
   const handleEdit = async () => {
     if (!editingUser) return;
-    if (!editForm.username.trim() || !editForm.role_id) {
+    if (!editForm.username.trim() || (!editingUser.is_owner && !editForm.role_id)) {
       setFormError(t('users.error.requiredFields'));
       return;
     }
@@ -108,7 +108,10 @@ export default function UsersPage() {
     setFormError('');
     try {
       await updateUser(editingUser.id, { username: editForm.username.trim() });
-      if (editForm.role_id !== editingUser.role?.id) {
+      if (
+        !editingUser.is_owner &&
+        editForm.role_id !== editingUser.role?.id
+      ) {
         await assignUserRole(editingUser.id, editForm.role_id);
       }
       await mutate();
@@ -266,6 +269,11 @@ export default function UsersPage() {
                             <Users size={20} className="text-primary" />
                           </div>
                           <span className="font-medium text-foreground">{user.username}</span>
+                          {user.is_owner && (
+                            <span className="inline-block px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800">
+                              {t('users.badge.owner')}
+                            </span>
+                          )}
                         </div>
                       </td>
                       <td className="px-6 py-4 text-sm text-muted-foreground">{user.email}</td>
@@ -447,20 +455,29 @@ export default function UsersPage() {
                   className={inputClassName}
                 />
               </FormField>
-              <FormField label={t('users.form.role')} htmlFor="edit-role" required>
-                <select
-                  id="edit-role"
-                  value={editForm.role_id}
-                  onChange={(e) => setEditForm({ ...editForm, role_id: e.target.value })}
-                  className={selectClassName}
-                >
-                  <option value="">{t('users.placeholders.roleSelect')}</option>
-                  {roles.map((role) => (
-                    <option key={role.id} value={role.id}>
-                      {role.name} ({role.code})
-                    </option>
-                  ))}
-                </select>
+              <FormField label={t('users.form.role')} htmlFor="edit-role" required={!editingUser.is_owner}>
+                {editingUser.is_owner ? (
+                  <div className="space-y-1">
+                    <p className="px-3 py-2 rounded-lg border border-border bg-muted text-foreground">
+                      {editingUser.role?.name ?? editingUser.role?.code ?? t('common.none')}
+                    </p>
+                    <p className="text-xs text-muted-foreground">{t('users.form.ownerRoleLocked')}</p>
+                  </div>
+                ) : (
+                  <select
+                    id="edit-role"
+                    value={editForm.role_id}
+                    onChange={(e) => setEditForm({ ...editForm, role_id: e.target.value })}
+                    className={selectClassName}
+                  >
+                    <option value="">{t('users.placeholders.roleSelect')}</option>
+                    {roles.map((role) => (
+                      <option key={role.id} value={role.id}>
+                        {role.name} ({role.code})
+                      </option>
+                    ))}
+                  </select>
+                )}
               </FormField>
             </div>
             <div className="flex gap-3">
