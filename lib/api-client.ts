@@ -121,6 +121,9 @@ export async function apiGet<T>(url: string, params?: Record<string, unknown>): 
   return response.data.data;
 }
 
+export const swrFetcher = <T>(url: string): Promise<T> =>
+  apiGet<T>(url.replace(API_BASE_URL, ''));
+
 export async function apiPost<T>(url: string, body?: unknown): Promise<T> {
   const response = await apiClient.post<ApiResponse<T>>(url, body);
   return response.data.data;

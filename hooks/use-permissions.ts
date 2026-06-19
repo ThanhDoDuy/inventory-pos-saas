@@ -1,7 +1,5 @@
 import useSWR from 'swr';
-import { apiGet, API_BASE_URL } from '@/lib/api-client';
-
-const fetcher = (url: string) => apiGet(url.replace(API_BASE_URL, ''));
+import { API_BASE_URL, swrFetcher as fetcher } from '@/lib/api-client';
 
 export interface PermissionItem {
   code: string;

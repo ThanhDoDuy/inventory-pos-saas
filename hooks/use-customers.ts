@@ -1,8 +1,6 @@
 import useSWR from 'swr';
-import { apiGet, apiPatch, apiPost, API_BASE_URL, extractErrorMessage } from '@/lib/api-client';
+import { apiGet, apiPatch, apiPost, API_BASE_URL, extractErrorMessage, swrFetcher as fetcher } from '@/lib/api-client';
 import { stringifyId } from '@/lib/format';
-
-const fetcher = (url: string) => apiGet(url.replace(API_BASE_URL, ''));
 
 export interface CustomerItem {
   id: string;
