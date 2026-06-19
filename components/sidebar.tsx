@@ -7,8 +7,8 @@ import {
   getActiveSectionId,
   getVisibleNavSections,
   isNavActive,
-  resolveAppRole,
 } from '@/lib/navigation';
+import { useUserPermissions } from '@/hooks/use-user-permissions';
 import { useTranslation } from '@/lib/i18n/use-translation';
 import { ChevronDown, LogOut, Menu, ShoppingCart, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -21,9 +21,9 @@ export function Sidebar() {
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
+  const { permissionSource, isLoading: permissionsLoading } = useUserPermissions();
 
-  const userRole = resolveAppRole(user);
-  const sections = getVisibleNavSections(userRole);
+  const sections = getVisibleNavSections(permissionSource);
 
   useEffect(() => {
     const activeSectionId = getActiveSectionId(pathname, sections);
@@ -90,7 +90,12 @@ export function Sidebar() {
         </div>
 
         <nav className="flex-1 overflow-y-auto p-3 space-y-1">
-          {sections.map((section) => {
+          {permissionsLoading ? (
+            <div className="px-3 py-4 text-sm text-muted-foreground">{t('common.loading')}</div>
+          ) : sections.length === 0 ? (
+            <div className="px-3 py-4 text-sm text-muted-foreground">{t('nav.empty.noAccess')}</div>
+          ) : (
+          sections.map((section) => {
             const isExpanded = expandedSections.has(section.id);
             const hasActiveItem = section.items.some((item) =>
               isNavActive(pathname, item.href),
@@ -149,7 +154,8 @@ export function Sidebar() {
                 </div>
               </div>
             );
-          })}
+          })
+          )}
         </nav>
 
         <div className="shrink-0 border-t border-border p-4 space-y-3">
@@ -160,7 +166,7 @@ export function Sidebar() {
               <p className="text-xs text-muted-foreground mt-1 truncate">{user.tenantName}</p>
             )}
             <p className="text-xs text-muted-foreground mt-1">
-              {user?.role?.name ?? userRole}
+              {user?.role?.name ?? user?.role?.code}
             </p>
           </div>
           <button

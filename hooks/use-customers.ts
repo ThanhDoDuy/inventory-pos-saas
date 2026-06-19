@@ -126,3 +126,11 @@ export async function disableCustomer(id: string) {
     throw new Error(extractErrorMessage(error, 'Không thể vô hiệu hóa khách hàng'));
   }
 }
+
+export async function activateCustomer(id: string) {
+  try {
+    return await apiPost(`/customers/${id}/activate`, {});
+  } catch (error) {
+    throw new Error(extractErrorMessage(error, 'Không thể kích hoạt lại khách hàng'));
+  }
+}

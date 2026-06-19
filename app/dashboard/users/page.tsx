@@ -1,8 +1,27 @@
 'use client';
 
-import { Users, Plus, Search, Trash2, Shield, Loader2 } from 'lucide-react';
+import {
+  Users,
+  Plus,
+  Search,
+  Trash2,
+  Shield,
+  Loader2,
+  Edit2,
+  KeyRound,
+  CheckCircle,
+} from 'lucide-react';
 import { useMemo, useState } from 'react';
-import { createUser, disableUser, useUsers } from '@/hooks/use-users';
+import {
+  activateUser,
+  assignUserRole,
+  createUser,
+  disableUser,
+  resetUserPassword,
+  updateUser,
+  useUsers,
+  type UserProfile,
+} from '@/hooks/use-users';
 import { useRoles } from '@/hooks/use-roles';
 import { getRoleColor } from '@/lib/format';
 import { FormField, inputClassName, selectClassName } from '@/components/form-field';
@@ -14,14 +33,18 @@ export default function UsersPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRole, setSelectedRole] = useState('all');
   const [showAddModal, setShowAddModal] = useState(false);
+  const [editingUser, setEditingUser] = useState<UserProfile | null>(null);
+  const [resetUser, setResetUser] = useState<UserProfile | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState('');
-  const [form, setForm] = useState({
+  const [createForm, setCreateForm] = useState({
     username: '',
     email: '',
     password: '',
     role_id: '',
   });
+  const [editForm, setEditForm] = useState({ username: '', role_id: '' });
+  const [newPassword, setNewPassword] = useState('');
 
   const { roles } = useRoles();
   const selectedRoleId =
@@ -42,7 +65,7 @@ export default function UsersPage() {
 
   const handleCreate = async () => {
     setFormError('');
-    if (!form.username || !form.email || !form.password || !form.role_id) {
+    if (!createForm.username || !createForm.email || !createForm.password || !createForm.role_id) {
       setFormError(t('users.error.requiredFields'));
       return;
     }
@@ -50,16 +73,68 @@ export default function UsersPage() {
     setIsSubmitting(true);
     try {
       await createUser({
-        username: form.username,
-        email: form.email,
-        password: form.password,
-        role_id: form.role_id,
+        username: createForm.username,
+        email: createForm.email,
+        password: createForm.password,
+        role_id: createForm.role_id,
       });
       await mutate();
       setShowAddModal(false);
-      setForm({ username: '', email: '', password: '', role_id: '' });
+      setCreateForm({ username: '', email: '', password: '', role_id: '' });
     } catch (err) {
       setFormError(err instanceof Error ? err.message : t('users.error.createFailed'));
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const openEdit = (user: UserProfile) => {
+    setEditingUser(user);
+    setEditForm({
+      username: user.username,
+      role_id: user.role?.id ?? '',
+    });
+    setFormError('');
+  };
+
+  const handleEdit = async () => {
+    if (!editingUser) return;
+    if (!editForm.username.trim() || !editForm.role_id) {
+      setFormError(t('users.error.requiredFields'));
+      return;
+    }
+
+    setIsSubmitting(true);
+    setFormError('');
+    try {
+      await updateUser(editingUser.id, { username: editForm.username.trim() });
+      if (editForm.role_id !== editingUser.role?.id) {
+        await assignUserRole(editingUser.id, editForm.role_id);
+      }
+      await mutate();
+      setEditingUser(null);
+    } catch (err) {
+      setFormError(err instanceof Error ? err.message : t('users.error.updateFailed'));
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleResetPassword = async () => {
+    if (!resetUser) return;
+    if (newPassword.length < 8) {
+      setFormError(t('users.error.passwordTooShort'));
+      return;
+    }
+
+    setIsSubmitting(true);
+    setFormError('');
+    try {
+      await resetUserPassword(resetUser.id, newPassword);
+      setResetUser(null);
+      setNewPassword('');
+    } catch (err) {
+      setFormError(err instanceof Error ? err.message : t('users.error.resetPasswordFailed'));
     } finally {
       setIsSubmitting(false);
     }
@@ -75,6 +150,16 @@ export default function UsersPage() {
     }
   };
 
+  const handleActivate = async (user: UserProfile) => {
+    if (!confirm(t('users.confirm.activate', { username: user.username }))) return;
+    try {
+      await activateUser(user.id);
+      await mutate();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : t('users.error.activateFailed'));
+    }
+  };
+
   return (
     <div>
       <div className="mb-8 flex items-center justify-between">
@@ -83,7 +168,10 @@ export default function UsersPage() {
           <p className="text-muted-foreground">{t('users.subtitle')}</p>
         </div>
         <button
-          onClick={() => setShowAddModal(true)}
+          onClick={() => {
+            setFormError('');
+            setShowAddModal(true);
+          }}
           className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg font-semibold hover:bg-primary/90 transition-colors"
         >
           <Plus size={20} />
@@ -207,16 +295,50 @@ export default function UsersPage() {
                       <td className="px-6 py-4 text-sm text-muted-foreground">
                         {formatDateTime(user.last_login_at)}
                       </td>
-                      <td className="px-6 py-4 text-center">
-                        {user.status === 'ACTIVE' && (
-                          <button
-                            onClick={() => handleDisable(user.id, user.username)}
-                            className="p-2 hover:bg-secondary rounded-lg transition-colors text-destructive"
-                            title={t('users.tooltip.disable')}
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        )}
+                      <td className="px-6 py-4">
+                        <div className="flex items-center justify-center gap-1">
+                          {user.status === 'ACTIVE' ? (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => openEdit(user)}
+                                className="p-2 hover:bg-secondary rounded-lg"
+                                title={t('users.tooltip.edit')}
+                              >
+                                <Edit2 size={16} />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setFormError('');
+                                  setNewPassword('');
+                                  setResetUser(user);
+                                }}
+                                className="p-2 hover:bg-secondary rounded-lg text-primary"
+                                title={t('users.tooltip.resetPassword')}
+                              >
+                                <KeyRound size={16} />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDisable(user.id, user.username)}
+                                className="p-2 hover:bg-secondary rounded-lg text-destructive"
+                                title={t('users.tooltip.disable')}
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            </>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => handleActivate(user)}
+                              className="p-2 hover:bg-secondary rounded-lg text-green-600"
+                              title={t('users.tooltip.activate')}
+                            >
+                              <CheckCircle size={16} />
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))
@@ -242,8 +364,8 @@ export default function UsersPage() {
                   id="user-username"
                   type="text"
                   placeholder={t('users.placeholders.username')}
-                  value={form.username}
-                  onChange={(e) => setForm({ ...form, username: e.target.value })}
+                  value={createForm.username}
+                  onChange={(e) => setCreateForm({ ...createForm, username: e.target.value })}
                   className={inputClassName}
                 />
               </FormField>
@@ -252,16 +374,16 @@ export default function UsersPage() {
                   id="user-email"
                   type="email"
                   placeholder={t('users.placeholders.email')}
-                  value={form.email}
-                  onChange={(e) => setForm({ ...form, email: e.target.value })}
+                  value={createForm.email}
+                  onChange={(e) => setCreateForm({ ...createForm, email: e.target.value })}
                   className={inputClassName}
                 />
               </FormField>
               <FormField label={t('users.form.role')} htmlFor="user-role" required>
                 <select
                   id="user-role"
-                  value={form.role_id}
-                  onChange={(e) => setForm({ ...form, role_id: e.target.value })}
+                  value={createForm.role_id}
+                  onChange={(e) => setCreateForm({ ...createForm, role_id: e.target.value })}
                   className={selectClassName}
                 >
                   <option value="">{t('users.placeholders.roleSelect')}</option>
@@ -277,8 +399,8 @@ export default function UsersPage() {
                   id="user-password"
                   type="password"
                   placeholder={t('users.placeholders.password')}
-                  value={form.password}
-                  onChange={(e) => setForm({ ...form, password: e.target.value })}
+                  value={createForm.password}
+                  onChange={(e) => setCreateForm({ ...createForm, password: e.target.value })}
                   minLength={8}
                   className={inputClassName}
                 />
@@ -286,6 +408,7 @@ export default function UsersPage() {
             </div>
             <div className="flex gap-3">
               <button
+                type="button"
                 onClick={() => setShowAddModal(false)}
                 disabled={isSubmitting}
                 className="flex-1 py-2 px-4 border border-border rounded-lg font-semibold hover:bg-secondary transition-colors text-foreground"
@@ -293,11 +416,113 @@ export default function UsersPage() {
                 {t('common.cancel')}
               </button>
               <button
+                type="button"
                 onClick={handleCreate}
                 disabled={isSubmitting}
                 className="flex-1 py-2 px-4 bg-primary text-primary-foreground rounded-lg font-semibold hover:bg-primary/90 transition-colors disabled:opacity-50"
               >
                 {isSubmitting ? t('common.creating') : t('common.add')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {editingUser && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-card rounded-lg border border-border p-8 max-w-md w-full">
+            <h2 className="text-2xl font-bold text-foreground mb-6">{t('users.modal.edit')}</h2>
+            {formError && (
+              <div className="mb-4 p-3 bg-destructive/10 border border-destructive rounded-lg text-destructive text-sm">
+                {formError}
+              </div>
+            )}
+            <div className="space-y-4 mb-6">
+              <FormField label={t('users.form.username')} htmlFor="edit-username" required>
+                <input
+                  id="edit-username"
+                  type="text"
+                  value={editForm.username}
+                  onChange={(e) => setEditForm({ ...editForm, username: e.target.value })}
+                  className={inputClassName}
+                />
+              </FormField>
+              <FormField label={t('users.form.role')} htmlFor="edit-role" required>
+                <select
+                  id="edit-role"
+                  value={editForm.role_id}
+                  onChange={(e) => setEditForm({ ...editForm, role_id: e.target.value })}
+                  className={selectClassName}
+                >
+                  <option value="">{t('users.placeholders.roleSelect')}</option>
+                  {roles.map((role) => (
+                    <option key={role.id} value={role.id}>
+                      {role.name} ({role.code})
+                    </option>
+                  ))}
+                </select>
+              </FormField>
+            </div>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setEditingUser(null)}
+                disabled={isSubmitting}
+                className="flex-1 py-2 border border-border rounded-lg font-semibold hover:bg-secondary"
+              >
+                {t('common.cancel')}
+              </button>
+              <button
+                type="button"
+                onClick={handleEdit}
+                disabled={isSubmitting}
+                className="flex-1 py-2 bg-primary text-primary-foreground rounded-lg font-semibold disabled:opacity-50"
+              >
+                {isSubmitting ? t('common.saving') : t('common.update')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {resetUser && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-card rounded-lg border border-border p-8 max-w-md w-full">
+            <h2 className="text-2xl font-bold text-foreground mb-2">{t('users.modal.resetPassword')}</h2>
+            <p className="text-sm text-muted-foreground mb-6">
+              {t('users.resetPasswordFor', { username: resetUser.username })}
+            </p>
+            {formError && (
+              <div className="mb-4 p-3 bg-destructive/10 border border-destructive rounded-lg text-destructive text-sm">
+                {formError}
+              </div>
+            )}
+            <FormField label={t('users.form.newPassword')} htmlFor="new-password" required hint={t('users.form.passwordHint')}>
+              <input
+                id="new-password"
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                minLength={8}
+                className={inputClassName}
+              />
+            </FormField>
+            <div className="flex gap-3 mt-6">
+              <button
+                type="button"
+                onClick={() => setResetUser(null)}
+                disabled={isSubmitting}
+                className="flex-1 py-2 border border-border rounded-lg font-semibold hover:bg-secondary"
+              >
+                {t('common.cancel')}
+              </button>
+              <button
+                type="button"
+                onClick={handleResetPassword}
+                disabled={isSubmitting}
+                className="flex-1 py-2 bg-primary text-primary-foreground rounded-lg font-semibold disabled:opacity-50"
+              >
+                {isSubmitting ? t('common.saving') : t('users.resetPasswordSubmit')}
               </button>
             </div>
           </div>

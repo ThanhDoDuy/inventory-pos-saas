@@ -7,7 +7,8 @@ import { PosQuickPaySheet } from '@/components/pos-quick-pay-sheet';
 import { useAuthStore } from '@/lib/auth-store';
 import { useRetailCartStore } from '@/lib/cart-store';
 import { cartItemsToInvoiceItems } from '@/lib/pos-utils';
-import { usePosRouteGuard } from '@/hooks/use-pos-route-guard';
+import { PERMISSIONS } from '@/lib/permission-codes';
+import { usePermissionRouteGuard } from '@/hooks/use-permission-route-guard';
 import { useTranslation } from '@/lib/i18n/use-translation';
 
 export default function PosRetailPage() {
@@ -15,7 +16,10 @@ export default function PosRetailPage() {
   const cart = useRetailCartStore();
   const user = useAuthStore((state) => state.user);
   const [showPay, setShowPay] = useState(false);
-  const allowed = usePosRouteGuard(['ADMIN', 'STAFF'], '/dashboard/pos/business');
+  const allowed = usePermissionRouteGuard(
+    [PERMISSIONS.INVOICE_CREATE],
+    '/dashboard/pos/business',
+  );
 
   const handleCheckout = () => {
     if (cart.items.length === 0) {

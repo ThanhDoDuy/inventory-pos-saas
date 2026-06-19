@@ -1,8 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { Truck, Plus, Search, Edit2, History, Ban, Loader2, Download, FileSpreadsheet, Upload } from 'lucide-react';
+import { Truck, Plus, Search, Edit2, History, Ban, CheckCircle, Loader2, Download, FileSpreadsheet, Upload } from 'lucide-react';
 import {
+  activateSupplier,
   createSupplier,
   disableSupplier,
   updateSupplier,
@@ -96,6 +97,16 @@ export default function SuppliersPage() {
       await mutate();
     } catch (err) {
       alert(err instanceof Error ? err.message : t('suppliers.error.disableFailed'));
+    }
+  };
+
+  const handleActivate = async (supplier: SupplierItem) => {
+    if (!confirm(t('suppliers.confirm.activate', { name: supplier.name }))) return;
+    try {
+      await activateSupplier(supplier.id);
+      await mutate();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : t('suppliers.error.activateFailed'));
     }
   };
 
@@ -274,7 +285,7 @@ export default function SuppliersPage() {
                           >
                             <History size={16} />
                           </button>
-                          {supplier.status === 'ACTIVE' && (
+                          {supplier.status === 'ACTIVE' ? (
                             <>
                               <button
                                 onClick={() => openEdit(supplier)}
@@ -291,6 +302,14 @@ export default function SuppliersPage() {
                                 <Ban size={16} />
                               </button>
                             </>
+                          ) : (
+                            <button
+                              onClick={() => handleActivate(supplier)}
+                              className="p-2 hover:bg-secondary rounded-lg text-green-600"
+                              title={t('suppliers.tooltip.activate')}
+                            >
+                              <CheckCircle size={16} />
+                            </button>
                           )}
                         </div>
                       </td>

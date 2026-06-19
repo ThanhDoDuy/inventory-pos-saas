@@ -18,6 +18,11 @@ import {
   Bell,
   BarChart3,
 } from 'lucide-react';
+import { PERMISSIONS } from '@/lib/permission-codes';
+import {
+  hasAllPermissions,
+  type RolePermissionSource,
+} from '@/lib/rbac-utils';
 
 export type AppRole = 'ADMIN' | 'MANAGER' | 'STAFF';
 
@@ -25,7 +30,8 @@ export interface NavItem {
   href: string;
   labelKey: string;
   icon: LucideIcon;
-  roles: AppRole[];
+  /** User must have every listed permission (AND). */
+  permissions: string[];
 }
 
 export interface NavSection {
@@ -43,13 +49,13 @@ export const NAV_SECTIONS: NavSection[] = [
         href: '/dashboard',
         labelKey: 'nav.item.dashboard',
         icon: LayoutDashboard,
-        roles: ['ADMIN', 'MANAGER'],
+        permissions: [PERMISSIONS.REPORTS_VIEW],
       },
       {
         href: '/dashboard/reports',
         labelKey: 'nav.item.reports',
         icon: BarChart3,
-        roles: ['ADMIN', 'MANAGER'],
+        permissions: [PERMISSIONS.REPORTS_VIEW],
       },
     ],
   },
@@ -61,25 +67,25 @@ export const NAV_SECTIONS: NavSection[] = [
         href: '/dashboard/pos',
         labelKey: 'nav.item.posRetail',
         icon: ShoppingCart,
-        roles: ['ADMIN', 'STAFF'],
+        permissions: [PERMISSIONS.INVOICE_CREATE],
       },
       {
         href: '/dashboard/pos/business',
         labelKey: 'nav.item.posBusiness',
         icon: Building2,
-        roles: ['ADMIN', 'MANAGER'],
+        permissions: [PERMISSIONS.INVOICE_CREATE, PERMISSIONS.CUSTOMERS_VIEW],
       },
       {
         href: '/dashboard/invoices',
         labelKey: 'nav.item.invoices',
         icon: FileText,
-        roles: ['ADMIN', 'MANAGER', 'STAFF'],
+        permissions: [PERMISSIONS.INVOICE_VIEW],
       },
       {
         href: '/dashboard/customers',
         labelKey: 'nav.item.customers',
         icon: UserCircle,
-        roles: ['ADMIN', 'MANAGER'],
+        permissions: [PERMISSIONS.CUSTOMERS_VIEW],
       },
     ],
   },
@@ -91,25 +97,25 @@ export const NAV_SECTIONS: NavSection[] = [
         href: '/dashboard/products',
         labelKey: 'nav.item.products',
         icon: Package,
-        roles: ['ADMIN', 'MANAGER', 'STAFF'],
+        permissions: [PERMISSIONS.PRODUCTS_VIEW],
       },
       {
         href: '/dashboard/categories',
         labelKey: 'nav.item.categories',
         icon: Tags,
-        roles: ['ADMIN', 'MANAGER'],
+        permissions: [PERMISSIONS.PRODUCTS_VIEW],
       },
       {
         href: '/dashboard/inventory',
         labelKey: 'nav.item.inventory',
         icon: Warehouse,
-        roles: ['ADMIN', 'MANAGER', 'STAFF'],
+        permissions: [PERMISSIONS.INVENTORY_VIEW],
       },
       {
         href: '/dashboard/inventory/adjustments',
         labelKey: 'nav.item.adjustments',
         icon: SlidersHorizontal,
-        roles: ['ADMIN', 'MANAGER'],
+        permissions: [PERMISSIONS.INVENTORY_ADJUST],
       },
     ],
   },
@@ -121,13 +127,13 @@ export const NAV_SECTIONS: NavSection[] = [
         href: '/dashboard/suppliers',
         labelKey: 'nav.item.suppliers',
         icon: Truck,
-        roles: ['ADMIN', 'MANAGER'],
+        permissions: [PERMISSIONS.SUPPLIERS_VIEW],
       },
       {
         href: '/dashboard/purchase-orders',
         labelKey: 'nav.item.purchaseOrders',
         icon: ClipboardList,
-        roles: ['ADMIN', 'MANAGER', 'STAFF'],
+        permissions: [PERMISSIONS.PO_VIEW],
       },
     ],
   },
@@ -139,31 +145,31 @@ export const NAV_SECTIONS: NavSection[] = [
         href: '/dashboard/users',
         labelKey: 'nav.item.users',
         icon: Users,
-        roles: ['ADMIN'],
+        permissions: [PERMISSIONS.USERS_VIEW],
       },
       {
         href: '/dashboard/rbac',
         labelKey: 'nav.item.rbac',
         icon: Shield,
-        roles: ['ADMIN'],
+        permissions: [PERMISSIONS.RBAC_VIEW],
       },
       {
         href: '/dashboard/settings',
         labelKey: 'nav.item.settings',
         icon: Settings,
-        roles: ['ADMIN'],
+        permissions: [PERMISSIONS.SETTINGS_VIEW],
       },
       {
         href: '/dashboard/audit-logs',
         labelKey: 'nav.item.auditLogs',
         icon: ScrollText,
-        roles: ['ADMIN', 'MANAGER'],
+        permissions: [PERMISSIONS.AUDIT_VIEW],
       },
       {
         href: '/dashboard/notifications',
         labelKey: 'nav.item.notifications',
         icon: Bell,
-        roles: ['ADMIN', 'MANAGER', 'STAFF'],
+        permissions: [PERMISSIONS.NOTIFICATIONS_VIEW],
       },
     ],
   },
@@ -177,11 +183,48 @@ export function resolveAppRole(user: { role?: { code?: string } } | null | undef
   return 'STAFF';
 }
 
-export function getVisibleNavSections(role: AppRole): NavSection[] {
+export function canAccessNavItem(
+  item: NavItem,
+  source: RolePermissionSource,
+): boolean {
+  return hasAllPermissions(source, item.permissions);
+}
+
+export function getVisibleNavSections(
+  source: RolePermissionSource,
+): NavSection[] {
   return NAV_SECTIONS.map((section) => ({
     ...section,
-    items: section.items.filter((item) => item.roles.includes(role)),
+    items: section.items.filter((item) => canAccessNavItem(item, source)),
   })).filter((section) => section.items.length > 0);
+}
+
+export function findNavItemForPath(pathname: string): NavItem | null {
+  let bestMatch: NavItem | null = null;
+  let bestLength = -1;
+
+  for (const section of NAV_SECTIONS) {
+    for (const item of section.items) {
+      if (!isNavActive(pathname, item.href)) continue;
+      if (item.href.length > bestLength) {
+        bestMatch = item;
+        bestLength = item.href.length;
+      }
+    }
+  }
+
+  return bestMatch;
+}
+
+export function getFirstAccessibleHref(source: RolePermissionSource): string | null {
+  for (const section of NAV_SECTIONS) {
+    for (const item of section.items) {
+      if (canAccessNavItem(item, source)) {
+        return item.href;
+      }
+    }
+  }
+  return null;
 }
 
 export function isNavActive(pathname: string, href: string) {

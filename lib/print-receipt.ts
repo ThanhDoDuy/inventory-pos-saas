@@ -7,10 +7,20 @@ export interface ReceiptLineItem {
   total: number;
 }
 
+export interface ReceiptCustomer {
+  name: string;
+  taxCode?: string;
+  address?: string;
+  phone?: string;
+}
+
 export interface ReceiptData {
   invoiceNumber: string;
   createdAt?: string;
   storeName?: string;
+  storeAddress?: string;
+  storePhone?: string;
+  customer?: ReceiptCustomer;
   items: ReceiptLineItem[];
   subtotal: number;
   discountPercent: number;
@@ -31,6 +41,29 @@ const PAYMENT_LABELS: Record<string, string> = {
 
 function paymentLabel(method: string) {
   return PAYMENT_LABELS[method.toUpperCase()] ?? method;
+}
+
+function buildCustomerBlock(customer: ReceiptCustomer): string {
+  return `
+  <div class="customer-block">
+    <div class="meta"><strong>Khách hàng:</strong> ${escapeHtml(customer.name)}</div>
+    ${
+      customer.taxCode
+        ? `<div class="meta"><strong>MST:</strong> ${escapeHtml(customer.taxCode)}</div>`
+        : ''
+    }
+    ${
+      customer.address
+        ? `<div class="meta">${escapeHtml(customer.address)}</div>`
+        : ''
+    }
+    ${
+      customer.phone
+        ? `<div class="meta">ĐT: ${escapeHtml(customer.phone)}</div>`
+        : ''
+    }
+  </div>
+  <div class="divider"></div>`;
 }
 
 function buildReceiptHtml(data: ReceiptData): string {
@@ -65,6 +98,7 @@ function buildReceiptHtml(data: ReceiptData): string {
     .center { text-align: center; }
     .store { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
     .meta { color: #555; font-size: 11px; margin-bottom: 12px; }
+    .customer-block .meta { margin-bottom: 4px; text-align: left; }
     .divider { border-top: 1px dashed #999; margin: 10px 0; }
     table { width: 100%; border-collapse: collapse; }
     th {
@@ -107,13 +141,23 @@ function buildReceiptHtml(data: ReceiptData): string {
 <body>
   <div class="center">
     <div class="store">${escapeHtml(data.storeName ?? 'Cửa hàng')}</div>
+    ${
+      data.storeAddress
+        ? `<div class="meta">${escapeHtml(data.storeAddress)}</div>`
+        : ''
+    }
+    ${
+      data.storePhone
+        ? `<div class="meta">ĐT: ${escapeHtml(data.storePhone)}</div>`
+        : ''
+    }
     <div class="meta">HÓA ĐƠN BÁN HÀNG</div>
   </div>
   <div class="meta center">
     Mã: <strong>${escapeHtml(data.invoiceNumber)}</strong><br/>
     ${data.createdAt ? formatDateTime(data.createdAt) : new Date().toLocaleString('vi-VN')}
   </div>
-  <div class="divider"></div>
+  ${data.customer ? buildCustomerBlock(data.customer) : '<div class="divider"></div>'}
   <table>
     <thead>
       <tr>

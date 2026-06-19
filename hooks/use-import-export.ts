@@ -355,3 +355,20 @@ export async function downloadInventoryTransactionsExport(params?: {
     query,
   );
 }
+
+export async function downloadAuditLogsExport(params?: {
+  userId?: string;
+  action?: string;
+  module?: string;
+  from?: string;
+  to?: string;
+}) {
+  const query: Record<string, string> = { format: 'csv' };
+  if (params?.userId) query.userId = params.userId;
+  if (params?.action && params.action !== 'all') query.action = params.action;
+  if (params?.module && params.module !== 'all') query.module = params.module;
+  if (params?.from) query.from = params.from;
+  if (params?.to) query.to = params.to;
+
+  await downloadFile('/audit-logs/export', `audit-logs-export-${dateStamp()}.csv`, query);
+}

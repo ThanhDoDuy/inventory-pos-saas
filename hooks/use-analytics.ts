@@ -43,6 +43,15 @@ export interface LowStockRow {
   available_quantity: number;
 }
 
+export interface DeadStockRow {
+  product_id: string;
+  name: string;
+  sku: string;
+  available_quantity: number;
+  stock_value: number;
+  inactive_days: number;
+}
+
 export function useDashboard() {
   const { data, error, isLoading, mutate } = useSWR<DashboardData>(
     `${API_BASE_URL}/reports/dashboard`,
@@ -102,6 +111,25 @@ export function useLowStock() {
   );
 
   return { lowStock: data ?? [], isLoading, error };
+}
+
+export function useDeadStock(inactiveDays = 30) {
+  const { data, error, isLoading, mutate } = useSWR<DeadStockRow[]>(
+    `${API_BASE_URL}/reports/dead-stock?inactiveDays=${inactiveDays}`,
+    fetcher,
+    { revalidateOnFocus: false },
+  );
+
+  const deadStock = (data ?? []).map((row) => ({
+    product_id: String(row.product_id ?? ''),
+    name: String(row.name ?? ''),
+    sku: String(row.sku ?? ''),
+    available_quantity: Number(row.available_quantity ?? 0),
+    stock_value: Number(row.stock_value ?? 0),
+    inactive_days: Number(row.inactive_days ?? inactiveDays),
+  }));
+
+  return { deadStock, isLoading, error, mutate };
 }
 
 export async function exportReport(

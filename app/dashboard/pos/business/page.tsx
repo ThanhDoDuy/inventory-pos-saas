@@ -9,16 +9,22 @@ import { useAuthStore } from '@/lib/auth-store';
 import { useBusinessCartStore } from '@/lib/cart-store';
 import { cartItemsToInvoiceItems } from '@/lib/pos-utils';
 import type { CustomerItem } from '@/hooks/use-customers';
-import { usePosRouteGuard } from '@/hooks/use-pos-route-guard';
+import { useTenant } from '@/hooks/use-tenant';
+import { PERMISSIONS } from '@/lib/permission-codes';
+import { usePermissionRouteGuard } from '@/hooks/use-permission-route-guard';
 import { useTranslation } from '@/lib/i18n/use-translation';
 
 export default function PosBusinessPage() {
   const { t } = useTranslation();
   const cart = useBusinessCartStore();
   const user = useAuthStore((state) => state.user);
+  const { tenant } = useTenant();
   const [selectedCustomer, setSelectedCustomer] = useState<CustomerItem | null>(null);
   const [showPayment, setShowPayment] = useState(false);
-  const allowed = usePosRouteGuard(['ADMIN', 'MANAGER'], '/dashboard/pos');
+  const allowed = usePermissionRouteGuard(
+    [PERMISSIONS.INVOICE_CREATE, PERMISSIONS.CUSTOMERS_VIEW],
+    '/dashboard/pos',
+  );
 
   const handleCheckout = () => {
     if (!selectedCustomer) {
@@ -37,6 +43,10 @@ export default function PosBusinessPage() {
     setSelectedCustomer(null);
     setShowPayment(false);
   };
+
+  const storeAddress = [tenant?.address, tenant?.city, tenant?.state]
+    .filter(Boolean)
+    .join(', ');
 
   if (!allowed) {
     return null;
@@ -76,10 +86,13 @@ export default function PosBusinessPage() {
           taxPercent={cart.taxPercentage}
           items={cartItemsToInvoiceItems(cart.items)}
           customerId={selectedCustomer.id}
+          customer={selectedCustomer}
           isOpen={showPayment}
           onClose={() => setShowPayment(false)}
           onSuccess={handlePaymentSuccess}
-          storeName={user?.tenantName}
+          storeName={user?.tenantName ?? tenant?.name}
+          storeAddress={storeAddress || undefined}
+          storePhone={tenant?.phone || undefined}
           notes={cart.notes || undefined}
         />
       )}

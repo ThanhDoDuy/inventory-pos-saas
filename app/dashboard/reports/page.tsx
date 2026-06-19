@@ -1,11 +1,12 @@
 'use client';
 
-import { BarChart3, Calendar, Download, TrendingUp, Loader2 } from 'lucide-react';
+import { BarChart3, Calendar, Download, TrendingUp, Loader2, PackageX } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { SalesChart, CategoryBreakdown } from '@/components/sales-chart';
 import {
   exportReport,
   useDashboard,
+  useDeadStock,
   useLowStock,
   useRevenueByPreset,
   useTopProductsByPreset,
@@ -20,12 +21,15 @@ export default function ReportsPage() {
   const { formatMoney, formatDateTime } = useFormat();
   const [dateRange, setDateRange] = useState<DateRangePreset>('month');
   const [isExporting, setIsExporting] = useState(false);
+  const [inactiveDays, setInactiveDays] = useState(30);
+  const [isExportingDeadStock, setIsExportingDeadStock] = useState(false);
 
   const { from, to } = useMemo(() => getDateRange(dateRange), [dateRange]);
   const { dashboard } = useDashboard();
   const { revenue, isLoading: revenueLoading } = useRevenueByPreset(dateRange);
   const { products: topProducts, isLoading: topLoading } = useTopProductsByPreset(dateRange, 5);
   const { lowStock, isLoading: lowStockLoading } = useLowStock();
+  const { deadStock, isLoading: deadStockLoading } = useDeadStock(inactiveDays);
   const { invoices, isLoading: invoicesLoading } = useInvoices(from, to, 20);
 
   const salesChartData = useMemo(
@@ -62,6 +66,22 @@ export default function ReportsPage() {
       setIsExporting(false);
     }
   };
+
+  const handleExportDeadStock = async () => {
+    setIsExportingDeadStock(true);
+    try {
+      await exportReport('DEAD_STOCK', { inactiveDays: String(inactiveDays) });
+    } catch {
+      alert(t('reports.error.exportFailed'));
+    } finally {
+      setIsExportingDeadStock(false);
+    }
+  };
+
+  const deadStockTotalValue = useMemo(
+    () => deadStock.reduce((sum, row) => sum + row.stock_value, 0),
+    [deadStock],
+  );
 
   const presetLabels: Record<DateRangePreset, string> = {
     week: t('reports.preset.week'),
@@ -204,6 +224,95 @@ export default function ReportsPage() {
             <CategoryBreakdown items={topProductsBreakdown} />
           )}
         </div>
+      </div>
+
+      <div className="mt-8 bg-card rounded-lg border border-border overflow-hidden">
+        <div className="p-6 border-b border-border flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="p-3 rounded-lg bg-amber-100 text-amber-700">
+              <PackageX size={24} />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-foreground">{t('reports.deadStock.title')}</h2>
+              <p className="text-sm text-muted-foreground">{t('reports.deadStock.subtitle')}</p>
+            </div>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <select
+              value={inactiveDays}
+              onChange={(e) => setInactiveDays(Number(e.target.value))}
+              className="px-3 py-2 border border-border rounded-lg text-sm bg-background"
+            >
+              <option value={30}>{t('reports.deadStock.days30')}</option>
+              <option value={60}>{t('reports.deadStock.days60')}</option>
+              <option value={90}>{t('reports.deadStock.days90')}</option>
+            </select>
+            <button
+              type="button"
+              onClick={handleExportDeadStock}
+              disabled={isExportingDeadStock}
+              className="flex items-center gap-2 px-4 py-2 border border-input rounded-lg text-sm font-semibold hover:bg-secondary disabled:opacity-50"
+            >
+              {isExportingDeadStock ? (
+                <Loader2 className="animate-spin" size={16} />
+              ) : (
+                <Download size={16} />
+              )}
+              {t('reports.exportCsv')}
+            </button>
+          </div>
+        </div>
+
+        <div className="px-6 py-4 bg-secondary/30 border-b border-border flex flex-wrap gap-6 text-sm">
+          <div>
+            <span className="text-muted-foreground">{t('reports.deadStock.itemCount')}: </span>
+            <span className="font-semibold">{deadStock.length}</span>
+          </div>
+          <div>
+            <span className="text-muted-foreground">{t('reports.deadStock.totalValue')}: </span>
+            <span className="font-semibold">{formatMoney(deadStockTotalValue)}</span>
+          </div>
+        </div>
+
+        {deadStockLoading ? (
+          <div className="flex items-center justify-center py-12 text-muted-foreground">
+            <Loader2 className="animate-spin mr-2" size={20} />
+            {t('common.loading')}
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-secondary border-b border-border">
+                <tr>
+                  <th className="px-6 py-3 text-left text-sm font-semibold">{t('reports.deadStock.table.sku')}</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold">{t('reports.deadStock.table.product')}</th>
+                  <th className="px-6 py-3 text-right text-sm font-semibold">{t('reports.deadStock.table.quantity')}</th>
+                  <th className="px-6 py-3 text-right text-sm font-semibold">{t('reports.deadStock.table.value')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {deadStock.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} className="px-6 py-8 text-center text-muted-foreground">
+                      {t('reports.deadStock.empty')}
+                    </td>
+                  </tr>
+                ) : (
+                  deadStock.map((row) => (
+                    <tr key={row.product_id} className="border-b border-border hover:bg-secondary/50">
+                      <td className="px-6 py-4 text-sm font-mono text-muted-foreground">{row.sku}</td>
+                      <td className="px-6 py-4 text-sm font-medium">{row.name}</td>
+                      <td className="px-6 py-4 text-right text-sm">{row.available_quantity}</td>
+                      <td className="px-6 py-4 text-right text-sm font-semibold">
+                        {formatMoney(row.stock_value)}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       <div className="mt-8 bg-card rounded-lg border border-border overflow-hidden">

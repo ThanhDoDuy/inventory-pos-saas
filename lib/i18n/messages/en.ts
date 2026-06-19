@@ -71,6 +71,9 @@ export const en: Messages = {
       auditLogs: 'Audit logs',
       notifications: 'Notifications',
     },
+    empty: {
+      noAccess: 'No pages available for your role',
+    },
   },
   auth: {
     loginTitle: 'POS System',
@@ -159,6 +162,22 @@ export const en: Messages = {
     },
     error: {
       exportFailed: 'Failed to export report',
+    },
+    deadStock: {
+      title: 'Dead stock',
+      subtitle: 'Products in stock with no paid sales in the selected period',
+      days30: '30 days',
+      days60: '60 days',
+      days90: '90 days',
+      itemCount: 'Items',
+      totalValue: 'Tied-up value',
+      empty: 'No dead stock in this period',
+      table: {
+        sku: 'SKU',
+        product: 'Product',
+        quantity: 'Qty on hand',
+        value: 'Stock value',
+      },
     },
   },
   pos: {
@@ -282,6 +301,24 @@ export const en: Messages = {
     error: {
       loadFailed: 'Failed to load invoices',
       printFailed: 'Failed to print invoice',
+      cancelFailed: 'Failed to cancel invoice',
+      refundFailed: 'Failed to refund invoice',
+    },
+    cancel: {
+      title: 'Cancel invoice',
+      description: 'Stock will be restored. This cannot be undone if the invoice has refunds.',
+      reason: 'Reason (optional)',
+      reasonPlaceholder: 'e.g. Wrong order',
+      submit: 'Cancel invoice',
+    },
+    refund: {
+      title: 'Refund',
+      reason: 'Reason (optional)',
+      reasonPlaceholder: 'e.g. Defective product',
+      remaining: 'Available: {remaining} (refunded: {refunded})',
+      total: 'Refund amount',
+      submit: 'Process refund',
+      noItems: 'Select at least one item to refund',
     },
   },
   customers: {
@@ -335,12 +372,14 @@ export const en: Messages = {
       history: 'Purchase history',
       edit: 'Edit',
       disable: 'Disable',
+      activate: 'Reactivate',
     },
     empty: {
       noCustomers: 'No customers yet ({total})',
     },
     confirm: {
       disable: 'Disable customer "{name}"?',
+      activate: 'Reactivate customer "{name}"?',
     },
     error: {
       loadFailed: 'Failed to load customer list',
@@ -348,6 +387,7 @@ export const en: Messages = {
       taxCodeRequired: 'Tax code is required for company customers',
       actionFailed: 'Action failed',
       disableFailed: 'Failed to disable customer',
+      activateFailed: 'Failed to reactivate customer',
     },
   },
   suppliers: {
@@ -389,18 +429,21 @@ export const en: Messages = {
       history: 'Order history',
       edit: 'Edit',
       disable: 'Disable',
+      activate: 'Reactivate',
     },
     empty: {
       noSuppliers: 'No suppliers yet ({total})',
     },
     confirm: {
       disable: 'Disable supplier "{name}"?',
+      activate: 'Reactivate supplier "{name}"?',
     },
     error: {
       loadFailed: 'Failed to load supplier list',
       requiredFields: 'Please enter name and phone number',
       actionFailed: 'Action failed',
       disableFailed: 'Failed to disable supplier',
+      activateFailed: 'Failed to reactivate supplier',
     },
   },
   products: {
@@ -510,18 +553,28 @@ export const en: Messages = {
     },
     modal: {
       add: 'Add category',
+      edit: 'Edit category',
     },
     placeholders: {
       name: 'e.g. Beverages',
       description: 'Short description (optional)',
     },
+    tooltip: {
+      edit: 'Edit',
+      delete: 'Delete',
+    },
     empty: {
       noCategories: 'No categories yet',
+    },
+    confirm: {
+      delete: 'Delete category "{name}"?',
     },
     error: {
       loadFailed: 'Failed to load categories',
       nameRequired: 'Category name is required',
       createFailed: 'Failed to create category',
+      updateFailed: 'Failed to update category',
+      deleteFailed: 'Failed to delete category',
     },
   },
   inventory: {
@@ -696,11 +749,16 @@ export const en: Messages = {
       email: 'Email',
       role: 'Role',
       password: 'Temporary password',
+      newPassword: 'New password',
       passwordHint: 'Minimum 8 characters',
     },
     modal: {
       add: 'Add user',
+      edit: 'Edit user',
+      resetPassword: 'Reset password',
     },
+    resetPasswordFor: 'Set a new password for {username}',
+    resetPasswordSubmit: 'Reset password',
     placeholders: {
       username: 'admin',
       email: 'you@example.com',
@@ -712,18 +770,26 @@ export const en: Messages = {
     },
     tooltip: {
       disable: 'Disable',
+      edit: 'Edit',
+      resetPassword: 'Reset password',
+      activate: 'Reactivate',
     },
     empty: {
       noUsers: 'No users',
     },
     confirm: {
       disable: 'Disable user "{username}"?',
+      activate: 'Reactivate user "{username}"?',
     },
     error: {
       loadFailed: 'Failed to load user list',
       requiredFields: 'Please fill in all required fields',
       createFailed: 'Failed to create user',
+      updateFailed: 'Failed to update user',
       disableFailed: 'Failed to disable user',
+      activateFailed: 'Failed to reactivate user',
+      resetPasswordFailed: 'Failed to reset password',
+      passwordTooShort: 'Password must be at least 8 characters',
     },
   },
   rbac: {
@@ -765,10 +831,63 @@ export const en: Messages = {
   notifications: {
     title: 'Notifications',
     description: 'Low stock alerts, system events and unread notifications.',
+    markAllRead: 'Mark all as read',
+    markRead: 'Mark as read',
+    filter: {
+      show: 'Show',
+      all: 'All',
+      unread: 'Unread only',
+      type: 'Type',
+    },
+    types: {
+      LOW_STOCK: 'Low stock',
+      PO_RECEIVED: 'PO received',
+      INVOICE_PAID: 'Invoice paid',
+    },
+    empty: {
+      all: 'No notifications yet.',
+      unread: 'No unread notifications.',
+    },
+    unreadCount: '{count} unread',
+    error: {
+      loadFailed: 'Failed to load notifications',
+      markReadFailed: 'Could not mark as read',
+      markAllFailed: 'Could not mark all as read',
+    },
   },
   auditLogs: {
     title: 'Audit logs',
     description: 'Track system activity: sign-ins, data changes, report exports.',
+    exportCsv: 'Export CSV',
+    filter: {
+      module: 'Module',
+      action: 'Action',
+      dateRange: 'Date range',
+      all: 'All',
+    },
+    table: {
+      time: 'Time',
+      user: 'User',
+      action: 'Action',
+      module: 'Module',
+      entity: 'Entity',
+      status: 'Status',
+      actions: 'Actions',
+    },
+    detail: {
+      title: 'Audit log detail',
+      ip: 'IP address',
+      oldValue: 'Previous value',
+      newValue: 'New value',
+      metadata: 'Metadata',
+    },
+    empty: 'No audit logs found for the selected filters.',
+    totalCount: '{count} records',
+    error: {
+      loadFailed: 'Failed to load audit logs',
+      exportFailed: 'Could not export audit logs',
+      detailFailed: 'Could not load audit log detail',
+    },
   },
   settings: {
     title: 'Settings',
@@ -786,6 +905,33 @@ export const en: Messages = {
       phone: 'Phone Number',
       city: 'City',
       state: 'State/Province',
+      saved: 'Business information saved',
+      error: 'Could not save business information',
+      saving: 'Saving...',
+    },
+    policies: {
+      title: 'Store policies',
+      allowNegativeStock: 'Allow negative stock',
+      lowStockThreshold: 'Default low stock threshold',
+      maxDiscountStaff: 'Max discount for staff (%)',
+      maxDiscountManager: 'Max discount for manager (%)',
+      saved: 'Store policies saved',
+      error: 'Could not save store policies',
+      saving: 'Saving...',
+    },
+    features: {
+      enable_low_stock_alert: {
+        label: 'Low stock alerts',
+        desc: 'Send in-app notifications when inventory is low',
+      },
+      enable_refund: {
+        label: 'Invoice refunds',
+        desc: 'Allow refunding paid invoices',
+      },
+      enable_partial_payment: {
+        label: 'Partial payments',
+        desc: 'Allow partial payment on invoices',
+      },
     },
     priceTiers: {
       title: 'Price tiers',
@@ -808,9 +954,12 @@ export const en: Messages = {
       paymentMethod: 'Payment Method',
       planDetail: '$99/month • Renews on January 15, 2025',
       cardInfo: 'Expires 12/25',
+      notAvailable: 'Billing management is not available yet.',
     },
     notifications: {
       title: 'Notification Preferences',
+      saved: 'Preferences saved',
+      error: 'Could not save preferences',
       lowStock: {
         label: 'Low Stock Alerts',
         desc: 'Get notified when inventory is running low',
@@ -833,9 +982,18 @@ export const en: Messages = {
       password: 'Password',
       twoFactor: 'Two-Factor Authentication',
       deleteAccount: 'Delete Account',
-      passwordLastChanged: 'Last changed 3 months ago',
+      passwordLastChanged: 'Change your account password',
       twoFactorDisabled: 'Not enabled',
       deleteWarning: 'Permanently delete your account and all data',
+      changePasswordTitle: 'Change password',
+      oldPassword: 'Current password',
+      newPassword: 'New password',
+      confirmPassword: 'Confirm new password',
+      passwordChanged: 'Password changed successfully',
+      passwordMismatch: 'New passwords do not match',
+      passwordMinLength: 'Password must be at least 8 characters',
+      changePasswordError: 'Could not change password',
+      comingSoon: 'Coming soon',
     },
     signOut: {
       title: 'Sign Out',

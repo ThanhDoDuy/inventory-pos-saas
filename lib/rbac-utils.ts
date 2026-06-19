@@ -19,6 +19,20 @@ export function roleGrantsPermission(
   return role.permission_codes.includes(`${resource}:*`);
 }
 
+export function hasAllPermissions(
+  role: RolePermissionSource,
+  permissionCodes: string[],
+): boolean {
+  return permissionCodes.every((code) => roleGrantsPermission(role, code));
+}
+
+export function hasAnyPermission(
+  role: RolePermissionSource,
+  permissionCodes: string[],
+): boolean {
+  return permissionCodes.some((code) => roleGrantsPermission(role, code));
+}
+
 export const MODULE_LABELS: Record<string, string> = {
   auth: 'Xác thực',
   users: 'Người dùng',

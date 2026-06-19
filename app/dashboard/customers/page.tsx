@@ -8,12 +8,14 @@ import {
   Edit2,
   History,
   Ban,
+  CheckCircle,
   Loader2,
   Download,
   FileSpreadsheet,
   Upload,
 } from 'lucide-react';
 import {
+  activateCustomer,
   createCustomer,
   disableCustomer,
   updateCustomer,
@@ -141,6 +143,16 @@ export default function CustomersPage() {
       await mutate();
     } catch (err) {
       alert(err instanceof Error ? err.message : t('customers.error.disableFailed'));
+    }
+  };
+
+  const handleActivate = async (customer: CustomerItem) => {
+    if (!confirm(t('customers.confirm.activate', { name: customer.name }))) return;
+    try {
+      await activateCustomer(customer.id);
+      await mutate();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : t('customers.error.activateFailed'));
     }
   };
 
@@ -349,7 +361,7 @@ export default function CustomersPage() {
                           >
                             <History size={16} />
                           </button>
-                          {customer.status === 'ACTIVE' && (
+                          {customer.status === 'ACTIVE' ? (
                             <>
                               <button
                                 onClick={() => openEdit(customer)}
@@ -366,6 +378,14 @@ export default function CustomersPage() {
                                 <Ban size={16} />
                               </button>
                             </>
+                          ) : (
+                            <button
+                              onClick={() => handleActivate(customer)}
+                              className="p-2 hover:bg-secondary rounded-lg text-green-600"
+                              title={t('customers.tooltip.activate')}
+                            >
+                              <CheckCircle size={16} />
+                            </button>
                           )}
                         </div>
                       </td>

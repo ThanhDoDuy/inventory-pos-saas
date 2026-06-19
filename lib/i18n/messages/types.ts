@@ -69,6 +69,9 @@ export interface Messages {
       auditLogs: string;
       notifications: string;
     };
+    empty: {
+      noAccess: string;
+    };
   };
   auth: {
     loginTitle: string;
@@ -157,6 +160,22 @@ export interface Messages {
     };
     error: {
       exportFailed: string;
+    };
+    deadStock: {
+      title: string;
+      subtitle: string;
+      days30: string;
+      days60: string;
+      days90: string;
+      itemCount: string;
+      totalValue: string;
+      empty: string;
+      table: {
+        sku: string;
+        product: string;
+        quantity: string;
+        value: string;
+      };
     };
   };
   pos: {
@@ -280,6 +299,24 @@ export interface Messages {
     error: {
       loadFailed: string;
       printFailed: string;
+      cancelFailed: string;
+      refundFailed: string;
+    };
+    cancel: {
+      title: string;
+      description: string;
+      reason: string;
+      reasonPlaceholder: string;
+      submit: string;
+    };
+    refund: {
+      title: string;
+      reason: string;
+      reasonPlaceholder: string;
+      remaining: string;
+      total: string;
+      submit: string;
+      noItems: string;
     };
   };
   customers: {
@@ -333,12 +370,14 @@ export interface Messages {
       history: string;
       edit: string;
       disable: string;
+      activate: string;
     };
     empty: {
       noCustomers: string;
     };
     confirm: {
       disable: string;
+      activate: string;
     };
     error: {
       loadFailed: string;
@@ -346,6 +385,7 @@ export interface Messages {
       taxCodeRequired: string;
       actionFailed: string;
       disableFailed: string;
+      activateFailed: string;
     };
   };
   suppliers: {
@@ -387,18 +427,21 @@ export interface Messages {
       history: string;
       edit: string;
       disable: string;
+      activate: string;
     };
     empty: {
       noSuppliers: string;
     };
     confirm: {
       disable: string;
+      activate: string;
     };
     error: {
       loadFailed: string;
       requiredFields: string;
       actionFailed: string;
       disableFailed: string;
+      activateFailed: string;
     };
   };
   products: {
@@ -507,18 +550,28 @@ export interface Messages {
     };
     modal: {
       add: string;
+      edit: string;
     };
     placeholders: {
       name: string;
       description: string;
     };
+    tooltip: {
+      edit: string;
+      delete: string;
+    };
     empty: {
       noCategories: string;
+    };
+    confirm: {
+      delete: string;
     };
     error: {
       loadFailed: string;
       nameRequired: string;
       createFailed: string;
+      updateFailed: string;
+      deleteFailed: string;
     };
   };
   inventory: {
@@ -693,11 +746,16 @@ export interface Messages {
       email: string;
       role: string;
       password: string;
+      newPassword: string;
       passwordHint: string;
     };
     modal: {
       add: string;
+      edit: string;
+      resetPassword: string;
     };
+    resetPasswordFor: string;
+    resetPasswordSubmit: string;
     placeholders: {
       username: string;
       email: string;
@@ -709,18 +767,26 @@ export interface Messages {
     };
     tooltip: {
       disable: string;
+      edit: string;
+      resetPassword: string;
+      activate: string;
     };
     empty: {
       noUsers: string;
     };
     confirm: {
       disable: string;
+      activate: string;
     };
     error: {
       loadFailed: string;
       requiredFields: string;
       createFailed: string;
+      updateFailed: string;
       disableFailed: string;
+      activateFailed: string;
+      resetPasswordFailed: string;
+      passwordTooShort: string;
     };
   };
   rbac: {
@@ -762,10 +828,63 @@ export interface Messages {
   notifications: {
     title: string;
     description: string;
+    markAllRead: string;
+    markRead: string;
+    filter: {
+      show: string;
+      all: string;
+      unread: string;
+      type: string;
+    };
+    types: {
+      LOW_STOCK: string;
+      PO_RECEIVED: string;
+      INVOICE_PAID: string;
+    };
+    empty: {
+      all: string;
+      unread: string;
+    };
+    unreadCount: string;
+    error: {
+      loadFailed: string;
+      markReadFailed: string;
+      markAllFailed: string;
+    };
   };
   auditLogs: {
     title: string;
     description: string;
+    exportCsv: string;
+    filter: {
+      module: string;
+      action: string;
+      dateRange: string;
+      all: string;
+    };
+    table: {
+      time: string;
+      user: string;
+      action: string;
+      module: string;
+      entity: string;
+      status: string;
+      actions: string;
+    };
+    detail: {
+      title: string;
+      ip: string;
+      oldValue: string;
+      newValue: string;
+      metadata: string;
+    };
+    empty: string;
+    totalCount: string;
+    error: {
+      loadFailed: string;
+      exportFailed: string;
+      detailFailed: string;
+    };
   };
   settings: {
     title: string;
@@ -783,6 +902,24 @@ export interface Messages {
       phone: string;
       city: string;
       state: string;
+      saved: string;
+      error: string;
+      saving: string;
+    };
+    policies: {
+      title: string;
+      allowNegativeStock: string;
+      lowStockThreshold: string;
+      maxDiscountStaff: string;
+      maxDiscountManager: string;
+      saved: string;
+      error: string;
+      saving: string;
+    };
+    features: {
+      enable_low_stock_alert: { label: string; desc: string };
+      enable_refund: { label: string; desc: string };
+      enable_partial_payment: { label: string; desc: string };
     };
     priceTiers: {
       title: string;
@@ -805,9 +942,12 @@ export interface Messages {
       paymentMethod: string;
       planDetail: string;
       cardInfo: string;
+      notAvailable: string;
     };
     notifications: {
       title: string;
+      saved: string;
+      error: string;
       lowStock: {
         label: string;
         desc: string;
@@ -833,6 +973,15 @@ export interface Messages {
       passwordLastChanged: string;
       twoFactorDisabled: string;
       deleteWarning: string;
+      changePasswordTitle: string;
+      oldPassword: string;
+      newPassword: string;
+      confirmPassword: string;
+      passwordChanged: string;
+      passwordMismatch: string;
+      passwordMinLength: string;
+      changePasswordError: string;
+      comingSoon: string;
     };
     signOut: {
       title: string;

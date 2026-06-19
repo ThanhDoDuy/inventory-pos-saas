@@ -71,6 +71,9 @@ export const vi: Messages = {
       auditLogs: 'Nhật ký audit',
       notifications: 'Thông báo',
     },
+    empty: {
+      noAccess: 'Không có trang nào khả dụng với quyền của bạn',
+    },
   },
   auth: {
     loginTitle: 'POS System',
@@ -159,6 +162,22 @@ export const vi: Messages = {
     },
     error: {
       exportFailed: 'Xuất báo cáo thất bại',
+    },
+    deadStock: {
+      title: 'Hàng tồn chậm',
+      subtitle: 'Sản phẩm còn tồn nhưng không có bán (đã thanh toán) trong kỳ đã chọn',
+      days30: '30 ngày',
+      days60: '60 ngày',
+      days90: '90 ngày',
+      itemCount: 'Số mặt hàng',
+      totalValue: 'Giá trị tồn',
+      empty: 'Không có hàng tồn chậm trong kỳ này',
+      table: {
+        sku: 'SKU',
+        product: 'Sản phẩm',
+        quantity: 'SL tồn',
+        value: 'Giá trị tồn',
+      },
     },
   },
   pos: {
@@ -282,6 +301,24 @@ export const vi: Messages = {
     error: {
       loadFailed: 'Không tải được hóa đơn',
       printFailed: 'Không thể in hóa đơn',
+      cancelFailed: 'Không thể hủy hóa đơn',
+      refundFailed: 'Không thể hoàn tiền hóa đơn',
+    },
+    cancel: {
+      title: 'Hủy hóa đơn',
+      description: 'Tồn kho sẽ được hoàn lại. Không thể hủy nếu hóa đơn đã có hoàn tiền.',
+      reason: 'Lý do (tùy chọn)',
+      reasonPlaceholder: 'VD: Đơn sai',
+      submit: 'Hủy hóa đơn',
+    },
+    refund: {
+      title: 'Hoàn tiền',
+      reason: 'Lý do (tùy chọn)',
+      reasonPlaceholder: 'VD: Hàng lỗi',
+      remaining: 'Còn lại: {remaining} (đã hoàn: {refunded})',
+      total: 'Số tiền hoàn',
+      submit: 'Xác nhận hoàn tiền',
+      noItems: 'Chọn ít nhất một sản phẩm để hoàn',
     },
   },
   customers: {
@@ -335,12 +372,14 @@ export const vi: Messages = {
       history: 'Lịch sử mua',
       edit: 'Sửa',
       disable: 'Vô hiệu hóa',
+      activate: 'Kích hoạt lại',
     },
     empty: {
       noCustomers: 'Chưa có khách hàng ({total})',
     },
     confirm: {
       disable: 'Vô hiệu hóa khách hàng "{name}"?',
+      activate: 'Kích hoạt lại khách hàng "{name}"?',
     },
     error: {
       loadFailed: 'Không tải được danh sách khách hàng',
@@ -348,6 +387,7 @@ export const vi: Messages = {
       taxCodeRequired: 'Mã số thuế bắt buộc với khách hàng công ty',
       actionFailed: 'Thao tác thất bại',
       disableFailed: 'Không thể vô hiệu hóa',
+      activateFailed: 'Không thể kích hoạt lại khách hàng',
     },
   },
   suppliers: {
@@ -389,18 +429,21 @@ export const vi: Messages = {
       history: 'Lịch sử đơn mua',
       edit: 'Sửa',
       disable: 'Vô hiệu hóa',
+      activate: 'Kích hoạt lại',
     },
     empty: {
       noSuppliers: 'Chưa có nhà cung cấp ({total})',
     },
     confirm: {
       disable: 'Vô hiệu hóa nhà cung cấp "{name}"?',
+      activate: 'Kích hoạt lại nhà cung cấp "{name}"?',
     },
     error: {
       loadFailed: 'Không tải được danh sách nhà cung cấp',
       requiredFields: 'Vui lòng nhập tên và số điện thoại',
       actionFailed: 'Thao tác thất bại',
       disableFailed: 'Không thể vô hiệu hóa',
+      activateFailed: 'Không thể kích hoạt lại nhà cung cấp',
     },
   },
   products: {
@@ -510,18 +553,28 @@ export const vi: Messages = {
     },
     modal: {
       add: 'Thêm danh mục',
+      edit: 'Sửa danh mục',
     },
     placeholders: {
       name: 'Ví dụ: Beverages',
       description: 'Mô tả ngắn (tuỳ chọn)',
     },
+    tooltip: {
+      edit: 'Sửa',
+      delete: 'Xóa',
+    },
     empty: {
       noCategories: 'Chưa có danh mục',
+    },
+    confirm: {
+      delete: 'Xóa danh mục "{name}"?',
     },
     error: {
       loadFailed: 'Không tải được danh mục',
       nameRequired: 'Tên danh mục không được trống',
       createFailed: 'Không thể tạo danh mục',
+      updateFailed: 'Không thể cập nhật danh mục',
+      deleteFailed: 'Không thể xóa danh mục',
     },
   },
   inventory: {
@@ -696,11 +749,16 @@ export const vi: Messages = {
       email: 'Email',
       role: 'Vai trò',
       password: 'Mật khẩu tạm',
+      newPassword: 'Mật khẩu mới',
       passwordHint: 'Tối thiểu 8 ký tự',
     },
     modal: {
       add: 'Thêm người dùng',
+      edit: 'Sửa người dùng',
+      resetPassword: 'Đặt lại mật khẩu',
     },
+    resetPasswordFor: 'Đặt mật khẩu mới cho {username}',
+    resetPasswordSubmit: 'Đặt lại mật khẩu',
     placeholders: {
       username: 'admin',
       email: 'you@example.com',
@@ -712,18 +770,26 @@ export const vi: Messages = {
     },
     tooltip: {
       disable: 'Vô hiệu hóa',
+      edit: 'Sửa',
+      resetPassword: 'Đặt lại mật khẩu',
+      activate: 'Kích hoạt lại',
     },
     empty: {
       noUsers: 'Không có người dùng',
     },
     confirm: {
       disable: 'Vô hiệu hóa người dùng "{username}"?',
+      activate: 'Kích hoạt lại người dùng "{username}"?',
     },
     error: {
       loadFailed: 'Không tải được danh sách người dùng',
       requiredFields: 'Vui lòng điền đầy đủ thông tin',
       createFailed: 'Không thể tạo người dùng',
+      updateFailed: 'Không thể cập nhật người dùng',
       disableFailed: 'Không thể vô hiệu hóa người dùng',
+      activateFailed: 'Không thể kích hoạt lại người dùng',
+      resetPasswordFailed: 'Không thể đặt lại mật khẩu',
+      passwordTooShort: 'Mật khẩu phải có ít nhất 8 ký tự',
     },
   },
   rbac: {
@@ -765,10 +831,63 @@ export const vi: Messages = {
   notifications: {
     title: 'Thông báo',
     description: 'Cảnh báo tồn kho thấp, sự kiện hệ thống và thông báo chưa đọc.',
+    markAllRead: 'Đánh dấu tất cả đã đọc',
+    markRead: 'Đánh dấu đã đọc',
+    filter: {
+      show: 'Hiển thị',
+      all: 'Tất cả',
+      unread: 'Chưa đọc',
+      type: 'Loại',
+    },
+    types: {
+      LOW_STOCK: 'Tồn kho thấp',
+      PO_RECEIVED: 'Nhận hàng PO',
+      INVOICE_PAID: 'Thanh toán hóa đơn',
+    },
+    empty: {
+      all: 'Chưa có thông báo.',
+      unread: 'Không có thông báo chưa đọc.',
+    },
+    unreadCount: '{count} chưa đọc',
+    error: {
+      loadFailed: 'Không tải được thông báo',
+      markReadFailed: 'Không thể đánh dấu đã đọc',
+      markAllFailed: 'Không thể đánh dấu tất cả đã đọc',
+    },
   },
   auditLogs: {
     title: 'Nhật ký audit',
     description: 'Theo dõi hoạt động hệ thống: đăng nhập, thay đổi dữ liệu, xuất báo cáo.',
+    exportCsv: 'Xuất CSV',
+    filter: {
+      module: 'Module',
+      action: 'Hành động',
+      dateRange: 'Khoảng thời gian',
+      all: 'Tất cả',
+    },
+    table: {
+      time: 'Thời gian',
+      user: 'Người dùng',
+      action: 'Hành động',
+      module: 'Module',
+      entity: 'Đối tượng',
+      status: 'Trạng thái',
+      actions: 'Thao tác',
+    },
+    detail: {
+      title: 'Chi tiết nhật ký',
+      ip: 'Địa chỉ IP',
+      oldValue: 'Giá trị cũ',
+      newValue: 'Giá trị mới',
+      metadata: 'Metadata',
+    },
+    empty: 'Không có nhật ký phù hợp bộ lọc.',
+    totalCount: '{count} bản ghi',
+    error: {
+      loadFailed: 'Không tải được nhật ký audit',
+      exportFailed: 'Không thể xuất nhật ký audit',
+      detailFailed: 'Không thể tải chi tiết nhật ký',
+    },
   },
   settings: {
     title: 'Cài đặt',
@@ -786,6 +905,33 @@ export const vi: Messages = {
       phone: 'Số điện thoại',
       city: 'Thành phố',
       state: 'Tỉnh/Thành',
+      saved: 'Đã lưu thông tin cửa hàng',
+      error: 'Không thể lưu thông tin cửa hàng',
+      saving: 'Đang lưu...',
+    },
+    policies: {
+      title: 'Chính sách cửa hàng',
+      allowNegativeStock: 'Cho phép tồn kho âm',
+      lowStockThreshold: 'Ngưỡng cảnh báo tồn thấp mặc định',
+      maxDiscountStaff: 'Giảm giá tối đa cho nhân viên (%)',
+      maxDiscountManager: 'Giảm giá tối đa cho quản lý (%)',
+      saved: 'Đã lưu chính sách cửa hàng',
+      error: 'Không thể lưu chính sách cửa hàng',
+      saving: 'Đang lưu...',
+    },
+    features: {
+      enable_low_stock_alert: {
+        label: 'Cảnh báo tồn kho thấp',
+        desc: 'Gửi thông báo trong app khi tồn kho thấp',
+      },
+      enable_refund: {
+        label: 'Hoàn tiền hóa đơn',
+        desc: 'Cho phép hoàn tiền hóa đơn đã thanh toán',
+      },
+      enable_partial_payment: {
+        label: 'Thanh toán một phần',
+        desc: 'Cho phép thanh toán một phần trên hóa đơn',
+      },
     },
     priceTiers: {
       title: 'Loại giá bán',
@@ -808,9 +954,12 @@ export const vi: Messages = {
       paymentMethod: 'Phương thức thanh toán',
       planDetail: '$99/tháng • Gia hạn ngày 15/01/2025',
       cardInfo: 'Hết hạn 12/25',
+      notAvailable: 'Quản lý thanh toán chưa khả dụng.',
     },
     notifications: {
       title: 'Tùy chọn thông báo',
+      saved: 'Đã lưu tùy chọn',
+      error: 'Không thể lưu tùy chọn',
       lowStock: {
         label: 'Cảnh báo tồn kho thấp',
         desc: 'Nhận thông báo khi sản phẩm sắp hết hàng',
@@ -833,9 +982,18 @@ export const vi: Messages = {
       password: 'Mật khẩu',
       twoFactor: 'Xác thực hai yếu tố',
       deleteAccount: 'Xóa tài khoản',
-      passwordLastChanged: 'Đổi lần cuối 3 tháng trước',
+      passwordLastChanged: 'Đổi mật khẩu tài khoản',
       twoFactorDisabled: 'Chưa bật',
       deleteWarning: 'Xóa vĩnh viễn tài khoản và toàn bộ dữ liệu',
+      changePasswordTitle: 'Đổi mật khẩu',
+      oldPassword: 'Mật khẩu hiện tại',
+      newPassword: 'Mật khẩu mới',
+      confirmPassword: 'Xác nhận mật khẩu mới',
+      passwordChanged: 'Đổi mật khẩu thành công',
+      passwordMismatch: 'Mật khẩu mới không khớp',
+      passwordMinLength: 'Mật khẩu phải có ít nhất 8 ký tự',
+      changePasswordError: 'Không thể đổi mật khẩu',
+      comingSoon: 'Sắp có',
     },
     signOut: {
       title: 'Đăng xuất',

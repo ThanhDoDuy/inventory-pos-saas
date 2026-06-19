@@ -14,11 +14,13 @@ import {
 } from 'lucide-react';
 import {
   createInvoice,
+  customerToReceiptCustomer,
   invoiceToReceiptData,
   mapPaymentMethod,
   type CreateInvoiceItem,
   type InvoiceDetail,
 } from '@/hooks/use-invoices';
+import type { CustomerItem } from '@/hooks/use-customers';
 import { useFormat, useTranslation } from '@/lib/i18n/use-translation';
 import { printReceipt } from '@/lib/print-receipt';
 
@@ -29,10 +31,13 @@ interface PaymentModalProps {
   taxPercent?: number;
   items: CreateInvoiceItem[];
   customerId?: string;
+  customer?: CustomerItem | null;
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
   storeName?: string;
+  storeAddress?: string;
+  storePhone?: string;
   notes?: string;
 }
 
@@ -47,10 +52,13 @@ export function PaymentModal({
   taxPercent = 0,
   items,
   customerId,
+  customer,
   isOpen,
   onClose,
   onSuccess,
   storeName,
+  storeAddress,
+  storePhone,
   notes,
 }: PaymentModalProps) {
   const { t } = useTranslation();
@@ -103,6 +111,9 @@ export function PaymentModal({
       printReceipt(
         invoiceToReceiptData(createdInvoice, {
           storeName,
+          storeAddress,
+          storePhone,
+          customer: customer ? customerToReceiptCustomer(customer) : undefined,
           notes,
           amountPaid: paymentMethod === 'cash' ? lastAmountPaid : createdInvoice.total,
           change: changeAmount,

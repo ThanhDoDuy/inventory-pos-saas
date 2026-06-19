@@ -101,3 +101,11 @@ export async function disableSupplier(id: string) {
     throw new Error(extractErrorMessage(error, 'Không thể vô hiệu hóa nhà cung cấp'));
   }
 }
+
+export async function activateSupplier(id: string) {
+  try {
+    return await apiPost(`/suppliers/${id}/activate`, {});
+  } catch (error) {
+    throw new Error(extractErrorMessage(error, 'Không thể kích hoạt lại nhà cung cấp'));
+  }
+}

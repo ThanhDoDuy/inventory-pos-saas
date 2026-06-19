@@ -114,3 +114,11 @@ export async function resetUserPassword(userId: string, newPassword: string) {
     throw new Error(extractErrorMessage(error, 'Không thể đặt lại mật khẩu'));
   }
 }
+
+export async function activateUser(userId: string) {
+  try {
+    return await apiPatch(`/users/${userId}/activate`, {});
+  } catch (error) {
+    throw new Error(extractErrorMessage(error, 'Không thể kích hoạt lại người dùng'));
+  }
+}

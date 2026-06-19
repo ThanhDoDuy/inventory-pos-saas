@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import useSWR from 'swr';
-import { apiGet, apiPatch, apiPost, extractErrorMessage } from '@/lib/api-client';
+import { apiGet, apiPatch, apiPost, apiDelete, extractErrorMessage } from '@/lib/api-client';
 import { stringifyId } from '@/lib/format';
 
 async function swrFetcher<T>(path: string): Promise<T> {
@@ -129,6 +129,33 @@ export function useCategories() {
   const categories = (data?.items ?? []).map((item) => mapCategory(item as unknown as Record<string, unknown>));
 
   return { categories, isLoading, error, mutate };
+}
+
+export async function createCategory(data: { name: string; description?: string }) {
+  try {
+    return await apiPost('/categories', data);
+  } catch (error) {
+    throw new Error(extractErrorMessage(error, 'Không thể tạo danh mục'));
+  }
+}
+
+export async function updateCategory(
+  id: string,
+  data: { name?: string; description?: string },
+) {
+  try {
+    return await apiPatch(`/categories/${id}`, data);
+  } catch (error) {
+    throw new Error(extractErrorMessage(error, 'Không thể cập nhật danh mục'));
+  }
+}
+
+export async function deleteCategory(id: string) {
+  try {
+    return await apiDelete(`/categories/${id}`);
+  } catch (error) {
+    throw new Error(extractErrorMessage(error, 'Không thể xóa danh mục'));
+  }
 }
 
 export function useProduct(productId: string) {
