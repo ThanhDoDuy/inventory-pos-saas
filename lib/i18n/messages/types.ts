@@ -1023,12 +1023,14 @@ export interface Messages {
   };
   importExport: {
     exportCsv: string;
+    exportAll: string;
     exportSummary: string;
     exportDetail: string;
     exportBalances: string;
     exportTransactions: string;
     downloadTemplate: string;
     importCsv: string;
+    menu: string;
     error: {
       exportFailed: string;
       templateFailed: string;

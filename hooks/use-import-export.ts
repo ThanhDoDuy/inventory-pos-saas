@@ -8,13 +8,23 @@ export async function downloadProductsExport(params?: {
   search?: string;
   category_id?: string;
   status?: string;
+  all?: boolean;
 }) {
-  const query: Record<string, string> = { format: 'csv' };
-  if (params?.search) query.search = params.search;
-  if (params?.category_id) query.category_id = params.category_id;
-  if (params?.status && params.status !== 'all') query.status = params.status;
+  const query: Record<string, string> = { format: 'xlsx' };
+  if (params?.all) {
+    query.all = 'true';
+  } else {
+    if (params?.search) query.search = params.search;
+    if (params?.category_id) query.category_id = params.category_id;
+    if (params?.status && params.status !== 'all') query.status = params.status;
+  }
 
-  await downloadFile('/products/export', `products-export-${dateStamp()}.csv`, query);
+  const suffix = params?.all ? 'all' : 'filtered';
+  await downloadFile(
+    '/products/export',
+    `products-export-${suffix}-${dateStamp()}.xlsx`,
+    query,
+  );
 }
 
 export async function downloadProductsTemplate() {
@@ -27,12 +37,22 @@ export async function downloadProductsTemplate() {
 export async function downloadSuppliersExport(params?: {
   search?: string;
   status?: string;
+  all?: boolean;
 }) {
-  const query: Record<string, string> = { format: 'csv' };
-  if (params?.search) query.search = params.search;
-  if (params?.status && params.status !== 'all') query.status = params.status;
+  const query: Record<string, string> = { format: 'xlsx' };
+  if (params?.all) {
+    query.all = 'true';
+  } else {
+    if (params?.search) query.search = params.search;
+    if (params?.status && params.status !== 'all') query.status = params.status;
+  }
 
-  await downloadFile('/suppliers/export', `suppliers-export-${dateStamp()}.csv`, query);
+  const suffix = params?.all ? 'all' : 'filtered';
+  await downloadFile(
+    '/suppliers/export',
+    `suppliers-export-${suffix}-${dateStamp()}.xlsx`,
+    query,
+  );
 }
 
 export async function downloadSuppliersTemplate() {

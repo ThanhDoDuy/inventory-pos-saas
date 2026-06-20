@@ -17,6 +17,7 @@ import {
 } from '@/hooks/use-import-export';
 import { FormField, inputClassName, selectClassName } from '@/components/form-field';
 import { SupplierImportModal } from '@/components/supplier-import-modal';
+import { ImportExportDropdown } from '@/components/import-export-dropdown';
 import { useFormat, useTranslation } from '@/lib/i18n/use-translation';
 
 const emptyForm = { name: '', phone: '', email: '', address: '', tax_code: '' };
@@ -110,13 +111,17 @@ export default function SuppliersPage() {
     }
   };
 
-  const handleExport = async () => {
+  const handleExport = async (all = false) => {
     setIsExporting(true);
     try {
-      await downloadSuppliersExport({
-        search: searchTerm || undefined,
-        status: statusFilter,
-      });
+      await downloadSuppliersExport(
+        all
+          ? { all: true }
+          : {
+              search: searchTerm || undefined,
+              status: statusFilter,
+            },
+      );
     } catch (err) {
       alert(err instanceof Error ? err.message : t('importExport.error.exportFailed'));
     } finally {
@@ -143,32 +148,36 @@ export default function SuppliersPage() {
           <p className="text-muted-foreground">{t('suppliers.subtitle')}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setShowImportModal(true)}
-            className="flex items-center gap-2 px-4 py-2 border border-border rounded-lg font-semibold hover:bg-secondary transition-colors"
-          >
-            <Upload size={18} />
-            {t('importExport.importCsv')}
-          </button>
-          <button
-            type="button"
-            onClick={handleDownloadTemplate}
-            disabled={isExporting}
-            className="flex items-center gap-2 px-4 py-2 border border-border rounded-lg font-semibold hover:bg-secondary transition-colors disabled:opacity-50"
-          >
-            <FileSpreadsheet size={18} />
-            {t('importExport.downloadTemplate')}
-          </button>
-          <button
-            type="button"
-            onClick={handleExport}
-            disabled={isExporting}
-            className="flex items-center gap-2 px-4 py-2 border border-border rounded-lg font-semibold hover:bg-secondary transition-colors disabled:opacity-50"
-          >
-            {isExporting ? <Loader2 className="animate-spin" size={18} /> : <Download size={18} />}
-            {t('importExport.exportCsv')}
-          </button>
+          <ImportExportDropdown
+            label={t('importExport.menu')}
+            isBusy={isExporting}
+            items={[
+              {
+                id: 'export-filtered',
+                label: t('importExport.exportCsv'),
+                icon: <Download size={18} />,
+                onClick: () => handleExport(false),
+              },
+              {
+                id: 'export-all',
+                label: t('importExport.exportAll'),
+                icon: <Download size={18} />,
+                onClick: () => handleExport(true),
+              },
+              {
+                id: 'download-template',
+                label: t('importExport.downloadTemplate'),
+                icon: <FileSpreadsheet size={18} />,
+                onClick: handleDownloadTemplate,
+              },
+              {
+                id: 'import',
+                label: t('importExport.importCsv'),
+                icon: <Upload size={18} />,
+                onClick: () => setShowImportModal(true),
+              },
+            ]}
+          />
           <button
             onClick={openCreate}
             className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg font-semibold hover:bg-primary/90"
