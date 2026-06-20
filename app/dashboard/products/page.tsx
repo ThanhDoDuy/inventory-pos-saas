@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { Package, Plus, Search, Edit2, Trash2, Loader2, Download, FileSpreadsheet, Upload } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
@@ -22,6 +23,7 @@ import { ImportExportDropdown } from '@/components/import-export-dropdown';
 import { PaginationBar } from '@/components/pagination-bar';
 import { useDashboard, useLowStock } from '@/hooks/use-analytics';
 import { useFormat, useTranslation } from '@/lib/i18n/use-translation';
+import { getProductListImageUrl } from '@/lib/cloudinary-url';
 
 function stockStatusColorKey(stock: number, minimumStock = 0) {
   if (stock <= 0) return 'Out of Stock';
@@ -267,12 +269,24 @@ export default function InventoryPage() {
                     const minStock = item.minimum_stock ?? 0;
                     const statusLabel = getStockStatus(item.stock, minStock);
                     const statusColorKey = stockStatusColorKey(item.stock, minStock);
+                    const thumbUrl = getProductListImageUrl(item.image_url, item.images);
                     return (
                       <tr key={item.id} className="border-b border-border hover:bg-secondary/50 transition-colors">
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                              <Package size={20} className="text-primary" />
+                            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center overflow-hidden shrink-0">
+                              {thumbUrl ? (
+                                <Image
+                                  src={thumbUrl}
+                                  alt={item.name}
+                                  width={40}
+                                  height={40}
+                                  className="object-cover w-full h-full"
+                                  unoptimized={!thumbUrl.includes('res.cloudinary.com')}
+                                />
+                              ) : (
+                                <Package size={20} className="text-primary" />
+                              )}
                             </div>
                             <span className="font-medium text-foreground">{item.name}</span>
                           </div>

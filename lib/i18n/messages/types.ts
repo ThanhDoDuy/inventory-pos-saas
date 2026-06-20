@@ -521,6 +521,28 @@ export interface Messages {
       updateFailed: string;
       deactivateFailed: string;
     };
+    images: {
+      title: string;
+      upload: string;
+      primary: string;
+      setPrimary: string;
+      delete: string;
+      empty: string;
+      hint: string;
+      confirm: {
+        delete: string;
+      };
+      error: {
+        invalidType: string;
+        tooLarge: string;
+        limitReached: string;
+        signFailed: string;
+        uploadFailed: string;
+        confirmFailed: string;
+        primaryFailed: string;
+        deleteFailed: string;
+      };
+    };
     detail: {
       productInfo: string;
       pricing: string;

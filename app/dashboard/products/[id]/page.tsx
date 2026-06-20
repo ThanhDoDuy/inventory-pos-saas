@@ -11,6 +11,7 @@ import {
 import { usePriceTiers } from '@/hooks/use-price-tiers';
 import { getStockStatusColor } from '@/lib/format';
 import { useFormat, useTranslation } from '@/lib/i18n/use-translation';
+import { ProductImageGallery } from '@/components/product-image-gallery';
 
 function stockStatusColorKey(stock: number, minimumStock = 0) {
   if (stock <= 0) return 'Out of Stock';
@@ -231,6 +232,8 @@ export default function ProductDetailPage() {
               </div>
             )}
           </div>
+
+          <ProductImageGallery productId={productId} />
 
           <div className="bg-card rounded-lg border border-border p-6">
             <h2 className="text-xl font-bold text-foreground mb-6">{t('products.detail.pricing')}</h2>

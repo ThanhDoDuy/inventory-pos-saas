@@ -4,6 +4,7 @@ import { apiGet, apiPatch, apiPost, apiDelete, extractErrorMessage } from '@/lib
 import { stringifyId } from '@/lib/format';
 import { tMessage } from '@/lib/i18n/get-message';
 import { DEFAULT_PAGE_SIZE, paginationFromListResponse } from '@/lib/pagination';
+import type { ProductImageItem } from '@/lib/product-images';
 
 async function swrFetcher<T>(path: string): Promise<T> {
   return apiGet<T>(path);
@@ -22,6 +23,8 @@ export interface ProductItem {
   barcode?: string | null;
   category?: { id: string; name: string };
   category_id?: string | null;
+  image_url?: string | null;
+  images?: ProductImageItem[];
 }
 
 export interface CategoryItem {
@@ -42,6 +45,28 @@ export interface CategoriesListResponse {
   total: number;
   page: number;
   limit: number;
+}
+
+function mapProductImage(raw: Record<string, unknown>): ProductImageItem {
+  const urlsRaw = raw.urls as Record<string, string> | undefined;
+  return {
+    id: stringifyId(raw.id ?? raw._id),
+    public_id: String(raw.public_id ?? ''),
+    secure_url: String(raw.secure_url ?? ''),
+    width: Number(raw.width ?? 0),
+    height: Number(raw.height ?? 0),
+    format: String(raw.format ?? ''),
+    bytes: Number(raw.bytes ?? 0),
+    is_primary: Boolean(raw.is_primary),
+    sort_order: Number(raw.sort_order ?? 0),
+    uploaded_at: raw.uploaded_at ? String(raw.uploaded_at) : undefined,
+    urls: {
+      thumb: urlsRaw?.thumb ?? String(raw.secure_url ?? ''),
+      list: urlsRaw?.list ?? String(raw.secure_url ?? ''),
+      detail: urlsRaw?.detail ?? String(raw.secure_url ?? ''),
+      zoom: urlsRaw?.zoom ?? String(raw.secure_url ?? ''),
+    },
+  };
 }
 
 function mapProduct(raw: Record<string, unknown>): ProductItem {
@@ -81,6 +106,10 @@ function mapProduct(raw: Record<string, unknown>): ProductItem {
           id: stringifyId(populatedCategory.id ?? populatedCategory._id),
           name: String(populatedCategory.name ?? ''),
         }
+      : undefined,
+    image_url: raw.image_url != null ? String(raw.image_url) : null,
+    images: Array.isArray(raw.images)
+      ? raw.images.map((item) => mapProductImage(item as Record<string, unknown>))
       : undefined,
   };
 }

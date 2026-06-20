@@ -524,6 +524,28 @@ export const en: Messages = {
       updateFailed: 'Failed to update product',
       deactivateFailed: 'Failed to deactivate product',
     },
+    images: {
+      title: 'Product images',
+      upload: 'Upload',
+      primary: 'Primary',
+      setPrimary: 'Set as primary',
+      delete: 'Remove',
+      empty: 'No images yet',
+      hint: 'Up to {max} images, 5 MB each (JPEG, PNG, WebP, AVIF)',
+      confirm: {
+        delete: 'Remove this image?',
+      },
+      error: {
+        invalidType: 'Only JPEG, PNG, WebP and AVIF images are allowed',
+        tooLarge: 'Image must be 5 MB or smaller',
+        limitReached: 'Maximum number of images reached',
+        signFailed: 'Could not prepare upload',
+        uploadFailed: 'Upload to Cloudinary failed',
+        confirmFailed: 'Could not save image metadata',
+        primaryFailed: 'Could not set primary image',
+        deleteFailed: 'Could not remove image',
+      },
+    },
     detail: {
       productInfo: 'Product information',
       pricing: 'Pricing',

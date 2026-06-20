@@ -524,6 +524,28 @@ export const vi: Messages = {
       updateFailed: 'Không thể cập nhật sản phẩm',
       deactivateFailed: 'Không thể ngừng bán sản phẩm',
     },
+    images: {
+      title: 'Hình ảnh sản phẩm',
+      upload: 'Tải lên',
+      primary: 'Ảnh chính',
+      setPrimary: 'Đặt làm ảnh chính',
+      delete: 'Xóa',
+      empty: 'Chưa có hình ảnh',
+      hint: 'Tối đa {max} ảnh, mỗi ảnh 5 MB (JPEG, PNG, WebP, AVIF)',
+      confirm: {
+        delete: 'Xóa hình ảnh này?',
+      },
+      error: {
+        invalidType: 'Chỉ chấp nhận JPEG, PNG, WebP và AVIF',
+        tooLarge: 'Ảnh không được lớn hơn 5 MB',
+        limitReached: 'Đã đạt số lượng ảnh tối đa',
+        signFailed: 'Không thể chuẩn bị tải lên',
+        uploadFailed: 'Tải lên Cloudinary thất bại',
+        confirmFailed: 'Không thể lưu thông tin ảnh',
+        primaryFailed: 'Không thể đặt ảnh chính',
+        deleteFailed: 'Không thể xóa ảnh',
+      },
+    },
     detail: {
       productInfo: 'Thông tin sản phẩm',
       pricing: 'Giá',
