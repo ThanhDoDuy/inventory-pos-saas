@@ -7,6 +7,7 @@ import {
   extractErrorMessage,
   setStoredTokens,
 } from './api-client';
+import { tMessage } from '@/lib/i18n/get-message';
 
 export interface AuthUser {
   id: string;
@@ -117,7 +118,7 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
       const data = await apiPost<AuthPayload>('/auth/login', { email, password });
       applySession(set, data);
     } catch (error) {
-      const errorMessage = extractErrorMessage(error, 'Đăng nhập thất bại');
+      const errorMessage = extractErrorMessage(error, tMessage('auth.loginFailed'));
       set({ error: errorMessage, isLoading: false, isAuthenticated: false });
       throw error;
     }
@@ -134,7 +135,7 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
       });
       applySession(set, data);
     } catch (error) {
-      const errorMessage = extractErrorMessage(error, 'Đăng ký thất bại');
+      const errorMessage = extractErrorMessage(error, tMessage('auth.signupFailed'));
       set({ error: errorMessage, isLoading: false, isAuthenticated: false });
       throw error;
     }

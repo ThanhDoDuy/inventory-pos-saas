@@ -1,4 +1,6 @@
-import { formatDateTime, formatMoney } from '@/lib/format';
+import type { Locale } from '@/lib/i18n/messages';
+import { getStoredLocale } from '@/lib/i18n/get-message';
+import { getReceiptLabels, type ReceiptLabels } from '@/lib/i18n/receipt-labels';
 
 export interface ReceiptLineItem {
   name: string;
@@ -32,24 +34,31 @@ export interface ReceiptData {
   notes?: string;
 }
 
-const PAYMENT_LABELS: Record<string, string> = {
-  CASH: 'Tiền mặt',
-  BANK_TRANSFER: 'Chuyển khoản',
-  CARD: 'Thẻ',
-  E_WALLET: 'Ví điện tử',
-};
-
-function paymentLabel(method: string) {
-  return PAYMENT_LABELS[method.toUpperCase()] ?? method;
+function formatReceiptMoney(value: number, locale: Locale) {
+  const numberLocale = locale === 'en' ? 'en-US' : 'vi-VN';
+  const formatted = new Intl.NumberFormat(numberLocale).format(value);
+  return locale === 'en' ? `${formatted} VND` : `${formatted}₫`;
 }
 
-function buildCustomerBlock(customer: ReceiptCustomer): string {
+function formatReceiptDateTime(value: string, locale: Locale) {
+  const numberLocale = locale === 'en' ? 'en-US' : 'vi-VN';
+  return new Intl.DateTimeFormat(numberLocale, {
+    dateStyle: 'short',
+    timeStyle: 'short',
+  }).format(new Date(value));
+}
+
+function paymentLabel(method: string, labels: ReceiptLabels) {
+  return labels.paymentMethods[method.toUpperCase()] ?? method;
+}
+
+function buildCustomerBlock(customer: ReceiptCustomer, labels: ReceiptLabels): string {
   return `
   <div class="customer-block">
-    <div class="meta"><strong>Khách hàng:</strong> ${escapeHtml(customer.name)}</div>
+    <div class="meta"><strong>${escapeHtml(labels.customerLabel)}</strong> ${escapeHtml(customer.name)}</div>
     ${
       customer.taxCode
-        ? `<div class="meta"><strong>MST:</strong> ${escapeHtml(customer.taxCode)}</div>`
+        ? `<div class="meta"><strong>${escapeHtml(labels.taxCodeLabel)}</strong> ${escapeHtml(customer.taxCode)}</div>`
         : ''
     }
     ${
@@ -59,14 +68,14 @@ function buildCustomerBlock(customer: ReceiptCustomer): string {
     }
     ${
       customer.phone
-        ? `<div class="meta">ĐT: ${escapeHtml(customer.phone)}</div>`
+        ? `<div class="meta">${escapeHtml(labels.phonePrefix)} ${escapeHtml(customer.phone)}</div>`
         : ''
     }
   </div>
   <div class="divider"></div>`;
 }
 
-function buildReceiptHtml(data: ReceiptData): string {
+function buildReceiptHtml(data: ReceiptData, labels: ReceiptLabels, locale: Locale): string {
   const discountAmount = Math.round(data.subtotal * (data.discountPercent / 100));
   const rows = data.items
     .map(
@@ -74,17 +83,20 @@ function buildReceiptHtml(data: ReceiptData): string {
       <tr>
         <td class="item-name">${escapeHtml(item.name)}</td>
         <td class="item-qty">${item.quantity}</td>
-        <td class="item-price">${formatMoney(item.unitPrice)}</td>
-        <td class="item-total">${formatMoney(item.total)}</td>
+        <td class="item-price">${formatReceiptMoney(item.unitPrice, locale)}</td>
+        <td class="item-total">${formatReceiptMoney(item.total, locale)}</td>
       </tr>`,
     )
     .join('');
 
+  const htmlLang = locale === 'en' ? 'en' : 'vi';
+  const dateLocale = locale === 'en' ? 'en-US' : 'vi-VN';
+
   return `<!DOCTYPE html>
-<html lang="vi">
+<html lang="${htmlLang}">
 <head>
   <meta charset="utf-8" />
-  <title>Hóa đơn ${escapeHtml(data.invoiceNumber)}</title>
+  <title>${escapeHtml(labels.documentTitle.replace('{number}', data.invoiceNumber))}</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -140,7 +152,7 @@ function buildReceiptHtml(data: ReceiptData): string {
 </head>
 <body>
   <div class="center">
-    <div class="store">${escapeHtml(data.storeName ?? 'Cửa hàng')}</div>
+    <div class="store">${escapeHtml(data.storeName ?? labels.defaultStoreName)}</div>
     ${
       data.storeAddress
         ? `<div class="meta">${escapeHtml(data.storeAddress)}</div>`
@@ -148,59 +160,63 @@ function buildReceiptHtml(data: ReceiptData): string {
     }
     ${
       data.storePhone
-        ? `<div class="meta">ĐT: ${escapeHtml(data.storePhone)}</div>`
+        ? `<div class="meta">${escapeHtml(labels.phonePrefix)} ${escapeHtml(data.storePhone)}</div>`
         : ''
     }
-    <div class="meta">HÓA ĐƠN BÁN HÀNG</div>
+    <div class="meta">${escapeHtml(labels.invoiceTitle)}</div>
   </div>
   <div class="meta center">
-    Mã: <strong>${escapeHtml(data.invoiceNumber)}</strong><br/>
-    ${data.createdAt ? formatDateTime(data.createdAt) : new Date().toLocaleString('vi-VN')}
+    ${escapeHtml(labels.codeLabel)} <strong>${escapeHtml(data.invoiceNumber)}</strong><br/>
+    ${
+      data.createdAt
+        ? formatReceiptDateTime(data.createdAt, locale)
+        : new Date().toLocaleString(dateLocale)
+    }
   </div>
-  ${data.customer ? buildCustomerBlock(data.customer) : '<div class="divider"></div>'}
+  ${data.customer ? buildCustomerBlock(data.customer, labels) : '<div class="divider"></div>'}
   <table>
     <thead>
       <tr>
-        <th>Sản phẩm</th>
-        <th>SL</th>
-        <th>Đơn giá</th>
-        <th>TT</th>
+        <th>${escapeHtml(labels.columns.product)}</th>
+        <th>${escapeHtml(labels.columns.qty)}</th>
+        <th>${escapeHtml(labels.columns.unitPrice)}</th>
+        <th>${escapeHtml(labels.columns.lineTotal)}</th>
       </tr>
     </thead>
     <tbody>${rows}</tbody>
   </table>
   <div class="divider"></div>
   <div class="summary">
-    <div class="summary-row"><span>Tạm tính</span><span>${formatMoney(data.subtotal)}</span></div>
+    <div class="summary-row"><span>${escapeHtml(labels.subtotal)}</span><span>${formatReceiptMoney(data.subtotal, locale)}</span></div>
     ${
       data.discountPercent > 0
-        ? `<div class="summary-row"><span>Giảm giá (${data.discountPercent}%)</span><span>-${formatMoney(discountAmount)}</span></div>`
+        ? `<div class="summary-row"><span>${escapeHtml(labels.discount.replace('{percent}', String(data.discountPercent)))}</span><span>-${formatReceiptMoney(discountAmount, locale)}</span></div>`
         : ''
     }
     ${
       data.tax > 0
-        ? `<div class="summary-row"><span>Thuế</span><span>${formatMoney(data.tax)}</span></div>`
+        ? `<div class="summary-row"><span>${escapeHtml(labels.tax)}</span><span>${formatReceiptMoney(data.tax, locale)}</span></div>`
         : ''
     }
-    <div class="summary-row total"><span>Tổng cộng</span><span>${formatMoney(data.total)}</span></div>
-    <div class="summary-row"><span>Thanh toán</span><span>${paymentLabel(data.paymentMethod)}</span></div>
+    <div class="summary-row total"><span>${escapeHtml(labels.grandTotal)}</span><span>${formatReceiptMoney(data.total, locale)}</span></div>
+    <div class="summary-row"><span>${escapeHtml(labels.payment)}</span><span>${paymentLabel(data.paymentMethod, labels)}</span></div>
     ${
       data.amountPaid !== undefined
-        ? `<div class="summary-row"><span>Khách trả</span><span>${formatMoney(data.amountPaid)}</span></div>`
+        ? `<div class="summary-row"><span>${escapeHtml(labels.amountPaid)}</span><span>${formatReceiptMoney(data.amountPaid, locale)}</span></div>`
         : ''
     }
     ${
       data.change !== undefined && data.change > 0
-        ? `<div class="summary-row"><span>Tiền thừa</span><span>${formatMoney(data.change)}</span></div>`
+        ? `<div class="summary-row"><span>${escapeHtml(labels.change)}</span><span>${formatReceiptMoney(data.change, locale)}</span></div>`
         : ''
     }
   </div>
   ${
     data.notes
-      ? `<div class="divider"></div><div class="meta">Ghi chú: ${escapeHtml(data.notes)}</div>`
+      ? `<div class="divider"></div><div class="meta">${escapeHtml(labels.notes)} ${escapeHtml(data.notes)}</div>`
       : ''
   }
-  <div class="footer">Cảm ơn quý khách!</div>
+  <div class="footer">${escapeHtml(labels.thankYou)}</div>
 </body>
 </html>`;
 }
@@ -213,8 +229,13 @@ function escapeHtml(value: string) {
     .replace(/"/g, '&quot;');
 }
 
-export function printReceipt(data: ReceiptData) {
-  const html = buildReceiptHtml(data);
+export function printReceipt(
+  data: ReceiptData,
+  options?: { labels?: ReceiptLabels; locale?: Locale },
+) {
+  const locale = options?.locale ?? getStoredLocale();
+  const labels = options?.labels ?? getReceiptLabels(locale);
+  const html = buildReceiptHtml(data, labels, locale);
 
   const iframe = document.createElement('iframe');
   iframe.setAttribute('title', 'print-receipt');
@@ -226,7 +247,7 @@ export function printReceipt(data: ReceiptData) {
   const doc = win?.document;
   if (!win || !doc) {
     document.body.removeChild(iframe);
-    throw new Error('Không thể khởi tạo bản in');
+    throw new Error(labels.printInitFailed);
   }
 
   doc.open();

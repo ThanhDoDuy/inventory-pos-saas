@@ -12,12 +12,14 @@ interface SalesChartProps {
 
 export function SalesChart({
   data = [],
-  emptyMessage = 'Chưa có dữ liệu doanh thu',
+  emptyMessage,
 }: SalesChartProps) {
   if (data.length === 0) {
     return (
       <div className="w-full h-64 flex items-center justify-center bg-secondary/50 rounded-lg">
-        <p className="text-muted-foreground text-sm">{emptyMessage}</p>
+        {emptyMessage ? (
+          <p className="text-muted-foreground text-sm">{emptyMessage}</p>
+        ) : null}
       </div>
     );
   }
@@ -56,10 +58,12 @@ interface CategoryBreakdownProps {
 
 export function CategoryBreakdown({
   items = [],
-  emptyMessage = 'Chưa có dữ liệu sản phẩm',
+  emptyMessage,
 }: CategoryBreakdownProps) {
   if (items.length === 0) {
-    return <p className="text-muted-foreground text-sm py-8 text-center">{emptyMessage}</p>;
+    return emptyMessage ? (
+      <p className="text-muted-foreground text-sm py-8 text-center">{emptyMessage}</p>
+    ) : null;
   }
 
   const total = items.reduce((sum, item) => sum + item.value, 0) || 1;

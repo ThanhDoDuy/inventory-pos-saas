@@ -15,12 +15,6 @@ export function stringifyId(id: unknown): string {
   return String(id);
 }
 
-export function getStockStatus(stock: number, minimumStock = 0) {
-  if (stock <= 0) return 'Out of Stock';
-  if (stock <= minimumStock) return 'Low Stock';
-  return 'In Stock';
-}
-
 export function getStockStatusColor(status: string) {
   switch (status) {
     case 'In Stock':
@@ -83,19 +77,6 @@ export function formatDateTime(value?: string) {
   }).format(new Date(value));
 }
 
-const PO_STATUS_LABELS: Record<string, string> = {
-  DRAFT: 'Nháp',
-  APPROVED: 'Đã duyệt',
-  PARTIALLY_RECEIVED: 'Nhận một phần',
-  RECEIVED: 'Đã nhận',
-  CANCELLED: 'Đã hủy',
-};
-
-export function getPoStatusLabel(status?: string) {
-  if (!status) return '—';
-  return PO_STATUS_LABELS[status] ?? status;
-}
-
 export function getPoStatusColor(status?: string) {
   switch (status) {
     case 'DRAFT':
@@ -111,37 +92,4 @@ export function getPoStatusColor(status?: string) {
     default:
       return 'bg-gray-100 text-gray-800';
   }
-}
-
-const PARTY_STATUS_LABELS: Record<string, string> = {
-  ACTIVE: 'Hoạt động',
-  DISABLED: 'Vô hiệu',
-};
-
-export function getPartyStatusLabel(status?: string) {
-  if (!status) return '—';
-  return PARTY_STATUS_LABELS[status] ?? status;
-}
-
-const ADJUSTMENT_REASON_LABELS: Record<string, string> = {
-  DAMAGE: 'Hư hỏng',
-  LOSS: 'Thất thoát',
-  EXPIRED: 'Hết hạn',
-  CORRECTION: 'Điều chỉnh',
-};
-
-export function getAdjustmentReasonLabel(reason?: string) {
-  if (!reason) return '—';
-  return ADJUSTMENT_REASON_LABELS[reason] ?? reason;
-}
-
-const TRANSACTION_TYPE_LABELS: Record<string, string> = {
-  IN: 'Nhập',
-  OUT: 'Xuất',
-  ADJUST: 'Điều chỉnh',
-};
-
-export function getTransactionTypeLabel(type?: string) {
-  if (!type) return '—';
-  return TRANSACTION_TYPE_LABELS[type] ?? type;
 }

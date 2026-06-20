@@ -1,7 +1,7 @@
 'use client';
 
-import { BarChart3, Calendar, Download, TrendingUp, Loader2, PackageX } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { BarChart3, Calendar, Download, TrendingUp, Loader2, PackageX, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
 import { SalesChart, CategoryBreakdown } from '@/components/sales-chart';
 import {
   exportReport,
@@ -22,14 +22,24 @@ export default function ReportsPage() {
   const [dateRange, setDateRange] = useState<DateRangePreset>('month');
   const [isExporting, setIsExporting] = useState(false);
   const [inactiveDays, setInactiveDays] = useState(30);
+  const [deadStockPage, setDeadStockPage] = useState(1);
   const [isExportingDeadStock, setIsExportingDeadStock] = useState(false);
+
+  useEffect(() => {
+    setDeadStockPage(1);
+  }, [inactiveDays]);
 
   const { from, to } = useMemo(() => getDateRange(dateRange), [dateRange]);
   const { dashboard } = useDashboard();
   const { revenue, isLoading: revenueLoading } = useRevenueByPreset(dateRange);
   const { products: topProducts, isLoading: topLoading } = useTopProductsByPreset(dateRange, 5);
   const { lowStock, isLoading: lowStockLoading } = useLowStock();
-  const { deadStock, isLoading: deadStockLoading } = useDeadStock(inactiveDays);
+  const {
+    deadStock,
+    pagination: deadStockPagination,
+    summary: deadStockSummary,
+    isLoading: deadStockLoading,
+  } = useDeadStock(inactiveDays, deadStockPage, 10);
   const { invoices, isLoading: invoicesLoading } = useInvoices(from, to, 20);
 
   const salesChartData = useMemo(
@@ -78,10 +88,8 @@ export default function ReportsPage() {
     }
   };
 
-  const deadStockTotalValue = useMemo(
-    () => deadStock.reduce((sum, row) => sum + row.stock_value, 0),
-    [deadStock],
-  );
+  const deadStockTotalValue = deadStockSummary?.total_value ?? 0;
+  const deadStockTotalItems = deadStockSummary?.total_items ?? 0;
 
   const presetLabels: Record<DateRangePreset, string> = {
     week: t('reports.preset.week'),
@@ -209,7 +217,7 @@ export default function ReportsPage() {
               {t('common.loading')}
             </div>
           ) : (
-            <SalesChart data={salesChartData} />
+            <SalesChart data={salesChartData} emptyMessage={t('reports.empty.noRevenueData')} />
           )}
         </div>
 
@@ -221,7 +229,10 @@ export default function ReportsPage() {
               {t('common.loading')}
             </div>
           ) : (
-            <CategoryBreakdown items={topProductsBreakdown} />
+            <CategoryBreakdown
+              items={topProductsBreakdown}
+              emptyMessage={t('reports.empty.noProductData')}
+            />
           )}
         </div>
       </div>
@@ -266,7 +277,7 @@ export default function ReportsPage() {
         <div className="px-6 py-4 bg-secondary/30 border-b border-border flex flex-wrap gap-6 text-sm">
           <div>
             <span className="text-muted-foreground">{t('reports.deadStock.itemCount')}: </span>
-            <span className="font-semibold">{deadStock.length}</span>
+            <span className="font-semibold">{deadStockTotalItems}</span>
           </div>
           <div>
             <span className="text-muted-foreground">{t('reports.deadStock.totalValue')}: </span>
@@ -311,6 +322,44 @@ export default function ReportsPage() {
                 )}
               </tbody>
             </table>
+          </div>
+        )}
+
+        {deadStockPagination && deadStockPagination.total_pages > 1 && (
+          <div className="px-6 py-4 border-t border-border flex items-center justify-between gap-4">
+            <p className="text-sm text-muted-foreground">
+              {t('common.pageOf', {
+                page: deadStockPagination.page,
+                totalPages: deadStockPagination.total_pages,
+              })}
+            </p>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setDeadStockPage((p) => Math.max(1, p - 1))}
+                disabled={deadStockLoading || deadStockPagination.page <= 1}
+                className="flex items-center gap-1 px-3 py-2 border border-border rounded-lg text-sm font-semibold hover:bg-secondary disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <ChevronLeft size={16} />
+                {t('common.previous')}
+              </button>
+              <button
+                type="button"
+                onClick={() =>
+                  setDeadStockPage((p) =>
+                    Math.min(deadStockPagination.total_pages, p + 1),
+                  )
+                }
+                disabled={
+                  deadStockLoading ||
+                  deadStockPagination.page >= deadStockPagination.total_pages
+                }
+                className="flex items-center gap-1 px-3 py-2 border border-border rounded-lg text-sm font-semibold hover:bg-secondary disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {t('common.next')}
+                <ChevronRight size={16} />
+              </button>
+            </div>
           </div>
         )}
       </div>

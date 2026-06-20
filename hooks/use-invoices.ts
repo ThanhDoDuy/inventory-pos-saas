@@ -2,6 +2,8 @@ import { useMemo } from 'react';
 import useSWR from 'swr';
 import { apiGet, apiPost, API_BASE_URL, extractErrorMessage, swrFetcher as fetcher } from '@/lib/api-client';
 import { stringifyId } from '@/lib/format';
+import { getUnnamedProductLabel } from '@/lib/i18n/receipt-labels';
+import { tMessage } from '@/lib/i18n/get-message';
 import type { CustomerItem } from '@/hooks/use-customers';
 import type { ReceiptCustomer } from '@/lib/print-receipt';
 
@@ -111,7 +113,7 @@ export async function createInvoice(payload: CreateInvoicePayload) {
     const raw = await apiPost<Record<string, unknown>>('/invoices', payload);
     return mapInvoiceDetail(raw);
   } catch (error) {
-    throw new Error(extractErrorMessage(error, 'Thanh toán thất bại'));
+    throw new Error(extractErrorMessage(error, tMessage('pos.payment.failed')));
   }
 }
 
@@ -120,7 +122,7 @@ export async function getInvoice(id: string) {
     const raw = await apiGet<Record<string, unknown>>(`/invoices/${id}`);
     return mapInvoiceDetail(raw);
   } catch (error) {
-    throw new Error(extractErrorMessage(error, 'Không tải được hóa đơn'));
+    throw new Error(extractErrorMessage(error, tMessage('invoices.error.loadFailed')));
   }
 }
 
@@ -131,7 +133,7 @@ export async function cancelInvoice(id: string, reason?: string) {
     });
     return mapInvoiceDetail(raw);
   } catch (error) {
-    throw new Error(extractErrorMessage(error, 'Không thể hủy hóa đơn'));
+    throw new Error(extractErrorMessage(error, tMessage('invoices.error.cancelFailed')));
   }
 }
 
@@ -147,7 +149,7 @@ export async function refundInvoice(
     });
     return mapInvoiceDetail(raw);
   } catch (error) {
-    throw new Error(extractErrorMessage(error, 'Không thể hoàn tiền hóa đơn'));
+    throw new Error(extractErrorMessage(error, tMessage('invoices.error.refundFailed')));
   }
 }
 
@@ -231,7 +233,7 @@ export function invoiceToReceiptData(
     storePhone: extras?.storePhone,
     customer,
     items: invoice.items.map((item) => ({
-      name: item.product_name ?? 'Sản phẩm',
+      name: item.product_name ?? getUnnamedProductLabel(),
       quantity: item.quantity,
       unitPrice: item.unit_price,
       total: item.total,

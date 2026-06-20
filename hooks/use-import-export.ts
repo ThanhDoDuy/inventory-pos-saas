@@ -1,4 +1,5 @@
 import { downloadFile, apiPost, apiPostForm, extractErrorMessage } from '@/lib/api-client';
+import { tMessage } from '@/lib/i18n/get-message';
 
 function dateStamp(): string {
   return new Date().toISOString().slice(0, 10);
@@ -127,7 +128,7 @@ export async function previewProductsImport(
       { mode },
     );
   } catch (error) {
-    throw new Error(extractErrorMessage(error, 'Không thể xem trước file import'));
+    throw new Error(extractErrorMessage(error, tMessage('importExport.error.previewFailed')));
   }
 }
 
@@ -141,7 +142,7 @@ export async function confirmProductsImport(previewToken: string) {
       failures: Array<{ line: number; sku: string; message: string }>;
     }>('/products/import/confirm', { previewToken });
   } catch (error) {
-    throw new Error(extractErrorMessage(error, 'Không thể import sản phẩm'));
+    throw new Error(extractErrorMessage(error, tMessage('importExport.error.importFailed')));
   }
 }
 
@@ -174,7 +175,7 @@ export async function previewSuppliersImport(
       { mode },
     );
   } catch (error) {
-    throw new Error(extractErrorMessage(error, 'Không thể xem trước file import'));
+    throw new Error(extractErrorMessage(error, tMessage('importExport.error.previewFailed')));
   }
 }
 
@@ -188,7 +189,7 @@ export async function confirmSuppliersImport(previewToken: string) {
       failures: Array<{ line: number; phone: string; message: string }>;
     }>('/suppliers/import/confirm', { previewToken });
   } catch (error) {
-    throw new Error(extractErrorMessage(error, 'Không thể import nhà cung cấp'));
+    throw new Error(extractErrorMessage(error, tMessage('importExport.error.importSuppliersFailed')));
   }
 }
 
@@ -223,7 +224,7 @@ export async function previewCustomersImport(
       { mode },
     );
   } catch (error) {
-    throw new Error(extractErrorMessage(error, 'Không thể xem trước file import'));
+    throw new Error(extractErrorMessage(error, tMessage('importExport.error.previewFailed')));
   }
 }
 
@@ -237,7 +238,7 @@ export async function confirmCustomersImport(previewToken: string) {
       failures: Array<{ line: number; phone: string; message: string }>;
     }>('/customers/import/confirm', { previewToken });
   } catch (error) {
-    throw new Error(extractErrorMessage(error, 'Không thể import khách hàng'));
+    throw new Error(extractErrorMessage(error, tMessage('importExport.error.importCustomersFailed')));
   }
 }
 
@@ -279,7 +280,7 @@ export async function previewPurchaseOrdersImport(file: File) {
       formData,
     );
   } catch (error) {
-    throw new Error(extractErrorMessage(error, 'Không thể xem trước file import'));
+    throw new Error(extractErrorMessage(error, tMessage('importExport.error.previewFailed')));
   }
 }
 
@@ -292,7 +293,7 @@ export async function confirmPurchaseOrdersImport(previewToken: string) {
       failures: Array<{ poGroup: string; message: string }>;
     }>('/purchase-orders/import/confirm', { previewToken });
   } catch (error) {
-    throw new Error(extractErrorMessage(error, 'Không thể import đơn mua hàng'));
+    throw new Error(extractErrorMessage(error, tMessage('importExport.error.importPurchaseOrdersFailed')));
   }
 }
 

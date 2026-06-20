@@ -17,16 +17,15 @@ import { useRoles } from '@/hooks/use-roles';
 import { usePermissions } from '@/hooks/use-permissions';
 import { getRoleColor } from '@/lib/format';
 import {
-  formatPermissionAction,
-  getModuleLabel,
   roleGrantsPermission,
 } from '@/lib/rbac-utils';
-import { useTranslation } from '@/lib/i18n/use-translation';
+import { useFormat, useTranslation } from '@/lib/i18n/use-translation';
 
 type RbacTab = 'overview' | 'matrix' | 'custom';
 
 export default function RbacPage() {
   const { t } = useTranslation();
+  const { getModuleLabel, formatPermissionAction } = useFormat();
   const { roles, isLoading: rolesLoading, error: rolesError, mutate } = useRoles();
   const { permissions, isLoading: permLoading, error: permError } = usePermissions();
   const [activeTab, setActiveTab] = useState<RbacTab>('overview');

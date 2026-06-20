@@ -8,6 +8,7 @@ import {
   extractErrorMessage,
   swrFetcher as fetcher,
 } from '@/lib/api-client';
+import { tMessage } from '@/lib/i18n/get-message';
 
 export interface TenantProfile {
   id: string;
@@ -66,6 +67,6 @@ export async function updateTenantProfile(data: {
     const raw = await apiPatch<Record<string, unknown>>('/tenants/me', data);
     return mapTenant(raw);
   } catch (error) {
-    throw new Error(extractErrorMessage(error, 'Could not save business information'));
+    throw new Error(extractErrorMessage(error, tMessage('settings.business.error')));
   }
 }

@@ -7,6 +7,7 @@ import {
   swrFetcher as fetcher,
 } from '@/lib/api-client';
 import { stringifyId } from '@/lib/format';
+import { tMessage } from '@/lib/i18n/get-message';
 
 export const NOTIFICATION_TYPES = ['LOW_STOCK', 'PO_RECEIVED', 'INVOICE_PAID'] as const;
 
@@ -77,7 +78,7 @@ export async function markNotificationRead(id: string) {
   try {
     return await apiPatch<Record<string, unknown>>(`/notifications/${id}/read`);
   } catch (error) {
-    throw new Error(extractErrorMessage(error, 'Could not mark notification as read'));
+    throw new Error(extractErrorMessage(error, tMessage('notifications.error.markReadFailed')));
   }
 }
 
@@ -87,6 +88,6 @@ export async function markAllNotificationsRead() {
       '/notifications/read-all',
     );
   } catch (error) {
-    throw new Error(extractErrorMessage(error, 'Could not mark all as read'));
+    throw new Error(extractErrorMessage(error, tMessage('notifications.error.markAllFailed')));
   }
 }

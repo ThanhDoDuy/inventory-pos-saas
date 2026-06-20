@@ -52,6 +52,20 @@ export interface DeadStockRow {
   inactive_days: number;
 }
 
+export interface DeadStockResponse {
+  items: DeadStockRow[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    total_pages: number;
+  };
+  summary: {
+    total_items: number;
+    total_value: number;
+  };
+}
+
 export function useDashboard() {
   const { data, error, isLoading, mutate } = useSWR<DashboardData>(
     `${API_BASE_URL}/reports/dashboard`,
@@ -113,14 +127,24 @@ export function useLowStock() {
   return { lowStock: data ?? [], isLoading, error };
 }
 
-export function useDeadStock(inactiveDays = 30) {
-  const { data, error, isLoading, mutate } = useSWR<DeadStockRow[]>(
-    `${API_BASE_URL}/reports/dead-stock?inactiveDays=${inactiveDays}`,
+export function useDeadStock(
+  inactiveDays = 30,
+  page = 1,
+  limit = 10,
+) {
+  const params = new URLSearchParams({
+    inactiveDays: String(inactiveDays),
+    page: String(page),
+    limit: String(limit),
+  });
+
+  const { data, error, isLoading, mutate } = useSWR<DeadStockResponse>(
+    `${API_BASE_URL}/reports/dead-stock?${params.toString()}`,
     fetcher,
     { revalidateOnFocus: false },
   );
 
-  const deadStock = (data ?? []).map((row) => ({
+  const deadStock = (data?.items ?? []).map((row) => ({
     product_id: String(row.product_id ?? ''),
     name: String(row.name ?? ''),
     sku: String(row.sku ?? ''),
@@ -129,7 +153,14 @@ export function useDeadStock(inactiveDays = 30) {
     inactive_days: Number(row.inactive_days ?? inactiveDays),
   }));
 
-  return { deadStock, isLoading, error, mutate };
+  return {
+    deadStock,
+    pagination: data?.pagination,
+    summary: data?.summary,
+    isLoading,
+    error,
+    mutate,
+  };
 }
 
 export async function exportReport(

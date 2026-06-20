@@ -96,6 +96,24 @@ export function useFormat() {
     [t],
   );
 
+  const getModuleLabel = useCallback(
+    (module: string) => {
+      const key = `rbac.modules.${module}`;
+      const label = t(key);
+      return label === key ? module : label;
+    },
+    [t],
+  );
+
+  const formatPermissionAction = useCallback(
+    (action: string) => {
+      const key = `rbac.actions.${action}`;
+      const label = t(key);
+      return label === key ? action : label;
+    },
+    [t],
+  );
+
   return {
     locale,
     formatPrice,
@@ -106,6 +124,8 @@ export function useFormat() {
     getAdjustmentReasonLabel,
     getTransactionTypeLabel,
     getStockStatus,
+    getModuleLabel,
+    formatPermissionAction,
   };
 }
 

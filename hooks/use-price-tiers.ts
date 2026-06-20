@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import useSWR from 'swr';
 import { apiGet, apiPatch, apiPost, extractErrorMessage } from '@/lib/api-client';
 import { stringifyId } from '@/lib/format';
+import { tMessage } from '@/lib/i18n/get-message';
 
 export interface PriceTierItem {
   id: string;
@@ -43,7 +44,7 @@ export async function createPriceTier(payload: { code: string; label: string }) 
     const raw = await apiPost<Record<string, unknown>>('/price-tiers', payload);
     return mapPriceTier(raw);
   } catch (error) {
-    throw new Error(extractErrorMessage(error, 'Không thể tạo loại giá'));
+    throw new Error(extractErrorMessage(error, tMessage('settings.priceTiers.error')));
   }
 }
 
@@ -55,6 +56,6 @@ export async function updatePriceTier(
     const raw = await apiPatch<Record<string, unknown>>(`/price-tiers/${code}`, payload);
     return mapPriceTier(raw);
   } catch (error) {
-    throw new Error(extractErrorMessage(error, 'Không thể cập nhật loại giá'));
+    throw new Error(extractErrorMessage(error, tMessage('settings.priceTiers.error')));
   }
 }

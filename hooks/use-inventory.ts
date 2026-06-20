@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import useSWR from 'swr';
 import { apiGet, apiPatch, apiPost, apiDelete, extractErrorMessage } from '@/lib/api-client';
 import { stringifyId } from '@/lib/format';
+import { tMessage } from '@/lib/i18n/get-message';
 
 async function swrFetcher<T>(path: string): Promise<T> {
   return apiGet<T>(path);
@@ -135,7 +136,7 @@ export async function createCategory(data: { name: string; description?: string 
   try {
     return await apiPost('/categories', data);
   } catch (error) {
-    throw new Error(extractErrorMessage(error, 'Không thể tạo danh mục'));
+    throw new Error(extractErrorMessage(error, tMessage('categories.error.createFailed')));
   }
 }
 
@@ -146,7 +147,7 @@ export async function updateCategory(
   try {
     return await apiPatch(`/categories/${id}`, data);
   } catch (error) {
-    throw new Error(extractErrorMessage(error, 'Không thể cập nhật danh mục'));
+    throw new Error(extractErrorMessage(error, tMessage('categories.error.updateFailed')));
   }
 }
 
@@ -154,7 +155,7 @@ export async function deleteCategory(id: string) {
   try {
     return await apiDelete(`/categories/${id}`);
   } catch (error) {
-    throw new Error(extractErrorMessage(error, 'Không thể xóa danh mục'));
+    throw new Error(extractErrorMessage(error, tMessage('categories.error.deleteFailed')));
   }
 }
 
@@ -184,7 +185,7 @@ export async function createProduct(productData: Record<string, unknown>) {
   try {
     return await apiPost('/products', productData);
   } catch (error) {
-    throw new Error(extractErrorMessage(error, 'Không thể tạo sản phẩm'));
+    throw new Error(extractErrorMessage(error, tMessage('products.error.createFailed')));
   }
 }
 
@@ -192,7 +193,7 @@ export async function updateProduct(productId: string, productData: Record<strin
   try {
     return await apiPatch(`/products/${productId}`, productData);
   } catch (error) {
-    throw new Error(extractErrorMessage(error, 'Không thể cập nhật sản phẩm'));
+    throw new Error(extractErrorMessage(error, tMessage('products.error.updateFailed')));
   }
 }
 
@@ -200,6 +201,6 @@ export async function deactivateProduct(productId: string) {
   try {
     return await apiPatch(`/products/${productId}/deactivate`, {});
   } catch (error) {
-    throw new Error(extractErrorMessage(error, 'Không thể ngừng bán sản phẩm'));
+    throw new Error(extractErrorMessage(error, tMessage('products.error.deactivateFailed')));
   }
 }

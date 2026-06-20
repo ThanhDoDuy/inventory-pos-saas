@@ -1,6 +1,7 @@
 import useSWR from 'swr';
 import { apiGet, apiPost, API_BASE_URL, extractErrorMessage, swrFetcher as fetcher } from '@/lib/api-client';
 import { stringifyId } from '@/lib/format';
+import { tMessage } from '@/lib/i18n/get-message';
 
 export type AdjustmentReason = 'DAMAGE' | 'LOSS' | 'EXPIRED' | 'CORRECTION';
 
@@ -66,6 +67,6 @@ export async function createAdjustment(data: {
   try {
     return await apiPost('/inventory/adjustment', data);
   } catch (error) {
-    throw new Error(extractErrorMessage(error, 'Không thể điều chỉnh kho'));
+    throw new Error(extractErrorMessage(error, tMessage('adjustments.error.submitFailed')));
   }
 }

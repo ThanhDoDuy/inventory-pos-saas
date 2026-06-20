@@ -32,10 +32,14 @@ export interface Messages {
     remove: string;
     name: string;
     total: string;
+    previous: string;
+    next: string;
+    pageOf: string;
     date: string;
     none: string;
     required: string;
     optional: string;
+    redirecting: string;
     error: {
       loadFailed: string;
       actionFailed: string;
@@ -173,6 +177,8 @@ export interface Messages {
     };
     empty: {
       noTransactions: string;
+      noRevenueData: string;
+      noProductData: string;
     };
     error: {
       exportFailed: string;
@@ -512,6 +518,7 @@ export interface Messages {
       loadFailed: string;
       requiredFields: string;
       createFailed: string;
+      updateFailed: string;
       deactivateFailed: string;
     };
     detail: {
@@ -806,6 +813,7 @@ export interface Messages {
       disableFailed: string;
       activateFailed: string;
       resetPasswordFailed: string;
+      assignRoleFailed: string;
       passwordTooShort: string;
     };
   };
@@ -843,6 +851,97 @@ export interface Messages {
     };
     error: {
       loadFailed: string;
+    };
+    modules: {
+      auth: string;
+      users: string;
+      products: string;
+      inventory: string;
+      po: string;
+      invoice: string;
+      customers: string;
+      suppliers: string;
+      reports: string;
+      notifications: string;
+      audit: string;
+      settings: string;
+      feature_flags: string;
+      rbac: string;
+      other: string;
+    };
+    actions: {
+      view: string;
+      create: string;
+      update: string;
+      delete: string;
+      stock_in: string;
+      stock_out: string;
+      adjust: string;
+      rebuild: string;
+      approve: string;
+      receive: string;
+      cancel: string;
+      refund: string;
+      apply_discount: string;
+      disable: string;
+      export: string;
+      mark_read: string;
+      login: string;
+      logout: string;
+      refresh: string;
+      '*': string;
+    };
+    customPanel: {
+      title: string;
+      subtitle: string;
+      createRole: string;
+      empty: string;
+      createFirst: string;
+      table: {
+        role: string;
+        description: string;
+        permissionCount: string;
+        actions: string;
+      };
+      tooltip: {
+        edit: string;
+        delete: string;
+      };
+      modal: {
+        editTitle: string;
+        createTitle: string;
+        editSubtitle: string;
+        createSubtitle: string;
+      };
+      form: {
+        code: string;
+        codeHint: string;
+        codePlaceholder: string;
+        displayName: string;
+        displayNamePlaceholder: string;
+        description: string;
+        descriptionPlaceholder: string;
+        permissions: string;
+        permissionsSelected: string;
+        searchPermissions: string;
+        noPermissions: string;
+        selectAll: string;
+        deselectAll: string;
+      };
+      validation: {
+        codeRequired: string;
+        codeFormat: string;
+        codeReserved: string;
+        nameRequired: string;
+        permissionsRequired: string;
+      };
+      confirm: {
+        delete: string;
+      };
+      error: {
+        actionFailed: string;
+        deleteFailed: string;
+      };
     };
   };
   notifications: {
@@ -909,6 +1008,10 @@ export interface Messages {
   settings: {
     title: string;
     subtitle: string;
+    error: {
+      saveFailed: string;
+      featureFlagFailed: string;
+    };
     tabs: {
       business: string;
       billing: string;
@@ -1036,6 +1139,9 @@ export interface Messages {
       templateFailed: string;
       previewFailed: string;
       importFailed: string;
+      importSuppliersFailed: string;
+      importCustomersFailed: string;
+      importPurchaseOrdersFailed: string;
       invalidFileType: string;
     };
     products: {
@@ -1117,6 +1223,38 @@ export interface Messages {
       colPhone: string;
       colSku: string;
       colQty: string;
+    };
+  };
+  receipt: {
+    defaultStoreName: string;
+    invoiceTitle: string;
+    documentTitle: string;
+    phonePrefix: string;
+    customerLabel: string;
+    taxCodeLabel: string;
+    codeLabel: string;
+    columns: {
+      product: string;
+      qty: string;
+      unitPrice: string;
+      lineTotal: string;
+    };
+    subtotal: string;
+    discount: string;
+    tax: string;
+    grandTotal: string;
+    payment: string;
+    amountPaid: string;
+    change: string;
+    notes: string;
+    thankYou: string;
+    unnamedProduct: string;
+    printInitFailed: string;
+    paymentMethods: {
+      CASH: string;
+      BANK_TRANSFER: string;
+      CARD: string;
+      E_WALLET: string;
     };
   };
   status: {

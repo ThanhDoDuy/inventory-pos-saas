@@ -7,6 +7,7 @@ import {
   extractErrorMessage,
   swrFetcher as fetcher,
 } from '@/lib/api-client';
+import { tMessage } from '@/lib/i18n/get-message';
 
 export interface SettingItem {
   key: string;
@@ -85,7 +86,7 @@ export async function bulkUpdateSettings(
   try {
     return await apiPost<unknown[]>('/settings/bulk-update', { items });
   } catch (error) {
-    throw new Error(extractErrorMessage(error, 'Could not save settings'));
+    throw new Error(extractErrorMessage(error, tMessage('settings.error.saveFailed')));
   }
 }
 
@@ -93,7 +94,7 @@ export async function toggleFeatureFlag(key: string, enabled: boolean) {
   try {
     return await apiPatch<FeatureFlagItem>(`/settings/feature/${key}`, { enabled });
   } catch (error) {
-    throw new Error(extractErrorMessage(error, 'Could not update feature flag'));
+    throw new Error(extractErrorMessage(error, tMessage('settings.error.featureFlagFailed')));
   }
 }
 
@@ -104,6 +105,6 @@ export async function changePassword(oldPassword: string, newPassword: string) {
       new_password: newPassword,
     });
   } catch (error) {
-    throw new Error(extractErrorMessage(error, 'Could not change password'));
+    throw new Error(extractErrorMessage(error, tMessage('settings.account.changePasswordError')));
   }
 }

@@ -11,7 +11,7 @@ import {
   type RoleItem,
 } from '@/hooks/use-roles';
 import { getRoleColor } from '@/lib/format';
-import { formatPermissionAction, getModuleLabel } from '@/lib/rbac-utils';
+import { useFormat, useTranslation } from '@/lib/i18n/use-translation';
 
 const RESERVED_CODES = new Set(['ADMIN', 'MANAGER', 'STAFF']);
 const ROLE_CODE_PATTERN = /^[A-Z][A-Z0-9_]{1,31}$/;
@@ -37,6 +37,8 @@ interface CustomRolesPanelProps {
 }
 
 export function CustomRolesPanel({ customRoles, permissions, onMutate }: CustomRolesPanelProps) {
+  const { t } = useTranslation();
+  const { getModuleLabel, formatPermissionAction } = useFormat();
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState<RoleItem | null>(null);
   const [form, setForm] = useState<RoleFormState>(emptyForm);
@@ -108,17 +110,19 @@ export function CustomRolesPanel({ customRoles, permissions, onMutate }: CustomR
   const validateForm = () => {
     if (!editing) {
       const code = form.code.trim().toUpperCase();
-      if (!code) return 'Vui lòng nhập mã vai trò';
+      if (!code) return t('rbac.customPanel.validation.codeRequired');
       if (!ROLE_CODE_PATTERN.test(code)) {
-        return 'Mã vai trò phải viết HOA, bắt đầu bằng chữ cái (ví dụ: WAREHOUSE_LEAD)';
+        return t('rbac.customPanel.validation.codeFormat');
       }
       if (RESERVED_CODES.has(code)) {
-        return 'Mã ADMIN, MANAGER, STAFF là vai trò hệ thống — không dùng được';
+        return t('rbac.customPanel.validation.codeReserved');
       }
     }
 
-    if (!form.name.trim()) return 'Vui lòng nhập tên vai trò';
-    if (form.permission_codes.length === 0) return 'Chọn ít nhất một quyền';
+    if (!form.name.trim()) return t('rbac.customPanel.validation.nameRequired');
+    if (form.permission_codes.length === 0) {
+      return t('rbac.customPanel.validation.permissionsRequired');
+    }
 
     return '';
   };
@@ -150,14 +154,20 @@ export function CustomRolesPanel({ customRoles, permissions, onMutate }: CustomR
       await onMutate();
       setShowModal(false);
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : 'Thao tác thất bại');
+      setFormError(
+        err instanceof Error ? err.message : t('rbac.customPanel.error.actionFailed'),
+      );
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleDelete = async (role: RoleItem) => {
-    if (!confirm(`Xóa vai trò "${role.name}" (${role.code})? Hành động này không thể hoàn tác.`)) {
+    if (
+      !confirm(
+        t('rbac.customPanel.confirm.delete', { name: role.name, code: role.code }),
+      )
+    ) {
       return;
     }
 
@@ -165,7 +175,9 @@ export function CustomRolesPanel({ customRoles, permissions, onMutate }: CustomR
       await deleteRole(role.id);
       await onMutate();
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Không thể xóa vai trò');
+      alert(
+        err instanceof Error ? err.message : t('rbac.customPanel.error.deleteFailed'),
+      );
     }
   };
 
@@ -173,9 +185,9 @@ export function CustomRolesPanel({ customRoles, permissions, onMutate }: CustomR
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-lg font-bold text-foreground">Vai trò tùy chỉnh</h2>
+          <h2 className="text-lg font-bold text-foreground">{t('rbac.customPanel.title')}</h2>
           <p className="text-sm text-muted-foreground mt-1">
-            Tạo và quản lý vai trò riêng cho cửa hàng của bạn
+            {t('rbac.customPanel.subtitle')}
           </p>
         </div>
         <button
@@ -184,7 +196,7 @@ export function CustomRolesPanel({ customRoles, permissions, onMutate }: CustomR
           className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg font-semibold hover:bg-primary/90"
         >
           <Plus size={18} />
-          Tạo vai trò
+          {t('rbac.customPanel.createRole')}
         </button>
       </div>
 
@@ -192,7 +204,7 @@ export function CustomRolesPanel({ customRoles, permissions, onMutate }: CustomR
         {customRoles.length === 0 ? (
           <div className="p-10 text-center">
             <p className="text-muted-foreground text-sm mb-4">
-              Chưa có vai trò tùy chỉnh. Bấm &quot;Tạo vai trò&quot; để thêm mới.
+              {t('rbac.customPanel.empty')}
             </p>
             <button
               type="button"
@@ -200,7 +212,7 @@ export function CustomRolesPanel({ customRoles, permissions, onMutate }: CustomR
               className="inline-flex items-center gap-2 px-4 py-2 border border-border rounded-lg font-semibold hover:bg-secondary"
             >
               <Plus size={16} />
-              Tạo vai trò đầu tiên
+              {t('rbac.customPanel.createFirst')}
             </button>
           </div>
         ) : (
@@ -208,10 +220,18 @@ export function CustomRolesPanel({ customRoles, permissions, onMutate }: CustomR
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-secondary/50 border-b border-border">
-                  <th className="text-left px-6 py-3 font-semibold">Vai trò</th>
-                  <th className="text-left px-6 py-3 font-semibold">Mô tả</th>
-                  <th className="text-center px-6 py-3 font-semibold">Số quyền</th>
-                  <th className="text-center px-6 py-3 font-semibold">Thao tác</th>
+                  <th className="text-left px-6 py-3 font-semibold">
+                    {t('rbac.customPanel.table.role')}
+                  </th>
+                  <th className="text-left px-6 py-3 font-semibold">
+                    {t('rbac.customPanel.table.description')}
+                  </th>
+                  <th className="text-center px-6 py-3 font-semibold">
+                    {t('rbac.customPanel.table.permissionCount')}
+                  </th>
+                  <th className="text-center px-6 py-3 font-semibold">
+                    {t('rbac.customPanel.table.actions')}
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -239,7 +259,7 @@ export function CustomRolesPanel({ customRoles, permissions, onMutate }: CustomR
                           type="button"
                           onClick={() => openEdit(role)}
                           className="p-2 hover:bg-secondary rounded-lg"
-                          title="Sửa"
+                          title={t('rbac.customPanel.tooltip.edit')}
                         >
                           <Edit2 size={16} />
                         </button>
@@ -247,7 +267,7 @@ export function CustomRolesPanel({ customRoles, permissions, onMutate }: CustomR
                           type="button"
                           onClick={() => handleDelete(role)}
                           className="p-2 hover:bg-secondary rounded-lg text-destructive"
-                          title="Xóa"
+                          title={t('rbac.customPanel.tooltip.delete')}
                         >
                           <Trash2 size={16} />
                         </button>
@@ -266,12 +286,14 @@ export function CustomRolesPanel({ customRoles, permissions, onMutate }: CustomR
           <div className="bg-card rounded-lg border border-border w-full max-w-2xl max-h-[90vh] flex flex-col">
             <div className="p-6 border-b border-border">
               <h2 className="text-xl font-bold text-foreground">
-                {editing ? 'Sửa vai trò' : 'Tạo vai trò mới'}
+                {editing
+                  ? t('rbac.customPanel.modal.editTitle')
+                  : t('rbac.customPanel.modal.createTitle')}
               </h2>
               <p className="text-sm text-muted-foreground mt-1">
                 {editing
-                  ? 'Cập nhật tên, mô tả và quyền của vai trò tùy chỉnh'
-                  : 'Mã vai trò không thể đổi sau khi tạo'}
+                  ? t('rbac.customPanel.modal.editSubtitle')
+                  : t('rbac.customPanel.modal.createSubtitle')}
               </p>
             </div>
 
@@ -284,10 +306,10 @@ export function CustomRolesPanel({ customRoles, permissions, onMutate }: CustomR
 
               {!editing && (
                 <FormField
-                  label="Mã vai trò"
+                  label={t('rbac.customPanel.form.code')}
                   htmlFor="role-code"
                   required
-                  hint="Viết HOA, ví dụ: WAREHOUSE_LEAD"
+                  hint={t('rbac.customPanel.form.codeHint')}
                 >
                   <input
                     id="role-code"
@@ -295,14 +317,14 @@ export function CustomRolesPanel({ customRoles, permissions, onMutate }: CustomR
                     onChange={(e) =>
                       setForm({ ...form, code: e.target.value.toUpperCase() })
                     }
-                    placeholder="WAREHOUSE_LEAD"
+                    placeholder={t('rbac.customPanel.form.codePlaceholder')}
                     className={inputClassName}
                   />
                 </FormField>
               )}
 
               {editing && (
-                <FormField label="Mã vai trò" htmlFor="role-code-readonly">
+                <FormField label={t('rbac.customPanel.form.code')} htmlFor="role-code-readonly">
                   <input
                     id="role-code-readonly"
                     value={form.code}
@@ -312,23 +334,27 @@ export function CustomRolesPanel({ customRoles, permissions, onMutate }: CustomR
                 </FormField>
               )}
 
-              <FormField label="Tên hiển thị" htmlFor="role-name" required>
+              <FormField
+                label={t('rbac.customPanel.form.displayName')}
+                htmlFor="role-name"
+                required
+              >
                 <input
                   id="role-name"
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  placeholder="Trưởng kho"
+                  placeholder={t('rbac.customPanel.form.displayNamePlaceholder')}
                   className={inputClassName}
                 />
               </FormField>
 
-              <FormField label="Mô tả" htmlFor="role-description">
+              <FormField label={t('rbac.customPanel.form.description')} htmlFor="role-description">
                 <textarea
                   id="role-description"
                   value={form.description}
                   onChange={(e) => setForm({ ...form, description: e.target.value })}
                   rows={2}
-                  placeholder="Mô tả ngắn về vai trò..."
+                  placeholder={t('rbac.customPanel.form.descriptionPlaceholder')}
                   className={`${inputClassName} resize-none`}
                 />
               </FormField>
@@ -336,9 +362,12 @@ export function CustomRolesPanel({ customRoles, permissions, onMutate }: CustomR
               <div>
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
                   <label className="text-sm font-medium text-foreground">
-                    Quyền <span className="text-destructive">*</span>
+                    {t('rbac.customPanel.form.permissions')}{' '}
+                    <span className="text-destructive">*</span>
                     <span className="text-muted-foreground font-normal ml-2">
-                      ({form.permission_codes.length} đã chọn)
+                      {t('rbac.customPanel.form.permissionsSelected', {
+                        count: form.permission_codes.length,
+                      })}
                     </span>
                   </label>
                   <div className="relative">
@@ -349,7 +378,7 @@ export function CustomRolesPanel({ customRoles, permissions, onMutate }: CustomR
                     <input
                       value={permissionSearch}
                       onChange={(e) => setPermissionSearch(e.target.value)}
-                      placeholder="Tìm quyền..."
+                      placeholder={t('rbac.customPanel.form.searchPermissions')}
                       className="pl-9 pr-3 py-1.5 text-sm border border-input rounded-lg bg-background w-full sm:w-48"
                     />
                   </div>
@@ -358,7 +387,7 @@ export function CustomRolesPanel({ customRoles, permissions, onMutate }: CustomR
                 <div className="border border-border rounded-lg max-h-64 overflow-y-auto divide-y divide-border">
                   {Object.keys(permissionsByModule).length === 0 ? (
                     <p className="text-sm text-muted-foreground p-4 text-center">
-                      Không tìm thấy quyền phù hợp
+                      {t('rbac.customPanel.form.noPermissions')}
                     </p>
                   ) : (
                     Object.entries(permissionsByModule).map(([module, perms]) => {
@@ -380,7 +409,9 @@ export function CustomRolesPanel({ customRoles, permissions, onMutate }: CustomR
                               onClick={() => toggleModule(perms, !allSelected)}
                               className="text-xs text-primary hover:underline"
                             >
-                              {allSelected ? 'Bỏ chọn' : someSelected ? 'Chọn tất cả' : 'Chọn tất cả'}
+                              {allSelected
+                                ? t('rbac.customPanel.form.deselectAll')
+                                : t('rbac.customPanel.form.selectAll')}
                             </button>
                           </div>
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-1">
@@ -428,7 +459,7 @@ export function CustomRolesPanel({ customRoles, permissions, onMutate }: CustomR
                 disabled={isSubmitting}
                 className="flex-1 py-2 border border-border rounded-lg font-semibold hover:bg-secondary disabled:opacity-50"
               >
-                Hủy
+                {t('common.cancel')}
               </button>
               <button
                 type="button"
@@ -437,7 +468,11 @@ export function CustomRolesPanel({ customRoles, permissions, onMutate }: CustomR
                 className="flex-1 py-2 bg-primary text-primary-foreground rounded-lg font-semibold disabled:opacity-50 inline-flex items-center justify-center gap-2"
               >
                 {isSubmitting && <Loader2 size={16} className="animate-spin" />}
-                {isSubmitting ? 'Đang lưu...' : editing ? 'Cập nhật' : 'Tạo vai trò'}
+                {isSubmitting
+                  ? t('common.saving')
+                  : editing
+                    ? t('common.update')
+                    : t('rbac.customPanel.createRole')}
               </button>
             </div>
           </div>

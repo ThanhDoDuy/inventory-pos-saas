@@ -8,6 +8,7 @@ import {
   swrFetcher as fetcher,
 } from '@/lib/api-client';
 import { stringifyId } from '@/lib/format';
+import { tMessage } from '@/lib/i18n/get-message';
 
 export interface UserProfile {
   id: string;
@@ -81,7 +82,7 @@ export async function createUser(userData: Record<string, unknown>) {
   try {
     return await apiPost('/users', userData);
   } catch (error) {
-    throw new Error(extractErrorMessage(error, 'Không thể tạo người dùng'));
+    throw new Error(extractErrorMessage(error, tMessage('users.error.createFailed')));
   }
 }
 
@@ -89,7 +90,7 @@ export async function updateUser(userId: string, userData: Record<string, unknow
   try {
     return await apiPatch(`/users/${userId}`, userData);
   } catch (error) {
-    throw new Error(extractErrorMessage(error, 'Không thể cập nhật người dùng'));
+    throw new Error(extractErrorMessage(error, tMessage('users.error.updateFailed')));
   }
 }
 
@@ -97,7 +98,7 @@ export async function disableUser(userId: string, reason = 'Disabled by admin') 
   try {
     return await apiPatch(`/users/${userId}/disable`, { reason });
   } catch (error) {
-    throw new Error(extractErrorMessage(error, 'Không thể vô hiệu hóa người dùng'));
+    throw new Error(extractErrorMessage(error, tMessage('users.error.disableFailed')));
   }
 }
 
@@ -105,7 +106,7 @@ export async function assignUserRole(userId: string, roleId: string) {
   try {
     return await apiPatch(`/users/${userId}/assign-role`, { role_id: roleId });
   } catch (error) {
-    throw new Error(extractErrorMessage(error, 'Không thể gán vai trò'));
+    throw new Error(extractErrorMessage(error, tMessage('users.error.assignRoleFailed')));
   }
 }
 
@@ -113,7 +114,7 @@ export async function resetUserPassword(userId: string, newPassword: string) {
   try {
     return await apiPost(`/users/${userId}/reset-password`, { new_password: newPassword });
   } catch (error) {
-    throw new Error(extractErrorMessage(error, 'Không thể đặt lại mật khẩu'));
+    throw new Error(extractErrorMessage(error, tMessage('users.error.resetPasswordFailed')));
   }
 }
 
@@ -121,6 +122,6 @@ export async function activateUser(userId: string) {
   try {
     return await apiPatch(`/users/${userId}/activate`, {});
   } catch (error) {
-    throw new Error(extractErrorMessage(error, 'Không thể kích hoạt lại người dùng'));
+    throw new Error(extractErrorMessage(error, tMessage('users.error.activateFailed')));
   }
 }

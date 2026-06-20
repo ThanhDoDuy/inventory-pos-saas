@@ -1,6 +1,7 @@
 import useSWR from 'swr';
 import { apiGet, apiPost, API_BASE_URL, extractErrorMessage, swrFetcher as fetcher } from '@/lib/api-client';
 import { stringifyId } from '@/lib/format';
+import { tMessage } from '@/lib/i18n/get-message';
 
 export interface PurchaseOrderItem {
   id: string;
@@ -99,7 +100,7 @@ export async function createPurchaseOrder(data: {
   try {
     return await apiPost('/purchase-orders', data);
   } catch (error) {
-    throw new Error(extractErrorMessage(error, 'Không thể tạo đơn nhập hàng'));
+    throw new Error(extractErrorMessage(error, tMessage('purchaseOrders.error.createFailed')));
   }
 }
 
@@ -107,7 +108,7 @@ export async function approvePurchaseOrder(id: string) {
   try {
     return await apiPost(`/purchase-orders/${id}/approve`, {});
   } catch (error) {
-    throw new Error(extractErrorMessage(error, 'Không thể duyệt đơn'));
+    throw new Error(extractErrorMessage(error, tMessage('purchaseOrders.error.approveFailed')));
   }
 }
 
@@ -118,7 +119,7 @@ export async function receivePurchaseOrder(
   try {
     return await apiPost(`/purchase-orders/${id}/receive`, { items });
   } catch (error) {
-    throw new Error(extractErrorMessage(error, 'Không thể nhận hàng'));
+    throw new Error(extractErrorMessage(error, tMessage('purchaseOrders.error.receiveFailed')));
   }
 }
 
@@ -126,6 +127,6 @@ export async function cancelPurchaseOrder(id: string, reason: string) {
   try {
     return await apiPost(`/purchase-orders/${id}/cancel`, { reason });
   } catch (error) {
-    throw new Error(extractErrorMessage(error, 'Không thể hủy đơn'));
+    throw new Error(extractErrorMessage(error, tMessage('purchaseOrders.error.cancelFailed')));
   }
 }

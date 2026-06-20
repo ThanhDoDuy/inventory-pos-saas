@@ -1,6 +1,7 @@
 import useSWR from 'swr';
 import { apiGet, apiPatch, apiPost, API_BASE_URL, extractErrorMessage, swrFetcher as fetcher } from '@/lib/api-client';
 import { stringifyId } from '@/lib/format';
+import { tMessage } from '@/lib/i18n/get-message';
 
 export type CustomerType = 'INDIVIDUAL' | 'COMPANY' | 'GROUP';
 
@@ -96,7 +97,7 @@ export async function createCustomer(data: {
   try {
     return await apiPost('/customers', data);
   } catch (error) {
-    throw new Error(extractErrorMessage(error, 'Không thể tạo khách hàng'));
+    throw new Error(extractErrorMessage(error, tMessage('customers.error.actionFailed')));
   }
 }
 
@@ -115,7 +116,7 @@ export async function updateCustomer(
   try {
     return await apiPatch(`/customers/${id}`, data);
   } catch (error) {
-    throw new Error(extractErrorMessage(error, 'Không thể cập nhật khách hàng'));
+    throw new Error(extractErrorMessage(error, tMessage('customers.error.actionFailed')));
   }
 }
 
@@ -123,7 +124,7 @@ export async function disableCustomer(id: string) {
   try {
     return await apiPost(`/customers/${id}/disable`, {});
   } catch (error) {
-    throw new Error(extractErrorMessage(error, 'Không thể vô hiệu hóa khách hàng'));
+    throw new Error(extractErrorMessage(error, tMessage('customers.error.disableFailed')));
   }
 }
 
@@ -131,6 +132,6 @@ export async function activateCustomer(id: string) {
   try {
     return await apiPost(`/customers/${id}/activate`, {});
   } catch (error) {
-    throw new Error(extractErrorMessage(error, 'Không thể kích hoạt lại khách hàng'));
+    throw new Error(extractErrorMessage(error, tMessage('customers.error.activateFailed')));
   }
 }

@@ -1,6 +1,7 @@
 import useSWR from 'swr';
 import { apiGet, apiPatch, apiPost, API_BASE_URL, extractErrorMessage, swrFetcher as fetcher } from '@/lib/api-client';
 import { stringifyId } from '@/lib/format';
+import { tMessage } from '@/lib/i18n/get-message';
 
 export interface SupplierItem {
   id: string;
@@ -79,7 +80,7 @@ export async function createSupplier(data: {
   try {
     return await apiPost('/suppliers', data);
   } catch (error) {
-    throw new Error(extractErrorMessage(error, 'Không thể tạo nhà cung cấp'));
+    throw new Error(extractErrorMessage(error, tMessage('suppliers.error.actionFailed')));
   }
 }
 
@@ -90,7 +91,7 @@ export async function updateSupplier(
   try {
     return await apiPatch(`/suppliers/${id}`, data);
   } catch (error) {
-    throw new Error(extractErrorMessage(error, 'Không thể cập nhật nhà cung cấp'));
+    throw new Error(extractErrorMessage(error, tMessage('suppliers.error.actionFailed')));
   }
 }
 
@@ -98,7 +99,7 @@ export async function disableSupplier(id: string) {
   try {
     return await apiPost(`/suppliers/${id}/disable`, {});
   } catch (error) {
-    throw new Error(extractErrorMessage(error, 'Không thể vô hiệu hóa nhà cung cấp'));
+    throw new Error(extractErrorMessage(error, tMessage('suppliers.error.disableFailed')));
   }
 }
 
@@ -106,6 +107,6 @@ export async function activateSupplier(id: string) {
   try {
     return await apiPost(`/suppliers/${id}/activate`, {});
   } catch (error) {
-    throw new Error(extractErrorMessage(error, 'Không thể kích hoạt lại nhà cung cấp'));
+    throw new Error(extractErrorMessage(error, tMessage('suppliers.error.activateFailed')));
   }
 }
