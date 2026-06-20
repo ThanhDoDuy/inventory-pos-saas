@@ -11,6 +11,7 @@ import {
   uploadProductImage,
   useProductImages,
 } from '@/hooks/use-product-images';
+import { ConfirmModal } from '@/components/confirm-modal';
 import { getProductDetailImageUrl } from '@/lib/cloudinary-url';
 import { useTranslation } from '@/lib/i18n/use-translation';
 
@@ -29,6 +30,7 @@ export function ProductImageGallery({
   const [isUploading, setIsUploading] = useState(false);
   const [actionId, setActionId] = useState<string | null>(null);
   const [error, setError] = useState('');
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
 
   const handleUpload = async (files: FileList | null) => {
     if (!files?.length || !canEdit) {
@@ -70,16 +72,18 @@ export function ProductImageGallery({
     }
   };
 
-  const handleDelete = async (imageId: string) => {
-    if (!confirm(t('products.images.confirm.delete'))) {
+  const handleDeleteConfirm = async () => {
+    if (!deleteTargetId) {
       return;
     }
 
+    const imageId = deleteTargetId;
     setError('');
     setActionId(imageId);
     try {
       await deleteProductImage(productId, imageId);
       await mutate();
+      setDeleteTargetId(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : t('products.images.error.deleteFailed'));
     } finally {
@@ -88,6 +92,18 @@ export function ProductImageGallery({
   };
 
   return (
+    <>
+      <ConfirmModal
+        isOpen={deleteTargetId !== null}
+        title={t('products.images.delete')}
+        message={t('products.images.confirm.delete')}
+        confirmLabel={t('common.remove')}
+        variant="destructive"
+        isLoading={actionId === deleteTargetId && deleteTargetId !== null}
+        onCancel={() => setDeleteTargetId(null)}
+        onConfirm={() => void handleDeleteConfirm()}
+      />
+
     <div className="bg-card rounded-lg border border-border p-6">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-xl font-bold text-foreground">{t('products.images.title')}</h2>
@@ -184,7 +200,7 @@ export function ProductImageGallery({
                     <button
                       type="button"
                       disabled={isBusy}
-                      onClick={() => void handleDelete(image.id)}
+                      onClick={() => setDeleteTargetId(image.id)}
                       className="flex-1 flex items-center justify-center gap-1 py-1.5 text-xs rounded bg-destructive/90 text-destructive-foreground hover:bg-destructive disabled:opacity-50"
                       title={t('products.images.delete')}
                     >
@@ -202,5 +218,6 @@ export function ProductImageGallery({
         </div>
       )}
     </div>
+    </>
   );
 }

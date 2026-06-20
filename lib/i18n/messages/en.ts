@@ -526,6 +526,7 @@ export const en: Messages = {
     },
     images: {
       title: 'Product images',
+      addInCreate: 'Product photos (optional)',
       upload: 'Upload',
       primary: 'Primary',
       setPrimary: 'Set as primary',

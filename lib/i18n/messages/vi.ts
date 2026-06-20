@@ -526,6 +526,7 @@ export const vi: Messages = {
     },
     images: {
       title: 'Hình ảnh sản phẩm',
+      addInCreate: 'Ảnh sản phẩm (tùy chọn)',
       upload: 'Tải lên',
       primary: 'Ảnh chính',
       setPrimary: 'Đặt làm ảnh chính',

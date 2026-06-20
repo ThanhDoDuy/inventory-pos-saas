@@ -523,6 +523,7 @@ export interface Messages {
     };
     images: {
       title: string;
+      addInCreate: string;
       upload: string;
       primary: string;
       setPrimary: string;

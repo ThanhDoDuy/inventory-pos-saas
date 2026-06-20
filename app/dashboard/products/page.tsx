@@ -16,14 +16,16 @@ import {
   downloadProductsTemplate,
 } from '@/hooks/use-import-export';
 import { usePriceTiers } from '@/hooks/use-price-tiers';
-import { getStockStatusColor } from '@/lib/format';
+import { getStockStatusColor, stringifyId } from '@/lib/format';
 import { FormField, inputClassName, selectClassName } from '@/components/form-field';
 import { ProductImportModal } from '@/components/product-import-modal';
+import { ProductImagePendingUpload } from '@/components/product-image-pending-upload';
 import { ImportExportDropdown } from '@/components/import-export-dropdown';
 import { PaginationBar } from '@/components/pagination-bar';
 import { useDashboard, useLowStock } from '@/hooks/use-analytics';
 import { useFormat, useTranslation } from '@/lib/i18n/use-translation';
 import { getProductListImageUrl } from '@/lib/cloudinary-url';
+import { uploadProductImage } from '@/hooks/use-product-images';
 
 function stockStatusColorKey(stock: number, minimumStock = 0) {
   if (stock <= 0) return 'Out of Stock';
@@ -50,6 +52,8 @@ export default function InventoryPage() {
   const [isExporting, setIsExporting] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
   const [page, setPage] = useState(1);
+  const [pendingImages, setPendingImages] = useState<File[]>([]);
+  const [imageError, setImageError] = useState('');
 
   const debouncedSearch = useDebouncedValue(searchTerm, 300);
 
@@ -75,8 +79,24 @@ export default function InventoryPage() {
     };
   }, [products.length, total, dashboard?.low_stock_count, lowStockRows]);
 
+  const resetCreateForm = () => {
+    setForm({
+      name: '',
+      sku: '',
+      category_id: '',
+      cost_price: '',
+      selling_price: '',
+      minimum_stock: '0',
+    });
+    setTierPrices({});
+    setPendingImages([]);
+    setImageError('');
+    setFormError('');
+  };
+
   const handleCreate = async () => {
     setFormError('');
+    setImageError('');
     if (!form.name || !form.sku || !form.selling_price) {
       setFormError(t('products.error.requiredFields'));
       return;
@@ -92,7 +112,7 @@ export default function InventoryPage() {
         ]),
       );
 
-      await createProduct({
+      const created = (await createProduct({
         name: form.name,
         sku: form.sku,
         cost_price: Number(form.cost_price) || 0,
@@ -100,18 +120,16 @@ export default function InventoryPage() {
         prices,
         minimum_stock: Number(form.minimum_stock) || 0,
         ...(form.category_id ? { category_id: form.category_id } : {}),
-      });
+      })) as Record<string, unknown>;
+
+      const productId = stringifyId(created.id ?? created._id);
+      for (let i = 0; i < pendingImages.length; i++) {
+        await uploadProductImage(productId, pendingImages[i], i);
+      }
+
       await mutate();
       setShowAddModal(false);
-      setForm({
-        name: '',
-        sku: '',
-        category_id: '',
-        cost_price: '',
-        selling_price: '',
-        minimum_stock: '0',
-      });
-      setTierPrices({});
+      resetCreateForm();
     } catch (err) {
       setFormError(err instanceof Error ? err.message : t('products.error.createFailed'));
     } finally {
@@ -194,7 +212,10 @@ export default function InventoryPage() {
             ]}
           />
           <button
-            onClick={() => setShowAddModal(true)}
+            onClick={() => {
+              resetCreateForm();
+              setShowAddModal(true);
+            }}
             className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg font-semibold hover:bg-primary/90 transition-colors"
           >
             <Plus size={20} />
@@ -342,7 +363,7 @@ export default function InventoryPage() {
 
       {showAddModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-card rounded-lg border border-border p-8 max-w-md w-full max-h-[90vh] overflow-y-auto">
+          <div className="bg-card rounded-lg border border-border p-8 max-w-lg w-full max-h-[90vh] overflow-y-auto">
             <h2 className="text-2xl font-bold text-foreground mb-6">{t('products.modal.add')}</h2>
             {formError && (
               <div className="mb-4 p-3 bg-destructive/10 border border-destructive rounded-lg text-destructive text-sm">
@@ -447,10 +468,20 @@ export default function InventoryPage() {
                   className={inputClassName}
                 />
               </FormField>
+              <ProductImagePendingUpload
+                files={pendingImages}
+                onChange={setPendingImages}
+                disabled={isSubmitting}
+                error={imageError}
+                onError={setImageError}
+              />
             </div>
             <div className="flex gap-3">
               <button
-                onClick={() => setShowAddModal(false)}
+                onClick={() => {
+                  setShowAddModal(false);
+                  resetCreateForm();
+                }}
                 disabled={isSubmitting}
                 className="flex-1 py-2 px-4 border border-border rounded-lg font-semibold hover:bg-secondary transition-colors text-foreground"
               >
@@ -461,7 +492,7 @@ export default function InventoryPage() {
                 disabled={isSubmitting}
                 className="flex-1 py-2 px-4 bg-primary text-primary-foreground rounded-lg font-semibold hover:bg-primary/90 transition-colors disabled:opacity-50"
               >
-                {isSubmitting ? t('common.saving') : t('common.add')}
+                {isSubmitting ? t('common.creating') : t('common.add')}
               </button>
             </div>
           </div>
