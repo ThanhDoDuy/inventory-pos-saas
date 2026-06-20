@@ -27,7 +27,6 @@ export default function InvoicesPage() {
   const [page, setPage] = useState(1);
   const { invoices, total, pagination, isLoading, error, mutate } = useInvoices(from, to, {
     page,
-    limit: 20,
   });
   const { featureFlags } = useSettings();
   const { tenant } = useTenant();

@@ -3,6 +3,7 @@ import useSWR from 'swr';
 import { apiGet, API_BASE_URL, downloadFile, swrFetcher as fetcher } from '@/lib/api-client';
 import type { DateRangePreset } from '@/lib/format';
 import { getDateRange } from '@/lib/format';
+import { DEFAULT_PAGE_SIZE } from '@/lib/pagination';
 
 export interface DashboardData {
   revenue_today: number;
@@ -130,7 +131,7 @@ export function useLowStock() {
 export function useDeadStock(
   inactiveDays = 30,
   page = 1,
-  limit = 10,
+  limit = DEFAULT_PAGE_SIZE,
 ) {
   const params = new URLSearchParams({
     inactiveDays: String(inactiveDays),

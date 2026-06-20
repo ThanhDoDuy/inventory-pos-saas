@@ -5,12 +5,14 @@ export interface PaginationMeta {
   total_pages: number;
 }
 
+export const DEFAULT_PAGE_SIZE = 10;
+
 export function buildPagination(
   total: number,
   page: number,
   limit: number,
 ): PaginationMeta {
-  const safeLimit = limit > 0 ? limit : 20;
+  const safeLimit = limit > 0 ? limit : DEFAULT_PAGE_SIZE;
   const total_pages = total > 0 ? Math.ceil(total / safeLimit) : 1;
   return {
     page: page > 0 ? page : 1,
@@ -26,7 +28,5 @@ export function paginationFromListResponse(data?: {
   limit?: number;
 }): PaginationMeta | undefined {
   if (!data || data.total === undefined) return undefined;
-  return buildPagination(data.total, data.page ?? 1, data.limit ?? 20);
+  return buildPagination(data.total, data.page ?? 1, data.limit ?? DEFAULT_PAGE_SIZE);
 }
-
-export const DEFAULT_PAGE_SIZE = 20;

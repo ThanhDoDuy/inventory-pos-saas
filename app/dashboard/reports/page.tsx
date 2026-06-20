@@ -40,8 +40,8 @@ export default function ReportsPage() {
     pagination: deadStockPagination,
     summary: deadStockSummary,
     isLoading: deadStockLoading,
-  } = useDeadStock(inactiveDays, deadStockPage, 10);
-  const { invoices, isLoading: invoicesLoading } = useInvoices(from, to, { limit: 20 });
+  } = useDeadStock(inactiveDays, deadStockPage);
+  const { invoices, isLoading: invoicesLoading } = useInvoices(from, to);
 
   const salesChartData = useMemo(
     () =>

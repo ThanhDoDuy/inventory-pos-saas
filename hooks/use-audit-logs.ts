@@ -1,6 +1,7 @@
 import useSWR from 'swr';
 import { apiGet, API_BASE_URL, swrFetcher as fetcher } from '@/lib/api-client';
 import { stringifyId } from '@/lib/format';
+import { DEFAULT_PAGE_SIZE } from '@/lib/pagination';
 
 export const AUDIT_MODULES = [
   'AUTH',
@@ -82,7 +83,7 @@ export function useAuditLogs(filters?: {
   page?: number;
   limit?: number;
 }) {
-  const params = new URLSearchParams({ limit: String(filters?.limit ?? 50) });
+  const params = new URLSearchParams({ limit: String(filters?.limit ?? DEFAULT_PAGE_SIZE) });
   if (filters?.page) params.set('page', String(filters.page));
   if (filters?.module && filters.module !== 'all') params.set('module', filters.module);
   if (filters?.action && filters.action !== 'all') params.set('action', filters.action);
