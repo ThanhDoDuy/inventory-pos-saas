@@ -1,8 +1,9 @@
 'use client';
 
-import { BarChart3, Calendar, Download, TrendingUp, Loader2, PackageX, ChevronLeft, ChevronRight } from 'lucide-react';
+import { BarChart3, Calendar, Download, TrendingUp, Loader2, PackageX } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { SalesChart, CategoryBreakdown } from '@/components/sales-chart';
+import { PaginationBar } from '@/components/pagination-bar';
 import {
   exportReport,
   useDashboard,
@@ -40,7 +41,7 @@ export default function ReportsPage() {
     summary: deadStockSummary,
     isLoading: deadStockLoading,
   } = useDeadStock(inactiveDays, deadStockPage, 10);
-  const { invoices, isLoading: invoicesLoading } = useInvoices(from, to, 20);
+  const { invoices, isLoading: invoicesLoading } = useInvoices(from, to, { limit: 20 });
 
   const salesChartData = useMemo(
     () =>
@@ -325,43 +326,11 @@ export default function ReportsPage() {
           </div>
         )}
 
-        {deadStockPagination && deadStockPagination.total_pages > 1 && (
-          <div className="px-6 py-4 border-t border-border flex items-center justify-between gap-4">
-            <p className="text-sm text-muted-foreground">
-              {t('common.pageOf', {
-                page: deadStockPagination.page,
-                totalPages: deadStockPagination.total_pages,
-              })}
-            </p>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setDeadStockPage((p) => Math.max(1, p - 1))}
-                disabled={deadStockLoading || deadStockPagination.page <= 1}
-                className="flex items-center gap-1 px-3 py-2 border border-border rounded-lg text-sm font-semibold hover:bg-secondary disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <ChevronLeft size={16} />
-                {t('common.previous')}
-              </button>
-              <button
-                type="button"
-                onClick={() =>
-                  setDeadStockPage((p) =>
-                    Math.min(deadStockPagination.total_pages, p + 1),
-                  )
-                }
-                disabled={
-                  deadStockLoading ||
-                  deadStockPagination.page >= deadStockPagination.total_pages
-                }
-                className="flex items-center gap-1 px-3 py-2 border border-border rounded-lg text-sm font-semibold hover:bg-secondary disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {t('common.next')}
-                <ChevronRight size={16} />
-              </button>
-            </div>
-          </div>
-        )}
+        <PaginationBar
+          pagination={deadStockPagination}
+          onPageChange={setDeadStockPage}
+          isLoading={deadStockLoading}
+        />
       </div>
 
       <div className="mt-8 bg-card rounded-lg border border-border overflow-hidden">

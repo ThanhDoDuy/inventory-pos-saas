@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Bell, CheckCheck, Loader2 } from 'lucide-react';
 import {
   markAllNotificationsRead,
@@ -10,6 +10,7 @@ import {
   type NotificationItem,
 } from '@/hooks/use-notifications';
 import { FormField, selectClassName } from '@/components/form-field';
+import { PaginationBar } from '@/components/pagination-bar';
 import { useFormat, useTranslation } from '@/lib/i18n/use-translation';
 
 function notificationTypeLabel(
@@ -80,10 +81,16 @@ export default function NotificationsPage() {
   const [readFilter, setReadFilter] = useState<'all' | 'unread'>('all');
   const [typeFilter, setTypeFilter] = useState('all');
   const [isMarking, setIsMarking] = useState(false);
+  const [page, setPage] = useState(1);
 
-  const { notifications, unreadCount, isLoading, error, mutate } = useNotifications({
+  useEffect(() => {
+    setPage(1);
+  }, [readFilter, typeFilter]);
+
+  const { notifications, unreadCount, pagination, isLoading, error, mutate } = useNotifications({
     unread: readFilter === 'unread',
     type: typeFilter,
+    page,
   });
 
   const handleMarkRead = async (id: string) => {
@@ -170,7 +177,8 @@ export default function NotificationsPage() {
         </div>
       </div>
 
-      <div className="space-y-3">
+      <div className="bg-card rounded-lg border border-border overflow-hidden">
+        <div className="space-y-3 p-6">
         {isLoading ? (
           <div className="flex items-center justify-center gap-2 py-12 text-muted-foreground bg-card rounded-lg border border-border">
             <Loader2 className="animate-spin" size={20} />
@@ -197,6 +205,8 @@ export default function NotificationsPage() {
             />
           ))
         )}
+        </div>
+        <PaginationBar pagination={pagination} onPageChange={setPage} isLoading={isLoading} />
       </div>
     </div>
   );

@@ -2,6 +2,7 @@ import useSWR from 'swr';
 import { apiGet, apiPatch, apiPost, API_BASE_URL, extractErrorMessage, swrFetcher as fetcher } from '@/lib/api-client';
 import { stringifyId } from '@/lib/format';
 import { tMessage } from '@/lib/i18n/get-message';
+import { DEFAULT_PAGE_SIZE, paginationFromListResponse } from '@/lib/pagination';
 
 export interface SupplierItem {
   id: string;
@@ -40,8 +41,16 @@ function mapSupplier(raw: Record<string, unknown>): SupplierItem {
   };
 }
 
-export function useSuppliers(search?: string, status?: string) {
-  const params = new URLSearchParams({ limit: '50' });
+export function useSuppliers(
+  search?: string,
+  status?: string,
+  page = 1,
+  limit = DEFAULT_PAGE_SIZE,
+) {
+  const params = new URLSearchParams({
+    limit: String(limit),
+    page: String(page),
+  });
   if (search) params.set('search', search);
   if (status && status !== 'all') params.set('status', status);
 
@@ -54,6 +63,7 @@ export function useSuppliers(search?: string, status?: string) {
   return {
     suppliers: (data?.items ?? []).map(mapSupplier),
     total: data?.total ?? 0,
+    pagination: paginationFromListResponse(data),
     isLoading,
     error,
     mutate,

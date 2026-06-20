@@ -10,6 +10,7 @@ import {
   type AdjustmentReason,
 } from '@/hooks/use-inventory-adjustments';
 import { FormField, inputClassName, selectClassName } from '@/components/form-field';
+import { PaginationBar } from '@/components/pagination-bar';
 import { useFormat, useTranslation } from '@/lib/i18n/use-translation';
 
 const REASONS: AdjustmentReason[] = ['DAMAGE', 'LOSS', 'EXPIRED', 'CORRECTION'];
@@ -28,8 +29,13 @@ export default function InventoryAdjustmentsPage() {
     note: '',
   });
 
+  const [page, setPage] = useState(1);
+
   const { products } = useProducts(undefined, { limit: 200 });
-  const { transactions, total, isLoading, error, mutate } = useInventoryTransactions('ADJUST');
+  const { transactions, total, pagination, isLoading, error, mutate } = useInventoryTransactions(
+    'ADJUST',
+    page,
+  );
 
   const productMap = useMemo(
     () => new Map(products.map((p) => [p.id, p.name])),
@@ -166,6 +172,7 @@ export default function InventoryAdjustmentsPage() {
             </table>
           </div>
         )}
+        <PaginationBar pagination={pagination} onPageChange={setPage} isLoading={isLoading} />
       </div>
 
       {showModal && (

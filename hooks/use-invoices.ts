@@ -4,6 +4,7 @@ import { apiGet, apiPost, API_BASE_URL, extractErrorMessage, swrFetcher as fetch
 import { stringifyId } from '@/lib/format';
 import { getUnnamedProductLabel } from '@/lib/i18n/receipt-labels';
 import { tMessage } from '@/lib/i18n/get-message';
+import { DEFAULT_PAGE_SIZE, paginationFromListResponse } from '@/lib/pagination';
 import type { CustomerItem } from '@/hooks/use-customers';
 import type { ReceiptCustomer } from '@/lib/print-receipt';
 
@@ -257,12 +258,24 @@ export function getRefundedQuantity(invoice: InvoiceDetail, productId: string): 
   }, 0);
 }
 
-export function useInvoices(from?: string, to?: string, limit = 20) {
+export function useInvoices(
+  from?: string,
+  to?: string,
+  options?: { page?: number; limit?: number },
+) {
+  const page = options?.page ?? 1;
+  const limit = options?.limit ?? DEFAULT_PAGE_SIZE;
+
   const swrKey = useMemo(() => {
     if (!from || !to) return null;
-    const params = new URLSearchParams({ limit: String(limit), from, to });
+    const params = new URLSearchParams({
+      limit: String(limit),
+      page: String(page),
+      from,
+      to,
+    });
     return `${API_BASE_URL}/invoices?${params.toString()}`;
-  }, [from, to, limit]);
+  }, [from, to, limit, page]);
 
   const { data, error, isLoading, mutate } = useSWR<InvoicesListResponse>(
     swrKey,
@@ -280,5 +293,12 @@ export function useInvoices(from?: string, to?: string, limit = 20) {
     item_count: raw.item_count !== undefined ? Number(raw.item_count) : undefined,
   }));
 
-  return { invoices, total: data?.total ?? 0, isLoading, error, mutate };
+  return {
+    invoices,
+    total: data?.total ?? 0,
+    pagination: paginationFromListResponse(data),
+    isLoading,
+    error,
+    mutate,
+  };
 }

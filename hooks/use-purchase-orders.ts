@@ -2,6 +2,7 @@ import useSWR from 'swr';
 import { apiGet, apiPost, API_BASE_URL, extractErrorMessage, swrFetcher as fetcher } from '@/lib/api-client';
 import { stringifyId } from '@/lib/format';
 import { tMessage } from '@/lib/i18n/get-message';
+import { DEFAULT_PAGE_SIZE, paginationFromListResponse } from '@/lib/pagination';
 
 export interface PurchaseOrderItem {
   id: string;
@@ -57,8 +58,16 @@ function mapPurchaseOrder(raw: Record<string, unknown>): PurchaseOrder {
   };
 }
 
-export function usePurchaseOrders(status?: string, supplierId?: string) {
-  const params = new URLSearchParams({ limit: '50' });
+export function usePurchaseOrders(
+  status?: string,
+  supplierId?: string,
+  page = 1,
+  limit = DEFAULT_PAGE_SIZE,
+) {
+  const params = new URLSearchParams({
+    limit: String(limit),
+    page: String(page),
+  });
   if (status && status !== 'all') params.set('status', status);
   if (supplierId) params.set('supplierId', supplierId);
 
@@ -71,6 +80,7 @@ export function usePurchaseOrders(status?: string, supplierId?: string) {
   return {
     orders: (data?.items ?? []).map(mapPurchaseOrder),
     total: data?.total ?? 0,
+    pagination: paginationFromListResponse(data),
     isLoading,
     error,
     mutate,

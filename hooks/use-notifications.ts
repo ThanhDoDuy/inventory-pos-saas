@@ -8,6 +8,7 @@ import {
 } from '@/lib/api-client';
 import { stringifyId } from '@/lib/format';
 import { tMessage } from '@/lib/i18n/get-message';
+import { DEFAULT_PAGE_SIZE } from '@/lib/pagination';
 
 export const NOTIFICATION_TYPES = ['LOW_STOCK', 'PO_RECEIVED', 'INVOICE_PAID'] as const;
 
@@ -54,8 +55,10 @@ export function useNotifications(filters?: {
   page?: number;
   limit?: number;
 }) {
-  const params = new URLSearchParams({ limit: String(filters?.limit ?? 50) });
-  if (filters?.page) params.set('page', String(filters.page));
+  const params = new URLSearchParams({
+    limit: String(filters?.limit ?? DEFAULT_PAGE_SIZE),
+    page: String(filters?.page ?? 1),
+  });
   if (filters?.unread) params.set('unread', 'true');
   if (filters?.type && filters.type !== 'all') params.set('type', filters.type);
 

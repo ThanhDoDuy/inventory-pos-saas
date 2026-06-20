@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Truck, Plus, Search, Edit2, History, Ban, CheckCircle, Loader2, Download, FileSpreadsheet, Upload } from 'lucide-react';
 import {
   activateSupplier,
@@ -18,6 +18,7 @@ import {
 import { FormField, inputClassName, selectClassName } from '@/components/form-field';
 import { SupplierImportModal } from '@/components/supplier-import-modal';
 import { ImportExportDropdown } from '@/components/import-export-dropdown';
+import { PaginationBar } from '@/components/pagination-bar';
 import { useFormat, useTranslation } from '@/lib/i18n/use-translation';
 
 const emptyForm = { name: '', phone: '', email: '', address: '', tax_code: '' };
@@ -35,10 +36,16 @@ export default function SuppliersPage() {
   const [formError, setFormError] = useState('');
   const [isExporting, setIsExporting] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
+  const [page, setPage] = useState(1);
 
-  const { suppliers, total, isLoading, error, mutate } = useSuppliers(
+  useEffect(() => {
+    setPage(1);
+  }, [searchTerm, statusFilter]);
+
+  const { suppliers, total, pagination, isLoading, error, mutate } = useSuppliers(
     searchTerm || undefined,
     statusFilter,
+    page,
   );
   const { history, isLoading: historyLoading } = useSupplierHistory(historyId);
 
@@ -329,6 +336,7 @@ export default function SuppliersPage() {
             </table>
           </div>
         )}
+        <PaginationBar pagination={pagination} onPageChange={setPage} isLoading={isLoading} />
       </div>
 
       {showModal && (

@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { Package, Plus, Search, Edit2, Trash2, Loader2, Download, FileSpreadsheet, Upload } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useDebouncedValue } from '@/hooks/use-debounced-value';
 import {
   createProduct,
@@ -19,6 +19,8 @@ import { getStockStatusColor } from '@/lib/format';
 import { FormField, inputClassName, selectClassName } from '@/components/form-field';
 import { ProductImportModal } from '@/components/product-import-modal';
 import { ImportExportDropdown } from '@/components/import-export-dropdown';
+import { PaginationBar } from '@/components/pagination-bar';
+import { useDashboard, useLowStock } from '@/hooks/use-analytics';
 import { useFormat, useTranslation } from '@/lib/i18n/use-translation';
 
 function stockStatusColorKey(stock: number, minimumStock = 0) {
@@ -45,24 +47,31 @@ export default function InventoryPage() {
   const [tierPrices, setTierPrices] = useState<Record<string, string>>({});
   const [isExporting, setIsExporting] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
+  const [page, setPage] = useState(1);
 
   const debouncedSearch = useDebouncedValue(searchTerm, 300);
-  const { products, total, isLoading, error, mutate } = useProducts(
+
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch]);
+
+  const { products, total, pagination, isLoading, error, mutate } = useProducts(
     debouncedSearch.trim() || undefined,
+    { page },
   );
   const { categories } = useCategories();
   const { tiers } = usePriceTiers();
+  const { dashboard } = useDashboard();
+  const { lowStock: lowStockRows } = useLowStock();
 
   const stats = useMemo(() => {
-    let lowStock = 0;
-    let outOfStock = 0;
-    for (const p of products) {
-      const min = p.minimum_stock ?? 0;
-      if (p.stock <= 0) outOfStock++;
-      else if (p.stock <= min) lowStock++;
-    }
-    return { total: total || products.length, lowStock, outOfStock };
-  }, [products, total]);
+    const outOfStock = lowStockRows.filter((row) => row.available_quantity <= 0).length;
+    return {
+      total: total || products.length,
+      lowStock: dashboard?.low_stock_count ?? lowStockRows.length,
+      outOfStock,
+    };
+  }, [products.length, total, dashboard?.low_stock_count, lowStockRows]);
 
   const handleCreate = async () => {
     setFormError('');
@@ -310,6 +319,11 @@ export default function InventoryPage() {
             </table>
           </div>
         )}
+        <PaginationBar
+          pagination={pagination}
+          onPageChange={setPage}
+          isLoading={isLoading}
+        />
       </div>
 
       {showAddModal && (

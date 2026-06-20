@@ -1,12 +1,14 @@
 'use client';
 
 import { Search, Loader2, AlertTriangle, Download } from 'lucide-react';
-import { useState, useMemo } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
 import { useProducts } from '@/hooks/use-inventory';
 import { downloadInventoryBalancesExport } from '@/hooks/use-import-export';
 import { getStockStatusColor } from '@/lib/format';
 import { FormField, inputClassName } from '@/components/form-field';
+import { PaginationBar } from '@/components/pagination-bar';
+import { useDebouncedValue } from '@/hooks/use-debounced-value';
 import { useFormat, useTranslation } from '@/lib/i18n/use-translation';
 
 function stockStatusColorKey(stock: number, minimumStock = 0) {
@@ -20,7 +22,17 @@ export default function InventoryStockPage() {
   const { formatMoney, getStockStatus } = useFormat();
   const [searchTerm, setSearchTerm] = useState('');
   const [isExporting, setIsExporting] = useState(false);
-  const { products, isLoading, error } = useProducts(searchTerm || undefined);
+  const [page, setPage] = useState(1);
+  const debouncedSearch = useDebouncedValue(searchTerm, 300);
+
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch]);
+
+  const { products, pagination, isLoading, error } = useProducts(
+    debouncedSearch || undefined,
+    { page },
+  );
 
   const stats = useMemo(() => {
     let low = 0;
@@ -167,6 +179,7 @@ export default function InventoryStockPage() {
             </table>
           </div>
         )}
+        <PaginationBar pagination={pagination} onPageChange={setPage} isLoading={isLoading} />
       </div>
 
       <p className="text-xs text-muted-foreground mt-4">

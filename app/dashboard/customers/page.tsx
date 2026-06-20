@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Users,
   Plus,
@@ -30,6 +30,7 @@ import {
 } from '@/hooks/use-import-export';
 import { FormField, inputClassName, selectClassName } from '@/components/form-field';
 import { CustomerImportModal } from '@/components/customer-import-modal';
+import { PaginationBar } from '@/components/pagination-bar';
 import { useFormat, useTranslation } from '@/lib/i18n/use-translation';
 
 const emptyForm = {
@@ -56,11 +57,17 @@ export default function CustomersPage() {
   const [formError, setFormError] = useState('');
   const [isExporting, setIsExporting] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
+  const [page, setPage] = useState(1);
 
-  const { customers, total, isLoading, error, mutate } = useCustomers(
+  useEffect(() => {
+    setPage(1);
+  }, [searchTerm, statusFilter, typeFilter]);
+
+  const { customers, total, pagination, isLoading, error, mutate } = useCustomers(
     searchTerm || undefined,
     statusFilter,
     typeFilter,
+    page,
   );
   const { history, isLoading: historyLoading } = useCustomerHistory(historyId);
 
@@ -396,6 +403,7 @@ export default function CustomersPage() {
             </table>
           </div>
         )}
+        <PaginationBar pagination={pagination} onPageChange={setPage} isLoading={isLoading} />
       </div>
 
       {showModal && (

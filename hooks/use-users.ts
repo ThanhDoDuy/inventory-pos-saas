@@ -9,6 +9,7 @@ import {
 } from '@/lib/api-client';
 import { stringifyId } from '@/lib/format';
 import { tMessage } from '@/lib/i18n/get-message';
+import { DEFAULT_PAGE_SIZE, paginationFromListResponse } from '@/lib/pagination';
 
 export interface UserProfile {
   id: string;
@@ -46,8 +47,11 @@ function mapUser(raw: Record<string, unknown>): UserProfile {
   };
 }
 
-export function useUsers(search?: string, roleId?: string) {
-  const params = new URLSearchParams({ limit: '50' });
+export function useUsers(search?: string, roleId?: string, page = 1, limit = DEFAULT_PAGE_SIZE) {
+  const params = new URLSearchParams({
+    limit: String(limit),
+    page: String(page),
+  });
   if (search) params.set('search', search);
   if (roleId) params.set('role_id', roleId);
 
@@ -62,6 +66,7 @@ export function useUsers(search?: string, roleId?: string) {
   return {
     users,
     total: data?.total ?? 0,
+    pagination: paginationFromListResponse(data),
     isLoading,
     error,
     mutate,

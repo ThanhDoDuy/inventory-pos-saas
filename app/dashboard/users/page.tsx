@@ -11,7 +11,7 @@ import {
   KeyRound,
   CheckCircle,
 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   activateUser,
   assignUserRole,
@@ -25,6 +25,7 @@ import {
 import { useRoles } from '@/hooks/use-roles';
 import { getRoleColor } from '@/lib/format';
 import { FormField, inputClassName, selectClassName } from '@/components/form-field';
+import { PaginationBar } from '@/components/pagination-bar';
 import { useFormat, useTranslation } from '@/lib/i18n/use-translation';
 
 export default function UsersPage() {
@@ -45,6 +46,7 @@ export default function UsersPage() {
   });
   const [editForm, setEditForm] = useState({ username: '', role_id: '' });
   const [newPassword, setNewPassword] = useState('');
+  const [page, setPage] = useState(1);
 
   const { roles } = useRoles();
   const selectedRoleId =
@@ -52,9 +54,14 @@ export default function UsersPage() {
       ? undefined
       : roles.find((r) => r.code.toUpperCase() === selectedRole.toUpperCase())?.id;
 
-  const { users, total, isLoading, error, mutate } = useUsers(
+  useEffect(() => {
+    setPage(1);
+  }, [searchTerm, selectedRoleId]);
+
+  const { users, total, pagination, isLoading, error, mutate } = useUsers(
     searchTerm || undefined,
     selectedRoleId,
+    page,
   );
 
   const stats = useMemo(() => {
@@ -355,6 +362,7 @@ export default function UsersPage() {
             </table>
           </div>
         )}
+        <PaginationBar pagination={pagination} onPageChange={setPage} isLoading={isLoading} />
       </div>
 
       {showAddModal && (

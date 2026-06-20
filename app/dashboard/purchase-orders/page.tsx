@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   ClipboardList,
   Plus,
@@ -28,6 +28,7 @@ import { getPoStatusColor } from '@/lib/format';
 import { FormField, inputClassName, selectClassName } from '@/components/form-field';
 import { PurchaseOrderImportModal } from '@/components/purchase-order-import-modal';
 import { ImportExportDropdown } from '@/components/import-export-dropdown';
+import { PaginationBar } from '@/components/pagination-bar';
 import { downloadPurchaseOrdersExport, downloadPurchaseOrdersTemplate } from '@/hooks/use-import-export';
 import { useFormat, useTranslation } from '@/lib/i18n/use-translation';
 import { ConfirmDialog } from '@/components/confirm-dialog';
@@ -54,6 +55,7 @@ export default function PurchaseOrdersPage() {
   const [isTemplateLoading, setIsTemplateLoading] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [approveId, setApproveId] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
 
   const [createForm, setCreateForm] = useState({
     supplierId: '',
@@ -61,7 +63,15 @@ export default function PurchaseOrdersPage() {
     items: [emptyLine()],
   });
 
-  const { orders, total, isLoading, error, mutate } = usePurchaseOrders(statusFilter);
+  useEffect(() => {
+    setPage(1);
+  }, [statusFilter]);
+
+  const { orders, total, pagination, isLoading, error, mutate } = usePurchaseOrders(
+    statusFilter,
+    undefined,
+    page,
+  );
   const { order: detail, isLoading: detailLoading, mutate: mutateDetail } = usePurchaseOrder(detailId);
   const { suppliers } = useSuppliers(undefined, 'ACTIVE');
   const { products } = useProducts(undefined, { limit: 200 });
@@ -370,6 +380,7 @@ export default function PurchaseOrdersPage() {
             </table>
           </div>
         )}
+        <PaginationBar pagination={pagination} onPageChange={setPage} isLoading={isLoading} />
       </div>
 
       {showCreate && (

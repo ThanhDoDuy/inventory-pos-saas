@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Download, Eye, Loader2, ScrollText, X } from 'lucide-react';
 import {
   AUDIT_ACTIONS,
@@ -12,6 +12,7 @@ import {
 import { downloadAuditLogsExport } from '@/hooks/use-import-export';
 import { useUsers } from '@/hooks/use-users';
 import { FormField, selectClassName } from '@/components/form-field';
+import { PaginationBar } from '@/components/pagination-bar';
 import type { DateRangePreset } from '@/lib/format';
 import { getDateRange } from '@/lib/format';
 import { useFormat, useTranslation } from '@/lib/i18n/use-translation';
@@ -37,13 +38,20 @@ export default function AuditLogsPage() {
   const [detailId, setDetailId] = useState<string | null>(null);
   const [detail, setDetail] = useState<AuditLogItem | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
+  const [page, setPage] = useState(1);
 
   const { from, to } = useMemo(() => getDateRange(dateRange), [dateRange]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [moduleFilter, actionFilter, dateRange]);
+
   const { logs, pagination, isLoading, error } = useAuditLogs({
     module: moduleFilter,
     action: actionFilter,
     from,
     to,
+    page,
   });
   const { users } = useUsers();
 
@@ -241,6 +249,7 @@ export default function AuditLogsPage() {
             </table>
           </div>
         )}
+        <PaginationBar pagination={pagination} onPageChange={setPage} isLoading={isLoading} />
       </div>
 
       {detailId && (

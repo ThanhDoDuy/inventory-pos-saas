@@ -1,6 +1,7 @@
 import useSWR from 'swr';
 import { apiGet, apiPost, API_BASE_URL, extractErrorMessage, swrFetcher as fetcher } from '@/lib/api-client';
 import { stringifyId } from '@/lib/format';
+import { DEFAULT_PAGE_SIZE, paginationFromListResponse } from '@/lib/pagination';
 import { tMessage } from '@/lib/i18n/get-message';
 
 export type AdjustmentReason = 'DAMAGE' | 'LOSS' | 'EXPIRED' | 'CORRECTION';
@@ -40,8 +41,16 @@ function mapTransaction(raw: Record<string, unknown>): InventoryTransaction {
   };
 }
 
-export function useInventoryTransactions(type = 'ADJUST') {
-  const params = new URLSearchParams({ limit: '50', type });
+export function useInventoryTransactions(
+  type = 'ADJUST',
+  page = 1,
+  limit = DEFAULT_PAGE_SIZE,
+) {
+  const params = new URLSearchParams({
+    limit: String(limit),
+    page: String(page),
+    type,
+  });
 
   const { data, error, isLoading, mutate } = useSWR<ListResponse>(
     `${API_BASE_URL}/inventory/transactions?${params.toString()}`,
@@ -52,6 +61,7 @@ export function useInventoryTransactions(type = 'ADJUST') {
   return {
     transactions: (data?.items ?? []).map(mapTransaction),
     total: data?.total ?? 0,
+    pagination: paginationFromListResponse(data),
     isLoading,
     error,
     mutate,

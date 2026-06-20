@@ -1,9 +1,10 @@
 'use client';
 
 import { Download, FileText, Loader2, Printer, RotateCcw, XCircle } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { InvoiceRefundModal } from '@/components/invoice-refund-modal';
 import { FormField, inputClassName } from '@/components/form-field';
+import { PaginationBar } from '@/components/pagination-bar';
 import {
   cancelInvoice,
   customerToReceiptCustomer,
@@ -23,7 +24,11 @@ export default function InvoicesPage() {
   const { t } = useTranslation();
   const { formatMoney, formatDateTime } = useFormat();
   const { from, to } = useMemo(() => getDateRange('month'), []);
-  const { invoices, total, isLoading, error, mutate } = useInvoices(from, to, 50);
+  const [page, setPage] = useState(1);
+  const { invoices, total, pagination, isLoading, error, mutate } = useInvoices(from, to, {
+    page,
+    limit: 20,
+  });
   const { featureFlags } = useSettings();
   const { tenant } = useTenant();
   const user = useAuthStore((state) => state.user);
@@ -230,6 +235,7 @@ export default function InvoicesPage() {
             </table>
           </div>
         )}
+        <PaginationBar pagination={pagination} onPageChange={setPage} isLoading={isLoading} />
       </div>
 
       {cancelTargetId && (

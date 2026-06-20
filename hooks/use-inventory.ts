@@ -3,6 +3,7 @@ import useSWR from 'swr';
 import { apiGet, apiPatch, apiPost, apiDelete, extractErrorMessage } from '@/lib/api-client';
 import { stringifyId } from '@/lib/format';
 import { tMessage } from '@/lib/i18n/get-message';
+import { DEFAULT_PAGE_SIZE, paginationFromListResponse } from '@/lib/pagination';
 
 async function swrFetcher<T>(path: string): Promise<T> {
   return apiGet<T>(path);
@@ -94,10 +95,14 @@ function mapCategory(raw: Record<string, unknown>): CategoryItem {
 
 export function useProducts(
   search?: string,
-  options?: { categoryId?: string; limit?: number },
+  options?: { categoryId?: string; limit?: number; page?: number },
 ) {
-  const limit = options?.limit ?? 100;
-  const params = new URLSearchParams({ limit: String(limit) });
+  const limit = options?.limit ?? DEFAULT_PAGE_SIZE;
+  const page = options?.page ?? 1;
+  const params = new URLSearchParams({
+    limit: String(limit),
+    page: String(page),
+  });
   if (search) params.set('search', search);
   if (options?.categoryId) params.set('category_id', options.categoryId);
 
@@ -114,6 +119,7 @@ export function useProducts(
   return {
     products,
     total: data?.total ?? 0,
+    pagination: paginationFromListResponse(data),
     isLoading,
     error,
     mutate,
