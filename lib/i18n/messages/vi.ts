@@ -996,6 +996,17 @@ export const vi: Messages = {
       unread: 'Không có thông báo chưa đọc.',
     },
     unreadCount: '{count} chưa đọc',
+    navbar: {
+      ariaLabel: 'Thông báo',
+      ariaLabelWithCount: 'Thông báo, {count} chưa đọc',
+      title: 'Thông báo',
+      markAllRead: 'Đánh dấu tất cả đã đọc',
+      viewMore: 'Xem thêm',
+      viewAll: 'Xem tất cả thông báo',
+      empty: 'Chưa có thông báo',
+      loading: 'Đang tải...',
+      close: 'Đóng',
+    },
     error: {
       loadFailed: 'Không tải được thông báo',
       markReadFailed: 'Không thể đánh dấu đã đọc',

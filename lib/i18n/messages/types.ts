@@ -992,6 +992,17 @@ export interface Messages {
       unread: string;
     };
     unreadCount: string;
+    navbar: {
+      ariaLabel: string;
+      ariaLabelWithCount: string;
+      title: string;
+      markAllRead: string;
+      viewMore: string;
+      viewAll: string;
+      empty: string;
+      loading: string;
+      close: string;
+    };
     error: {
       loadFailed: string;
       markReadFailed: string;

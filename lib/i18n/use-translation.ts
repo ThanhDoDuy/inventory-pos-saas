@@ -1,6 +1,8 @@
 'use client';
 
 import { useCallback } from 'react';
+import { formatDistanceToNow } from 'date-fns';
+import { enUS, vi as viLocale } from 'date-fns/locale';
 import { useLocaleStore } from '@/lib/locale-store';
 import type { Locale } from './messages';
 import { MESSAGES } from './messages';
@@ -45,6 +47,17 @@ export function useFormat() {
       }).format(new Date(value));
     },
     [numberLocale],
+  );
+
+  const formatRelativeTime = useCallback(
+    (value?: string) => {
+      if (!value) return '';
+      return formatDistanceToNow(new Date(value), {
+        addSuffix: true,
+        locale: locale === 'en' ? enUS : viLocale,
+      });
+    },
+    [locale],
   );
 
   const getPoStatusLabel = useCallback(
@@ -119,6 +132,7 @@ export function useFormat() {
     formatPrice,
     formatMoney,
     formatDateTime,
+    formatRelativeTime,
     getPoStatusLabel,
     getPartyStatusLabel,
     getAdjustmentReasonLabel,

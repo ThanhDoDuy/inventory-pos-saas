@@ -14,4 +14,5 @@ export const PERMISSIONS = {
   SETTINGS_VIEW: 'settings:view',
   AUDIT_VIEW: 'audit:view',
   NOTIFICATIONS_VIEW: 'notifications:view',
+  NOTIFICATIONS_MARK_READ: 'notifications:mark_read',
 } as const;

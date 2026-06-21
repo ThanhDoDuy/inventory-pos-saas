@@ -996,6 +996,17 @@ export const en: Messages = {
       unread: 'No unread notifications.',
     },
     unreadCount: '{count} unread',
+    navbar: {
+      ariaLabel: 'Notifications',
+      ariaLabelWithCount: 'Notifications, {count} unread',
+      title: 'Notifications',
+      markAllRead: 'Mark all as read',
+      viewMore: 'View more',
+      viewAll: 'View all notifications',
+      empty: 'No notifications yet',
+      loading: 'Loading...',
+      close: 'Close',
+    },
     error: {
       loadFailed: 'Failed to load notifications',
       markReadFailed: 'Could not mark as read',

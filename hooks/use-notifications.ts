@@ -20,6 +20,7 @@ export interface NotificationItem {
   title: string;
   message: string;
   payload: Record<string, unknown>;
+  redirect_url?: string;
   is_read: boolean;
   read_at?: string;
   created_at?: string;
@@ -43,6 +44,7 @@ function mapNotification(raw: Record<string, unknown>): NotificationItem {
     title: String(raw.title ?? ''),
     message: String(raw.message ?? ''),
     payload: (raw.payload as Record<string, unknown>) ?? {},
+    redirect_url: raw.redirect_url ? String(raw.redirect_url) : undefined,
     is_read: Boolean(raw.is_read),
     read_at: raw.read_at ? String(raw.read_at) : undefined,
     created_at: raw.created_at ? String(raw.created_at) : undefined,
