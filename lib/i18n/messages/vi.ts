@@ -59,7 +59,7 @@ export const vi: Messages = {
       dashboard: 'Dashboard',
       reports: 'Báo cáo',
       pos: 'POS',
-      posRetail: 'POS khách vãng lai',
+      posRetail: 'POS khách lẻ',
       posBusiness: 'POS doanh nghiệp',
       invoices: 'Hóa đơn',
       customers: 'Khách hàng',
@@ -278,8 +278,12 @@ export const vi: Messages = {
       qty: 'SL: {count}',
       close: 'Đóng',
     },
+    orderPriceTier: {
+      label: 'Loại giá cho đơn hàng',
+      hint: 'Áp dụng cho mọi sản phẩm thêm vào giỏ. Mặc định: Giá lẻ.',
+    },
     retail: {
-      title: 'POS khách vãng lai',
+      title: 'POS khách lẻ',
       subtitle: 'Thanh toán nhanh cho khách lẻ — không cần hồ sơ khách hàng',
       confirmTitle: 'Xác nhận thanh toán',
       confirmPay: 'Xác nhận thanh toán',

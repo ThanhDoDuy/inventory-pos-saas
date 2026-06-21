@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import type { StoreApi, UseBoundStore } from 'zustand';
+import { RETAIL_TIER_CODE } from '@/lib/price-input';
 
 export interface CartItem {
   id: string;
@@ -17,6 +18,8 @@ export interface CartItem {
 
 export interface CartState {
   items: CartItem[];
+  orderPriceTierCode: string;
+  orderPriceTierLabel: string;
   discountPercentage: number;
   customDiscountAmount: number;
   taxPercentage: number;
@@ -30,6 +33,7 @@ export interface CartState {
   addItem: (item: Omit<CartItem, 'total'>) => void;
   removeItem: (lineId: string) => void;
   updateQuantity: (lineId: string, quantity: number) => void;
+  setOrderPriceTier: (code: string, label: string) => void;
   updateDiscount: (discountPercentage: number) => void;
   setCustomDiscount: (amount: number) => void;
   updateTaxPercentage: (tax: number) => void;
@@ -70,6 +74,8 @@ function calculateTotals(
 function createCartStore(): CartStore {
   return create<CartState>((set) => ({
     items: [],
+    orderPriceTierCode: RETAIL_TIER_CODE,
+    orderPriceTierLabel: '',
     discountPercentage: 0,
     customDiscountAmount: 0,
     taxPercentage: 0,
@@ -140,6 +146,10 @@ function createCartStore(): CartStore {
       });
     },
 
+    setOrderPriceTier: (code, label) => {
+      set({ orderPriceTierCode: code, orderPriceTierLabel: label });
+    },
+
     updateDiscount: (discountPercentage) => {
       set((state) =>
         calculateTotals(
@@ -180,6 +190,8 @@ function createCartStore(): CartStore {
     clearCart: () => {
       set({
         items: [],
+        orderPriceTierCode: RETAIL_TIER_CODE,
+        orderPriceTierLabel: '',
         discountPercentage: 0,
         customDiscountAmount: 0,
         taxPercentage: 0,

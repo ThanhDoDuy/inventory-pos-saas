@@ -275,6 +275,10 @@ export interface Messages {
       qty: string;
       close: string;
     };
+    orderPriceTier: {
+      label: string;
+      hint: string;
+    };
     retail: {
       title: string;
       subtitle: string;

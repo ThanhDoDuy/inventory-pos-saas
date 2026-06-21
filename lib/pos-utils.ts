@@ -14,6 +14,14 @@ export function resolveProductPrices(product: ProductItem): Record<string, numbe
   };
 }
 
+export function resolveUnitPriceForTier(
+  product: ProductItem,
+  tierCode: string,
+): number {
+  const prices = resolveProductPrices(product);
+  return prices[tierCode] ?? product.selling_price;
+}
+
 export function cartItemsToInvoiceItems(
   items: Array<{
     productId: string;

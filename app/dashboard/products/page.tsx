@@ -25,6 +25,12 @@ import { PaginationBar } from '@/components/pagination-bar';
 import { useDashboard, useLowStock } from '@/hooks/use-analytics';
 import { useFormat, useTranslation } from '@/lib/i18n/use-translation';
 import { getProductListImageUrl } from '@/lib/cloudinary-url';
+import {
+  buildProductPrices,
+  excludeRetailTier,
+  parsePriceInteger,
+  vndPriceInputProps,
+} from '@/lib/price-input';
 import { uploadProductImage } from '@/hooks/use-product-images';
 
 function stockStatusColorKey(stock: number, minimumStock = 0) {
@@ -67,6 +73,7 @@ export default function InventoryPage() {
   );
   const { categories } = useCategories();
   const { tiers } = usePriceTiers();
+  const editableTiers = useMemo(() => excludeRetailTier(tiers), [tiers]);
   const { dashboard } = useDashboard();
   const { lowStock: lowStockRows } = useLowStock();
 
@@ -104,18 +111,13 @@ export default function InventoryPage() {
 
     setIsSubmitting(true);
     try {
-      const retail = Number(form.selling_price);
-      const prices = Object.fromEntries(
-        tiers.map((tier) => [
-          tier.code,
-          Number(tierPrices[tier.code] || retail),
-        ]),
-      );
+      const retail = parsePriceInteger(form.selling_price);
+      const prices = buildProductPrices(form.selling_price, tierPrices, tiers);
 
       const created = (await createProduct({
         name: form.name,
         sku: form.sku,
-        cost_price: Number(form.cost_price) || 0,
+        cost_price: parsePriceInteger(form.cost_price),
         selling_price: retail,
         prices,
         minimum_stock: Number(form.minimum_stock) || 0,
@@ -409,8 +411,7 @@ export default function InventoryPage() {
               <FormField label={t('products.form.costPrice')} htmlFor="product-cost">
                 <input
                   id="product-cost"
-                  type="number"
-                  min={0}
+                  {...vndPriceInputProps}
                   placeholder={t('products.placeholders.cost')}
                   value={form.cost_price}
                   onChange={(e) => setForm({ ...form, cost_price: e.target.value })}
@@ -420,30 +421,23 @@ export default function InventoryPage() {
               <FormField label={t('products.form.sellingPrice')} htmlFor="product-price" required>
                 <input
                   id="product-price"
-                  type="number"
-                  min={0}
+                  {...vndPriceInputProps}
                   placeholder={t('products.placeholders.price')}
                   value={form.selling_price}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    setForm({ ...form, selling_price: value });
-                    setTierPrices((prev) => ({
-                      ...prev,
-                      RETAIL: value,
-                    }));
-                  }}
+                  onChange={(e) =>
+                    setForm({ ...form, selling_price: e.target.value })
+                  }
                   className={inputClassName}
                 />
               </FormField>
-              {tiers.length > 0 && (
+              {editableTiers.length > 0 && (
                 <div className="space-y-3 pt-2 border-t border-border">
                   <p className="text-sm font-medium text-foreground">{t('products.form.tierPrices')}</p>
-                  {tiers.map((tier) => (
+                  {editableTiers.map((tier) => (
                     <FormField key={tier.code} label={tier.label} htmlFor={`tier-${tier.code}`}>
                       <input
                         id={`tier-${tier.code}`}
-                        type="number"
-                        min={0}
+                        {...vndPriceInputProps}
                         value={tierPrices[tier.code] ?? form.selling_price}
                         onChange={(e) =>
                           setTierPrices((prev) => ({

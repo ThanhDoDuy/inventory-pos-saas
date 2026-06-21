@@ -278,6 +278,10 @@ export const en: Messages = {
       qty: 'Qty: {count}',
       close: 'Close',
     },
+    orderPriceTier: {
+      label: 'Order price type',
+      hint: 'Applies to all products added to the cart. Default: Retail.',
+    },
     retail: {
       title: 'Walk-in POS',
       subtitle: 'Fast checkout for walk-in customers — no customer profile required',

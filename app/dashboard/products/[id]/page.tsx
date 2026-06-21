@@ -1,7 +1,7 @@
 'use client';
 
 import { ArrowLeft, Edit2, Save, X, Loader2 } from 'lucide-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import {
   deactivateProduct,
@@ -10,6 +10,12 @@ import {
 } from '@/hooks/use-inventory';
 import { usePriceTiers } from '@/hooks/use-price-tiers';
 import { getStockStatusColor } from '@/lib/format';
+import {
+  buildProductPrices,
+  excludeRetailTier,
+  parsePriceInteger,
+  vndPriceInputProps,
+} from '@/lib/price-input';
 import { useFormat, useTranslation } from '@/lib/i18n/use-translation';
 import { ProductImageGallery } from '@/components/product-image-gallery';
 
@@ -28,6 +34,7 @@ export default function ProductDetailPage() {
 
   const { product, isLoading, error, mutate } = useProduct(productId);
   const { tiers } = usePriceTiers();
+  const editableTiers = useMemo(() => excludeRetailTier(tiers), [tiers]);
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [editData, setEditData] = useState({
@@ -105,11 +112,12 @@ export default function ProductDetailPage() {
   const handleSave = async () => {
     setIsSaving(true);
     try {
+      const prices = buildProductPrices(editData.selling_price, tierPrices, tiers);
       await updateProduct(productId, {
         name: editData.name,
-        cost_price: editData.cost_price,
-        selling_price: editData.selling_price,
-        prices: tierPrices,
+        cost_price: parsePriceInteger(editData.cost_price),
+        selling_price: parsePriceInteger(editData.selling_price),
+        prices,
         minimum_stock: editData.minimum_stock,
       });
       await mutate();
@@ -253,9 +261,9 @@ export default function ProductDetailPage() {
                     <p className="font-bold text-green-800 text-lg">{profitMargin}%</p>
                   </div>
                 </div>
-                {tiers.length > 0 && (
+                {editableTiers.length > 0 && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {tiers.map((tier) => (
+                    {editableTiers.map((tier) => (
                       <div key={tier.code} className="p-3 border border-border rounded-lg">
                         <p className="text-muted-foreground text-sm mb-1">{tier.label}</p>
                         <p className="font-semibold text-foreground">
@@ -273,10 +281,13 @@ export default function ProductDetailPage() {
                     <label htmlFor="edit-cost-price" className="block text-sm font-medium text-foreground mb-2">{t('products.detail.form.costPrice')}</label>
                     <input
                       id="edit-cost-price"
-                      type="number"
+                      {...vndPriceInputProps}
                       value={editData.cost_price}
                       onChange={(e) =>
-                        setEditData({ ...editData, cost_price: parseFloat(e.target.value) || 0 })
+                        setEditData({
+                          ...editData,
+                          cost_price: parsePriceInteger(e.target.value),
+                        })
                       }
                       className="w-full px-4 py-2 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 bg-background text-foreground"
                     />
@@ -285,30 +296,31 @@ export default function ProductDetailPage() {
                     <label htmlFor="edit-selling-price" className="block text-sm font-medium text-foreground mb-2">{t('products.detail.form.sellingPrice')}</label>
                     <input
                       id="edit-selling-price"
-                      type="number"
+                      {...vndPriceInputProps}
                       value={editData.selling_price}
-                      onChange={(e) => {
-                        const value = parseFloat(e.target.value) || 0;
-                        setEditData({ ...editData, selling_price: value });
-                        setTierPrices((prev) => ({ ...prev, RETAIL: value }));
-                      }}
+                      onChange={(e) =>
+                        setEditData({
+                          ...editData,
+                          selling_price: parsePriceInteger(e.target.value),
+                        })
+                      }
                       className="w-full px-4 py-2 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 bg-background text-foreground"
                     />
                   </div>
                 </div>
-                {tiers.map((tier) => (
+                {editableTiers.map((tier) => (
                   <div key={tier.code}>
                     <label htmlFor={`edit-tier-${tier.code}`} className="block text-sm font-medium text-foreground mb-2">
                       {tier.label}
                     </label>
                     <input
                       id={`edit-tier-${tier.code}`}
-                      type="number"
+                      {...vndPriceInputProps}
                       value={tierPrices[tier.code] ?? editData.selling_price}
                       onChange={(e) =>
                         setTierPrices((prev) => ({
                           ...prev,
-                          [tier.code]: parseFloat(e.target.value) || 0,
+                          [tier.code]: parsePriceInteger(e.target.value),
                         }))
                       }
                       className="w-full px-4 py-2 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 bg-background text-foreground"
