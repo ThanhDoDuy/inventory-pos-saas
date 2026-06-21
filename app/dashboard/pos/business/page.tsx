@@ -5,11 +5,9 @@ import { POSCart } from '@/components/pos-cart';
 import { PosCustomerPanel } from '@/components/pos-customer-panel';
 import { PosProductPicker } from '@/components/pos-product-picker';
 import { PaymentModal } from '@/components/payment-modal';
-import { useAuthStore } from '@/lib/auth-store';
 import { useBusinessCartStore } from '@/lib/cart-store';
 import { cartItemsToInvoiceItems } from '@/lib/pos-utils';
 import type { CustomerItem } from '@/hooks/use-customers';
-import { useTenant } from '@/hooks/use-tenant';
 import { PERMISSIONS } from '@/lib/permission-codes';
 import { usePermissionRouteGuard } from '@/hooks/use-permission-route-guard';
 import { useTranslation } from '@/lib/i18n/use-translation';
@@ -17,8 +15,6 @@ import { useTranslation } from '@/lib/i18n/use-translation';
 export default function PosBusinessPage() {
   const { t } = useTranslation();
   const cart = useBusinessCartStore();
-  const user = useAuthStore((state) => state.user);
-  const { tenant } = useTenant();
   const [selectedCustomer, setSelectedCustomer] = useState<CustomerItem | null>(null);
   const [showPayment, setShowPayment] = useState(false);
   const allowed = usePermissionRouteGuard(
@@ -43,10 +39,6 @@ export default function PosBusinessPage() {
     setSelectedCustomer(null);
     setShowPayment(false);
   };
-
-  const storeAddress = [tenant?.address, tenant?.city, tenant?.state]
-    .filter(Boolean)
-    .join(', ');
 
   if (!allowed) {
     return null;
@@ -90,9 +82,6 @@ export default function PosBusinessPage() {
           isOpen={showPayment}
           onClose={() => setShowPayment(false)}
           onSuccess={handlePaymentSuccess}
-          storeName={user?.tenantName ?? tenant?.name}
-          storeAddress={storeAddress || undefined}
-          storePhone={tenant?.phone || undefined}
           notes={cart.notes || undefined}
         />
       )}

@@ -21,6 +21,10 @@ import {
   type FeatureFlagItem,
 } from '@/hooks/use-settings';
 import { FormField, inputClassName } from '@/components/form-field';
+import {
+  buildTenantAddress,
+  RECEIPT_LAYOUT_KEYS,
+} from '@/lib/receipt-layout';
 
 const FEATURE_FLAG_KEYS = [
   'enable_low_stock_alert',
@@ -60,6 +64,11 @@ export default function SettingsPage() {
     maxDiscountStaff: '10',
     maxDiscountManager: '30',
   });
+  const [receiptLayoutForm, setReceiptLayoutForm] = useState({
+    showStoreName: true,
+    showStorePhone: false,
+    showStoreAddress: false,
+  });
 
   const [businessMessage, setBusinessMessage] = useState('');
   const [businessError, setBusinessError] = useState('');
@@ -68,6 +77,10 @@ export default function SettingsPage() {
   const [policyMessage, setPolicyMessage] = useState('');
   const [policyError, setPolicyError] = useState('');
   const [isSavingPolicies, setIsSavingPolicies] = useState(false);
+
+  const [receiptLayoutMessage, setReceiptLayoutMessage] = useState('');
+  const [receiptLayoutError, setReceiptLayoutError] = useState('');
+  const [isSavingReceiptLayout, setIsSavingReceiptLayout] = useState(false);
 
   const [notifMessage, setNotifMessage] = useState('');
   const [notifError, setNotifError] = useState('');
@@ -108,6 +121,14 @@ export default function SettingsPage() {
       lowStockThreshold: getSettingValue(settings, 'inventory.low_stock_threshold', '20'),
       maxDiscountStaff: getSettingValue(settings, 'sales.max_discount_staff', '10'),
       maxDiscountManager: getSettingValue(settings, 'sales.max_discount_manager', '30'),
+    });
+    setReceiptLayoutForm({
+      showStoreName:
+        getSettingValue(settings, RECEIPT_LAYOUT_KEYS.showStoreName, 'true') === 'true',
+      showStorePhone:
+        getSettingValue(settings, RECEIPT_LAYOUT_KEYS.showStorePhone, 'false') === 'true',
+      showStoreAddress:
+        getSettingValue(settings, RECEIPT_LAYOUT_KEYS.showStoreAddress, 'false') === 'true',
     });
   }, [settings]);
 
@@ -168,6 +189,38 @@ export default function SettingsPage() {
       setIsSavingPolicies(false);
     }
   };
+
+  const handleSaveReceiptLayout = async () => {
+    setReceiptLayoutError('');
+    setReceiptLayoutMessage('');
+    setIsSavingReceiptLayout(true);
+    try {
+      await bulkUpdateSettings([
+        {
+          key: RECEIPT_LAYOUT_KEYS.showStoreName,
+          value: receiptLayoutForm.showStoreName ? 'true' : 'false',
+        },
+        {
+          key: RECEIPT_LAYOUT_KEYS.showStorePhone,
+          value: receiptLayoutForm.showStorePhone ? 'true' : 'false',
+        },
+        {
+          key: RECEIPT_LAYOUT_KEYS.showStoreAddress,
+          value: receiptLayoutForm.showStoreAddress ? 'true' : 'false',
+        },
+      ]);
+      await mutateSettings();
+      setReceiptLayoutMessage(t('settings.receiptLayout.saved'));
+    } catch (err) {
+      setReceiptLayoutError(
+        err instanceof Error ? err.message : t('settings.receiptLayout.error'),
+      );
+    } finally {
+      setIsSavingReceiptLayout(false);
+    }
+  };
+
+  const receiptPreviewAddress = buildTenantAddress(tenant);
 
   const handleToggleFeature = async (flag: FeatureFlagItem, enabled: boolean) => {
     setNotifError('');
@@ -380,6 +433,109 @@ export default function SettingsPage() {
                   className="px-6 py-2 bg-primary text-primary-foreground rounded-lg font-semibold hover:bg-primary/90 transition-colors disabled:opacity-50"
                 >
                   {isSavingBusiness ? t('settings.business.saving') : t('settings.buttons.saveChanges')}
+                </button>
+              </>
+            )}
+          </div>
+
+          <div className="bg-card rounded-lg border border-border p-6">
+            <h2 className="text-xl font-bold text-foreground mb-2">
+              {t('settings.receiptLayout.title')}
+            </h2>
+            <p className="text-sm text-muted-foreground mb-6">
+              {t('settings.receiptLayout.subtitle')}
+            </p>
+            {settingsLoading ? (
+              <div className="flex items-center gap-2 text-muted-foreground py-4">
+                <Loader2 className="animate-spin" size={18} />
+                {t('common.loading')}
+              </div>
+            ) : (
+              <>
+                {receiptLayoutMessage && (
+                  <p className="mb-4 text-sm text-green-700 bg-green-50 border border-green-200 rounded-lg p-3">
+                    {receiptLayoutMessage}
+                  </p>
+                )}
+                {receiptLayoutError && (
+                  <p className="mb-4 text-sm text-destructive bg-destructive/10 border border-destructive/30 rounded-lg p-3">
+                    {receiptLayoutError}
+                  </p>
+                )}
+                <div className="space-y-4 mb-6">
+                  <label className="flex items-start gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={receiptLayoutForm.showStoreName}
+                      onChange={(e) =>
+                        setReceiptLayoutForm((f) => ({
+                          ...f,
+                          showStoreName: e.target.checked,
+                        }))
+                      }
+                      className="mt-1 rounded"
+                    />
+                    <span>
+                      <span className="block text-sm font-medium">
+                        {t('settings.receiptLayout.showStoreName')}
+                      </span>
+                      <span className="block text-xs text-muted-foreground">
+                        {tenant?.name || t('settings.receiptLayout.previewEmpty')}
+                      </span>
+                    </span>
+                  </label>
+                  <label className="flex items-start gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={receiptLayoutForm.showStorePhone}
+                      onChange={(e) =>
+                        setReceiptLayoutForm((f) => ({
+                          ...f,
+                          showStorePhone: e.target.checked,
+                        }))
+                      }
+                      className="mt-1 rounded"
+                    />
+                    <span>
+                      <span className="block text-sm font-medium">
+                        {t('settings.receiptLayout.showStorePhone')}
+                      </span>
+                      <span className="block text-xs text-muted-foreground">
+                        {tenant?.phone || t('settings.receiptLayout.previewEmpty')}
+                      </span>
+                    </span>
+                  </label>
+                  <label className="flex items-start gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={receiptLayoutForm.showStoreAddress}
+                      onChange={(e) =>
+                        setReceiptLayoutForm((f) => ({
+                          ...f,
+                          showStoreAddress: e.target.checked,
+                        }))
+                      }
+                      className="mt-1 rounded"
+                    />
+                    <span>
+                      <span className="block text-sm font-medium">
+                        {t('settings.receiptLayout.showStoreAddress')}
+                      </span>
+                      <span className="block text-xs text-muted-foreground">
+                        {receiptPreviewAddress || t('settings.receiptLayout.previewEmpty')}
+                      </span>
+                    </span>
+                  </label>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleSaveReceiptLayout}
+                  disabled={isSavingReceiptLayout}
+                  className="px-6 py-2 bg-primary text-primary-foreground rounded-lg font-semibold hover:bg-primary/90 transition-colors disabled:opacity-50"
+                >
+                  {isSavingReceiptLayout
+                    ? t('settings.receiptLayout.saving')
+                    : t('settings.buttons.saveChanges')}
                 </button>
               </>
             )}

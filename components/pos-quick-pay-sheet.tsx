@@ -19,6 +19,7 @@ import {
   type InvoiceDetail,
 } from '@/hooks/use-invoices';
 import { cartItemsToInvoiceItems } from '@/lib/pos-utils';
+import { useReceiptLayout } from '@/hooks/use-receipt-layout';
 import { useFormat, useTranslation } from '@/lib/i18n/use-translation';
 import { printReceipt } from '@/lib/print-receipt';
 
@@ -28,7 +29,6 @@ interface PosQuickPaySheetProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
-  storeName?: string;
 }
 
 type PaymentMethod = 'cash' | 'transfer';
@@ -41,10 +41,10 @@ export function PosQuickPaySheet({
   isOpen,
   onClose,
   onSuccess,
-  storeName,
 }: PosQuickPaySheetProps) {
   const { t } = useTranslation();
   const { formatMoney } = useFormat();
+  const { storeInfo } = useReceiptLayout();
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash');
   const [amountPaid, setAmountPaid] = useState(total);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -90,7 +90,7 @@ export function PosQuickPaySheet({
     try {
       printReceipt(
         invoiceToReceiptData(createdInvoice, {
-          storeName,
+          ...storeInfo,
           amountPaid: paymentMethod === 'cash' ? lastAmountPaid : createdInvoice.total,
           change: changeAmount,
         }),

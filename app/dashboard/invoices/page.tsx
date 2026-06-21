@@ -14,8 +14,7 @@ import {
 } from '@/hooks/use-invoices';
 import { downloadInvoicesExport } from '@/hooks/use-import-export';
 import { isFeatureEnabled, useSettings } from '@/hooks/use-settings';
-import { useTenant } from '@/hooks/use-tenant';
-import { useAuthStore } from '@/lib/auth-store';
+import { useReceiptLayout } from '@/hooks/use-receipt-layout';
 import { getDateRange } from '@/lib/format';
 import { printReceipt } from '@/lib/print-receipt';
 import { useFormat, useTranslation } from '@/lib/i18n/use-translation';
@@ -29,8 +28,7 @@ export default function InvoicesPage() {
     page,
   });
   const { featureFlags } = useSettings();
-  const { tenant } = useTenant();
-  const user = useAuthStore((state) => state.user);
+  const { storeInfo } = useReceiptLayout();
   const [printingId, setPrintingId] = useState<string | null>(null);
   const [isExporting, setIsExporting] = useState(false);
   const [cancelTargetId, setCancelTargetId] = useState<string | null>(null);
@@ -41,19 +39,13 @@ export default function InvoicesPage() {
 
   const refundEnabled = isFeatureEnabled(featureFlags, 'enable_refund');
 
-  const storeAddress = [tenant?.address, tenant?.city, tenant?.state]
-    .filter(Boolean)
-    .join(', ');
-
   const handlePrint = async (invoiceId: string) => {
     setPrintingId(invoiceId);
     try {
       const detail = await getInvoice(invoiceId);
       printReceipt(
         invoiceToReceiptData(detail, {
-          storeName: user?.tenantName ?? tenant?.name,
-          storeAddress: storeAddress || undefined,
-          storePhone: tenant?.phone || undefined,
+          ...storeInfo,
           customer: detail.customer ? customerToReceiptCustomer(detail.customer) : undefined,
         }),
       );

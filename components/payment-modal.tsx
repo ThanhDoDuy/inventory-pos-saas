@@ -21,6 +21,7 @@ import {
   type InvoiceDetail,
 } from '@/hooks/use-invoices';
 import type { CustomerItem } from '@/hooks/use-customers';
+import { useReceiptLayout } from '@/hooks/use-receipt-layout';
 import { useFormat, useTranslation } from '@/lib/i18n/use-translation';
 import { printReceipt } from '@/lib/print-receipt';
 
@@ -35,9 +36,6 @@ interface PaymentModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
-  storeName?: string;
-  storeAddress?: string;
-  storePhone?: string;
   notes?: string;
 }
 
@@ -56,13 +54,11 @@ export function PaymentModal({
   isOpen,
   onClose,
   onSuccess,
-  storeName,
-  storeAddress,
-  storePhone,
   notes,
 }: PaymentModalProps) {
   const { t } = useTranslation();
   const { formatMoney } = useFormat();
+  const { storeInfo } = useReceiptLayout();
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash');
   const [amountPaid, setAmountPaid] = useState(total);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -110,9 +106,7 @@ export function PaymentModal({
     try {
       printReceipt(
         invoiceToReceiptData(createdInvoice, {
-          storeName,
-          storeAddress,
-          storePhone,
+          ...storeInfo,
           customer: customer ? customerToReceiptCustomer(customer) : undefined,
           notes,
           amountPaid: paymentMethod === 'cash' ? lastAmountPaid : createdInvoice.total,

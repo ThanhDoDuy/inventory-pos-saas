@@ -152,7 +152,11 @@ function buildReceiptHtml(data: ReceiptData, labels: ReceiptLabels, locale: Loca
 </head>
 <body>
   <div class="center">
-    <div class="store">${escapeHtml(data.storeName ?? labels.defaultStoreName)}</div>
+    ${
+      data.storeName
+        ? `<div class="store">${escapeHtml(data.storeName)}</div>`
+        : ''
+    }
     ${
       data.storeAddress
         ? `<div class="meta">${escapeHtml(data.storeAddress)}</div>`

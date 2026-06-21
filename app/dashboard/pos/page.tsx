@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { POSCart } from '@/components/pos-cart';
 import { PosProductPicker } from '@/components/pos-product-picker';
 import { PosQuickPaySheet } from '@/components/pos-quick-pay-sheet';
-import { useAuthStore } from '@/lib/auth-store';
 import { useRetailCartStore } from '@/lib/cart-store';
 import { cartItemsToInvoiceItems } from '@/lib/pos-utils';
 import { PERMISSIONS } from '@/lib/permission-codes';
@@ -14,7 +13,6 @@ import { useTranslation } from '@/lib/i18n/use-translation';
 export default function PosRetailPage() {
   const { t } = useTranslation();
   const cart = useRetailCartStore();
-  const user = useAuthStore((state) => state.user);
   const [showPay, setShowPay] = useState(false);
   const allowed = usePermissionRouteGuard(
     [PERMISSIONS.INVOICE_CREATE],
@@ -65,7 +63,6 @@ export default function PosRetailPage() {
         isOpen={showPay}
         onClose={() => setShowPay(false)}
         onSuccess={handleSuccess}
-        storeName={user?.tenantName}
       />
     </div>
   );

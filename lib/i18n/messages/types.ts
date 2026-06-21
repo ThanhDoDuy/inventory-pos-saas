@@ -1066,6 +1066,17 @@ export interface Messages {
       error: string;
       saving: string;
     };
+    receiptLayout: {
+      title: string;
+      subtitle: string;
+      showStoreName: string;
+      showStorePhone: string;
+      showStoreAddress: string;
+      previewEmpty: string;
+      saved: string;
+      error: string;
+      saving: string;
+    };
     features: {
       enable_low_stock_alert: { label: string; desc: string };
       enable_refund: { label: string; desc: string };

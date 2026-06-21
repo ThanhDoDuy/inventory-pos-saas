@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Plus, Minus, Search, X, Loader2 } from 'lucide-react';
 import { FormField, inputClassName, selectClassName } from '@/components/form-field';
 import { useCategories, useProducts, type ProductItem } from '@/hooks/use-inventory';
 import { useDebouncedValue } from '@/hooks/use-debounced-value';
-import { usePriceTiers } from '@/hooks/use-price-tiers';
+import { useOrderPriceTier } from '@/hooks/use-order-price-tier';
 import type { CartState } from '@/lib/cart-store';
 import { RETAIL_TIER_CODE } from '@/lib/price-input';
 import { resolveUnitPriceForTier } from '@/lib/pos-utils';
@@ -25,38 +25,7 @@ export function PosProductPicker({ cart, disabled = false }: PosProductPickerPro
   const [searchTerm, setSearchTerm] = useState('');
 
   const { categories, isLoading: categoriesLoading } = useCategories();
-  const { tiers, isLoading: tiersLoading } = usePriceTiers();
-
-  const activeTiers = useMemo(
-    () => tiers.filter((tier) => tier.is_active),
-    [tiers],
-  );
-
-  useEffect(() => {
-    if (!activeTiers.length) {
-      return;
-    }
-
-    const matched = activeTiers.find((tier) => tier.code === cart.orderPriceTierCode);
-    if (matched) {
-      if (matched.label !== cart.orderPriceTierLabel) {
-        cart.setOrderPriceTier(matched.code, matched.label);
-      }
-      return;
-    }
-
-    const retailTier =
-      activeTiers.find((tier) => tier.code === RETAIL_TIER_CODE) ?? activeTiers[0];
-    cart.setOrderPriceTier(retailTier.code, retailTier.label);
-  }, [activeTiers, cart.orderPriceTierCode, cart.orderPriceTierLabel, cart.setOrderPriceTier]);
-
-  const selectedTier = useMemo(
-    () =>
-      activeTiers.find((tier) => tier.code === cart.orderPriceTierCode) ??
-      activeTiers.find((tier) => tier.code === RETAIL_TIER_CODE) ??
-      activeTiers[0],
-    [activeTiers, cart.orderPriceTierCode],
-  );
+  const { selectedTier, isLoading: tiersLoading } = useOrderPriceTier(cart);
 
   const categoryId = selectedCategoryId !== 'all' ? selectedCategoryId : undefined;
   const debouncedSearch = useDebouncedValue(searchTerm, 300);
@@ -157,42 +126,8 @@ export function PosProductPicker({ cart, disabled = false }: PosProductPickerPro
     addProductWithOrderTier(product, 1);
   };
 
-  const handleOrderTierChange = (tierCode: string) => {
-    const tier = activeTiers.find((item) => item.code === tierCode);
-    if (!tier) {
-      return;
-    }
-    cart.setOrderPriceTier(tier.code, tier.label);
-  };
-
   return (
     <div className="space-y-6">
-      <div className="bg-card rounded-lg border border-primary/30 p-6">
-        <FormField label={t('pos.orderPriceTier.label')} htmlFor="pos-order-price-tier">
-          {tiersLoading ? (
-            <div className="flex items-center gap-2 text-muted-foreground py-2 text-sm">
-              <Loader2 className="animate-spin" size={16} />
-              {t('common.loading')}
-            </div>
-          ) : (
-            <select
-              id="pos-order-price-tier"
-              value={cart.orderPriceTierCode}
-              onChange={(e) => handleOrderTierChange(e.target.value)}
-              className={selectClassName}
-              disabled={disabled || activeTiers.length === 0}
-            >
-              {activeTiers.map((tier) => (
-                <option key={tier.code} value={tier.code}>
-                  {tier.label}
-                </option>
-              ))}
-            </select>
-          )}
-        </FormField>
-        <p className="text-xs text-muted-foreground mt-2">{t('pos.orderPriceTier.hint')}</p>
-      </div>
-
       <div className="bg-card rounded-lg border border-border p-6">
         <h2 className="text-xl font-bold text-foreground mb-4">{t('pos.addProduct')}</h2>
         {disabled && (

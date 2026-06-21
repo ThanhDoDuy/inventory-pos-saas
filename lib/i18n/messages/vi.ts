@@ -1070,6 +1070,17 @@ export const vi: Messages = {
       error: 'Không thể lưu chính sách cửa hàng',
       saving: 'Đang lưu...',
     },
+    receiptLayout: {
+      title: 'Giao diện hóa đơn',
+      subtitle: 'Chọn thông tin cửa hàng hiển thị trên hóa đơn in. Giá trị lấy từ Thông tin doanh nghiệp phía trên.',
+      showStoreName: 'Tên cửa hàng',
+      showStorePhone: 'Số điện thoại',
+      showStoreAddress: 'Địa chỉ',
+      previewEmpty: 'Chưa cài — cập nhật trong Thông tin doanh nghiệp',
+      saved: 'Đã lưu giao diện hóa đơn',
+      error: 'Không thể lưu giao diện hóa đơn',
+      saving: 'Đang lưu...',
+    },
     features: {
       enable_low_stock_alert: {
         label: 'Cảnh báo tồn kho thấp',

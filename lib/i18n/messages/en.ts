@@ -1070,6 +1070,17 @@ export const en: Messages = {
       error: 'Could not save store policies',
       saving: 'Saving...',
     },
+    receiptLayout: {
+      title: 'Receipt layout',
+      subtitle: 'Choose which store details appear on printed invoices. Values come from Business Information above.',
+      showStoreName: 'Store name',
+      showStorePhone: 'Phone number',
+      showStoreAddress: 'Address',
+      previewEmpty: 'Not set — update in Business Information',
+      saved: 'Receipt layout saved',
+      error: 'Could not save receipt layout',
+      saving: 'Saving...',
+    },
     features: {
       enable_low_stock_alert: {
         label: 'Low stock alerts',

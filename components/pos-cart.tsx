@@ -1,8 +1,10 @@
 'use client';
 
+import { FormField, selectClassName } from '@/components/form-field';
+import { useOrderPriceTier } from '@/hooks/use-order-price-tier';
 import type { CartState } from '@/lib/cart-store';
 import { useFormat, useTranslation } from '@/lib/i18n/use-translation';
-import { ShoppingCart, Trash2 } from 'lucide-react';
+import { Loader2, ShoppingCart, Trash2 } from 'lucide-react';
 
 interface POSCartProps {
   cart: CartState;
@@ -21,11 +23,12 @@ export function POSCart({
 }: POSCartProps) {
   const { t } = useTranslation();
   const { formatMoney } = useFormat();
+  const { activeTiers, isLoading: tiersLoading, setOrderTier } = useOrderPriceTier(cart);
   const isRetail = variant === 'retail';
 
   return (
     <div className="bg-card rounded-lg border border-border p-6 h-fit sticky top-4">
-      <div className="flex items-center gap-2 mb-6">
+      <div className="flex items-center gap-2 mb-4">
         <ShoppingCart size={24} className="text-primary" />
         <h2 className="text-xl font-bold text-foreground">{t('pos.cart.title')}</h2>
         {cart.items.length > 0 && (
@@ -33,6 +36,32 @@ export function POSCart({
             {cart.items.length}
           </span>
         )}
+      </div>
+
+      <div className="mb-6 pb-4 border-b border-border">
+        <FormField label={t('pos.orderPriceTier.label')} htmlFor="pos-cart-order-price-tier">
+          {tiersLoading ? (
+            <div className="flex items-center gap-2 text-muted-foreground py-2 text-sm">
+              <Loader2 className="animate-spin" size={16} />
+              {t('common.loading')}
+            </div>
+          ) : (
+            <select
+              id="pos-cart-order-price-tier"
+              value={cart.orderPriceTierCode}
+              onChange={(e) => setOrderTier(e.target.value)}
+              className={selectClassName}
+              disabled={disabled || activeTiers.length === 0}
+            >
+              {activeTiers.map((tier) => (
+                <option key={tier.code} value={tier.code}>
+                  {tier.label}
+                </option>
+              ))}
+            </select>
+          )}
+        </FormField>
+        <p className="text-xs text-muted-foreground mt-2">{t('pos.orderPriceTier.hint')}</p>
       </div>
 
       {cart.items.length === 0 ? (
@@ -43,7 +72,6 @@ export function POSCart({
             <div key={item.id} className="flex items-center justify-between gap-2 p-3 bg-secondary rounded-lg">
               <div className="flex-1 min-w-0">
                 <p className="font-semibold text-foreground text-sm truncate">{item.name}</p>
-                <p className="text-xs text-primary">{item.priceTierLabel}</p>
                 <p className="text-xs text-muted-foreground">
                   {item.quantity} × {formatMoney(item.unitPrice)} = {formatMoney(item.quantity * item.unitPrice)}
                 </p>
