@@ -280,7 +280,7 @@ export const vi: Messages = {
     },
     orderPriceTier: {
       label: 'Loại giá cho đơn hàng',
-      hint: 'Áp dụng cho mọi sản phẩm thêm vào giỏ. Mặc định: Giá lẻ.',
+      hint: 'Áp dụng cho mọi sản phẩm trong giỏ. Mặc định: Giá lẻ.',
     },
     retail: {
       title: 'POS khách lẻ',

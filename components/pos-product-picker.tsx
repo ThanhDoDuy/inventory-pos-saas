@@ -8,7 +8,7 @@ import { useDebouncedValue } from '@/hooks/use-debounced-value';
 import { useOrderPriceTier } from '@/hooks/use-order-price-tier';
 import type { CartState } from '@/lib/cart-store';
 import { RETAIL_TIER_CODE } from '@/lib/price-input';
-import { resolveUnitPriceForTier } from '@/lib/pos-utils';
+import { resolveProductPrices, resolveUnitPriceForTier } from '@/lib/pos-utils';
 import { useFormat, useTranslation } from '@/lib/i18n/use-translation';
 
 interface PosProductPickerProps {
@@ -73,6 +73,7 @@ export function PosProductPicker({ cart, disabled = false }: PosProductPickerPro
       sku: product.sku,
       quantity: qty,
       unitPrice,
+      productPrices: resolveProductPrices(product),
       priceTierCode: tierCode,
       priceTierLabel: tierLabel,
       tax: 0,

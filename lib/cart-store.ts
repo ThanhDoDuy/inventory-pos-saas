@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import type { StoreApi, UseBoundStore } from 'zustand';
 import { RETAIL_TIER_CODE } from '@/lib/price-input';
+import { resolvePriceForTier } from '@/lib/pos-utils';
 
 export interface CartItem {
   id: string;
@@ -9,6 +10,7 @@ export interface CartItem {
   sku: string;
   quantity: number;
   unitPrice: number;
+  productPrices?: Record<string, number>;
   priceTierCode: string;
   priceTierLabel: string;
   tax: number;
@@ -147,7 +149,43 @@ function createCartStore(): CartStore {
     },
 
     setOrderPriceTier: (code, label) => {
-      set({ orderPriceTierCode: code, orderPriceTierLabel: label });
+      set((state) => {
+        if (state.orderPriceTierCode === code && state.orderPriceTierLabel === label) {
+          return state;
+        }
+
+        const mergedByProduct = new Map<string, CartItem>();
+
+        for (const item of state.items) {
+          const unitPrice = resolvePriceForTier(item.productPrices, code, item.unitPrice);
+          const existing = mergedByProduct.get(item.productId);
+
+          if (existing) {
+            existing.quantity += item.quantity;
+          } else {
+            mergedByProduct.set(item.productId, {
+              ...item,
+              id: `${item.productId}:${code}`,
+              unitPrice,
+              priceTierCode: code,
+              priceTierLabel: label,
+            });
+          }
+        }
+
+        const updatedItems = Array.from(mergedByProduct.values());
+
+        return {
+          orderPriceTierCode: code,
+          orderPriceTierLabel: label,
+          ...calculateTotals(
+            updatedItems,
+            state.discountPercentage,
+            state.customDiscountAmount,
+            state.taxPercentage,
+          ),
+        };
+      });
     },
 
     updateDiscount: (discountPercentage) => {

@@ -22,6 +22,17 @@ export function resolveUnitPriceForTier(
   return prices[tierCode] ?? product.selling_price;
 }
 
+export function resolvePriceForTier(
+  productPrices: Record<string, number> | undefined,
+  tierCode: string,
+  fallback: number,
+): number {
+  return resolveUnitPriceForTier(
+    { selling_price: fallback, prices: productPrices } as ProductItem,
+    tierCode,
+  );
+}
+
 export function cartItemsToInvoiceItems(
   items: Array<{
     productId: string;

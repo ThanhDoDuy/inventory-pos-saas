@@ -280,7 +280,7 @@ export const en: Messages = {
     },
     orderPriceTier: {
       label: 'Order price type',
-      hint: 'Applies to all products added to the cart. Default: Retail.',
+      hint: 'Applies to all products in the cart. Default: Retail.',
     },
     retail: {
       title: 'Walk-in POS',
