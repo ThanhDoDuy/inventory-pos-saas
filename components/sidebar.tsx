@@ -131,7 +131,7 @@ export function Sidebar() {
                     isExpanded ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'
                   }`}
                 >
-                  <div className="overflow-hidden">
+                  <div className="overflow-hidden min-h-0">
                     <div className="space-y-0.5 pt-0.5 pb-1 pl-2">
                       {section.items.map((item) => {
                         const Icon = item.icon;
