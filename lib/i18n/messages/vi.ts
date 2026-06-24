@@ -42,6 +42,8 @@ export const vi: Messages = {
     required: 'Bắt buộc',
     optional: 'Tuỳ chọn',
     redirecting: 'Đang chuyển hướng...',
+    permissionsLoadError: 'Không thể tải quyền truy cập. Vui lòng thử lại.',
+    retry: 'Thử lại',
     error: {
       loadFailed: 'Không tải được dữ liệu',
       actionFailed: 'Thao tác thất bại',

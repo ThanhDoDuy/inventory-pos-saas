@@ -40,6 +40,8 @@ export interface Messages {
     required: string;
     optional: string;
     redirecting: string;
+    permissionsLoadError: string;
+    retry: string;
     error: {
       loadFailed: string;
       actionFailed: string;

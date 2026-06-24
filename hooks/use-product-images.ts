@@ -30,6 +30,10 @@ export function useProductImages(productId: string) {
   };
 }
 
+// Cloudinary signatures are valid for 1 hour, but we refresh aggressively to
+// avoid failures when a user delays between opening the upload UI and confirming.
+const SIGNATURE_MAX_AGE_MS = 8 * 60 * 1000; // 8 minutes
+
 function validateFile(file: File): void {
   if (!PRODUCT_IMAGE_MIME_TYPES.has(file.type)) {
     throw new Error(tMessage('products.images.error.invalidType'));
@@ -39,10 +43,26 @@ function validateFile(file: File): void {
   }
 }
 
+async function fetchFreshSign(
+  productId: string,
+  cached?: SignProductImageResponse,
+): Promise<SignProductImageResponse> {
+  if (cached) {
+    const ageMs = Date.now() - cached.timestamp * 1000;
+    if (ageMs < SIGNATURE_MAX_AGE_MS) return cached;
+  }
+  try {
+    return await apiPost<SignProductImageResponse>(`/products/${productId}/images/sign`, {});
+  } catch (error) {
+    throw new Error(extractErrorMessage(error, tMessage('products.images.error.signFailed')));
+  }
+}
+
 export async function uploadProductImage(
   productId: string,
   file: File,
   currentCount: number,
+  cachedSign?: SignProductImageResponse,
 ): Promise<ProductImagesResponse> {
   validateFile(file);
 
@@ -50,12 +70,8 @@ export async function uploadProductImage(
     throw new Error(tMessage('products.images.error.limitReached'));
   }
 
-  let sign: SignProductImageResponse;
-  try {
-    sign = await apiPost<SignProductImageResponse>(`/products/${productId}/images/sign`, {});
-  } catch (error) {
-    throw new Error(extractErrorMessage(error, tMessage('products.images.error.signFailed')));
-  }
+  // Always use a fresh (or recently cached) signature — never upload with a stale one.
+  const sign = await fetchFreshSign(productId, cachedSign);
 
   const formData = new FormData();
   formData.append('file', file);

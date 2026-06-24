@@ -5,7 +5,8 @@ import {
   apiPost,
   clearStoredTokens,
   extractErrorMessage,
-  setStoredTokens,
+  getStoredAccessToken,
+  setStoredAccessToken,
 } from './api-client';
 import { tMessage } from '@/lib/i18n/get-message';
 
@@ -27,7 +28,9 @@ export interface AuthUser {
 export interface AuthState {
   user: AuthUser | null;
   accessToken: string | null;
-  refreshToken: string | null;
+  // refresh_token is now an HttpOnly cookie — not held in client state.
+  // Field kept for type compatibility; always null at runtime.
+  refreshToken: null;
   isLoading: boolean;
   error: string | null;
   isAuthenticated: boolean;
@@ -47,7 +50,9 @@ export interface AuthState {
 
 interface AuthPayload {
   access_token: string;
-  refresh_token: string;
+  // refresh_token is stripped by the controller and sent as an HttpOnly cookie.
+  // It may be absent in the response body.
+  refresh_token?: string;
   user: AuthUser;
   tenant?: { id: string; name: string; slug?: string };
 }
@@ -92,17 +97,28 @@ function applySession(
   payload: AuthPayload,
 ) {
   const user = mapUser(payload.user, payload.tenant);
-  setStoredTokens(payload.access_token, payload.refresh_token);
+  setStoredAccessToken(payload.access_token);
+  // If the backend still sends refresh_token in the response body (pre-HttpOnly-cookie
+  // deployment), persist it in localStorage so the refresh interceptor can use it.
+  // Once the backend deploys cookie support the token will come via Set-Cookie instead
+  // and this branch will be a no-op.
+  if (payload.refresh_token && typeof window !== 'undefined') {
+    localStorage.setItem('refresh_token', payload.refresh_token);
+  }
   apiClient.defaults.headers.common.Authorization = `Bearer ${payload.access_token}`;
   set({
     user,
     accessToken: payload.access_token,
-    refreshToken: payload.refresh_token,
+    refreshToken: null,
     isAuthenticated: true,
     isLoading: false,
     error: null,
   });
 }
+
+// Module-level flag so checkAuth is a no-op after the first successful hydration.
+// Reset on logout so a fresh login re-hydrates correctly.
+let sessionHydrated = false;
 
 export const useAuthStore = create<AuthState>()((set, get) => ({
   user: null,
@@ -142,6 +158,7 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
   },
 
   logout: async () => {
+    sessionHydrated = false;
     try {
       await apiPost('/auth/logout');
     } catch {
@@ -168,24 +185,31 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
   },
 
   checkAuth: async () => {
-    const { accessToken, refreshToken } = get();
-    const storedAccess = accessToken || (typeof window !== 'undefined' ? localStorage.getItem('access_token') : null);
-    const storedRefresh = refreshToken || (typeof window !== 'undefined' ? localStorage.getItem('refresh_token') : null);
+    // Skip the network round-trip if this session is already verified.
+    if (sessionHydrated && get().isAuthenticated) return;
 
-    if (!storedAccess && !storedRefresh) {
+    const storedAccess =
+      get().accessToken ??
+      getStoredAccessToken() ??
+      // Graceful migration: read legacy localStorage token one last time.
+      (typeof window !== 'undefined' ? localStorage.getItem('access_token') : null);
+
+    if (!storedAccess) {
+      // No access token and no cookie — can't hydrate without a network call.
+      // The response interceptor will attempt a cookie-based refresh on the first 401.
       set({ isAuthenticated: false, user: null });
       return;
     }
 
-    if (storedAccess && storedRefresh) {
-      setStoredTokens(storedAccess, storedRefresh);
-      apiClient.defaults.headers.common.Authorization = `Bearer ${storedAccess}`;
-    }
+    setStoredAccessToken(storedAccess);
+    apiClient.defaults.headers.common.Authorization = `Bearer ${storedAccess}`;
 
     try {
       const profile = await apiGet<AuthUser>('/auth/profile');
       let user = mapUser(profile);
 
+      // Fallback: if profile doesn't include a populated role object, fetch it separately.
+      // This should be unnecessary once the backend always populates role_id in /auth/profile.
       if (!user.role?.code && user.role_id) {
         try {
           const role = await apiGet<{ id: string; code: string; name: string }>(
@@ -200,14 +224,15 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
             },
           };
         } catch {
-          // profile should include role after BE fix; ignore fallback errors
+          // ignore — role will be missing but user is still authenticated
         }
       }
 
+      sessionHydrated = true;
       set({
         user,
         accessToken: storedAccess,
-        refreshToken: storedRefresh,
+        refreshToken: null,
         isAuthenticated: true,
       });
     } catch {

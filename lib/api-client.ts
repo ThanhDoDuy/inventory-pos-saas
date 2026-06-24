@@ -16,27 +16,40 @@ export interface ApiResponse<T> {
   meta: Record<string, unknown>;
 }
 
-const TOKEN_KEY = 'access_token';
-const REFRESH_KEY = 'refresh_token';
+// Access token only — refresh token lives in an HttpOnly cookie managed by the browser.
+const ACCESS_KEY = 'access_token';
 
+export function getStoredAccessToken(): string | null {
+  if (typeof window === 'undefined') return null;
+  return sessionStorage.getItem(ACCESS_KEY);
+}
+
+export function setStoredAccessToken(token: string): void {
+  sessionStorage.setItem(ACCESS_KEY, token);
+  // Remove the legacy access_token from localStorage — it lives in sessionStorage now.
+  // Do NOT remove refresh_token here: it may still be the only way to refresh until
+  // the backend deploys HttpOnly-cookie support and the user logs in fresh.
+  localStorage.removeItem('access_token');
+}
+
+export function clearStoredTokens(): void {
+  sessionStorage.removeItem(ACCESS_KEY);
+  localStorage.removeItem('access_token');
+  localStorage.removeItem('refresh_token');
+}
+
+/** @deprecated Use getStoredAccessToken + setStoredAccessToken directly. */
 export function getStoredTokens() {
-  if (typeof window === 'undefined') {
-    return { accessToken: null, refreshToken: null };
-  }
   return {
-    accessToken: localStorage.getItem(TOKEN_KEY),
-    refreshToken: localStorage.getItem(REFRESH_KEY),
+    accessToken: getStoredAccessToken(),
+    // Always null — refresh token is now HttpOnly cookie only.
+    refreshToken: null as null,
   };
 }
 
-export function setStoredTokens(accessToken: string, refreshToken: string) {
-  localStorage.setItem(TOKEN_KEY, accessToken);
-  localStorage.setItem(REFRESH_KEY, refreshToken);
-}
-
-export function clearStoredTokens() {
-  localStorage.removeItem(TOKEN_KEY);
-  localStorage.removeItem(REFRESH_KEY);
+/** @deprecated Auth-store sets access token via setStoredAccessToken. */
+export function setStoredTokens(accessToken: string, _refreshToken: string): void {
+  setStoredAccessToken(accessToken);
 }
 
 export function extractErrorMessage(error: unknown, fallback = 'Request failed'): string {
@@ -56,9 +69,9 @@ export const apiClient = axios.create({
 });
 
 apiClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
-  const { accessToken } = getStoredTokens();
-  if (accessToken) {
-    config.headers.Authorization = `Bearer ${accessToken}`;
+  const token = getStoredAccessToken();
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
 });
@@ -66,19 +79,21 @@ apiClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
 let refreshPromise: Promise<string | null> | null = null;
 
 async function refreshAccessToken(): Promise<string | null> {
-  const { refreshToken } = getStoredTokens();
-  if (!refreshToken) {
-    return null;
-  }
+  // Prefer the HttpOnly cookie (set by the backend on login/register/refresh).
+  // Fall back to the legacy localStorage refresh_token for sessions that existed
+  // before the backend deployed cookie support — this bridges the migration gap.
+  const legacyToken =
+    typeof window !== 'undefined' ? localStorage.getItem('refresh_token') : null;
 
   const response = await axios.post<ApiResponse<{ access_token: string }>>(
     `${API_BASE_URL}/auth/refresh-token`,
-    { refresh_token: refreshToken },
+    legacyToken ? { refresh_token: legacyToken } : {},
+    { withCredentials: true },
   );
 
   const accessToken = response.data.data?.access_token;
   if (accessToken) {
-    localStorage.setItem(TOKEN_KEY, accessToken);
+    setStoredAccessToken(accessToken);
     apiClient.defaults.headers.common.Authorization = `Bearer ${accessToken}`;
     return accessToken;
   }

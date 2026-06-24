@@ -42,6 +42,8 @@ export const en: Messages = {
     required: 'Required',
     optional: 'Optional',
     redirecting: 'Redirecting...',
+    permissionsLoadError: 'Failed to load permissions. Please retry.',
+    retry: 'Retry',
     error: {
       loadFailed: 'Failed to load data',
       actionFailed: 'Action failed',

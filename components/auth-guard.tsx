@@ -5,6 +5,10 @@ import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/lib/auth-store';
 import { useTranslation } from '@/lib/i18n/use-translation';
 
+// Shared promise so concurrent AuthGuard mounts (e.g. during hot-reload or
+// React Strict Mode double-invoke) don't fire duplicate /auth/profile calls.
+let hydratePromise: Promise<void> | null = null;
+
 export function AuthGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const { t } = useTranslation();
@@ -13,7 +17,14 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    checkAuth().finally(() => setReady(true));
+    if (!hydratePromise) {
+      hydratePromise = checkAuth().finally(() => {
+        hydratePromise = null;
+        setReady(true);
+      });
+    } else {
+      hydratePromise.finally(() => setReady(true));
+    }
   }, [checkAuth]);
 
   useEffect(() => {
