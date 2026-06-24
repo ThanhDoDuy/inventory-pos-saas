@@ -2,20 +2,15 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Bell } from 'lucide-react';
-import { useRouter } from 'next/navigation';
 import {
   fetchNotificationLatestPage,
   useNotificationLatest,
 } from '@/hooks/use-notification-latest';
-import {
-  markAllNotificationsRead,
-  markNotificationRead,
-  type NotificationItem,
-} from '@/hooks/use-notifications';
+import { markAllNotificationsRead, type NotificationItem } from '@/hooks/use-notifications';
 import { useUserPermissions } from '@/hooks/use-user-permissions';
 import { NotificationBadge } from '@/components/notifications/notification-badge';
 import { NotificationPanel } from '@/components/notifications/notification-panel';
-import { mergeNotificationItems, resolveNotificationRedirectUrl } from '@/lib/notification-config';
+import { mergeNotificationItems } from '@/lib/notification-config';
 import { PERMISSIONS } from '@/lib/permission-codes';
 import { useTranslation } from '@/lib/i18n/use-translation';
 
@@ -29,7 +24,6 @@ function sortByCreatedDesc(items: NotificationItem[]) {
 
 export function NotificationBell() {
   const { t } = useTranslation();
-  const router = useRouter();
   const { hasPermission } = useUserPermissions();
   const canView = hasPermission(PERMISSIONS.NOTIFICATIONS_VIEW);
   const canMarkRead = hasPermission(PERMISSIONS.NOTIFICATIONS_MARK_READ);
@@ -48,7 +42,6 @@ export function NotificationBell() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [isMarkingAll, setIsMarkingAll] = useState(false);
   const [pulse, setPulse] = useState(false);
-  const [localItems, setLocalItems] = useState<NotificationItem[]>([]);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const prevUnreadRef = useRef(unreadCount);
@@ -66,15 +59,14 @@ export function NotificationBell() {
     prevUnreadRef.current = unreadCount;
   }, [unreadCount]);
 
+  // Reset extra pages when the panel closes.
+  // localItems is NOT state — it's derived via useMemo, so no need to reset it here.
   useEffect(() => {
     if (!open) {
       setExtraItems([]);
       setLoadedPage(1);
-      setLocalItems([]);
-      return;
     }
-    setLocalItems(sortByCreatedDesc(mergeNotificationItems(firstPageItems, extraItems)));
-  }, [open, firstPageItems, extraItems]);
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -99,43 +91,20 @@ export function NotificationBell() {
     };
   }, [open]);
 
-  const displayItems = open
-    ? localItems
-    : sortByCreatedDesc(firstPageItems);
+  // Derived display list — useMemo tolerates firstPageItems being a new reference
+  // every render (useNotificationLatest maps SWR data inline), unlike useEffect which
+  // would loop infinitely under the same condition.
+  const displayItems = useMemo(
+    () => sortByCreatedDesc(mergeNotificationItems(firstPageItems, extraItems)),
+    [firstPageItems, extraItems],
+  );
 
   const hasMore = loadedPage < (pagination?.total_pages ?? 1);
 
-  const applyOptimisticRead = useCallback(
-    (id: string) => {
-      setLocalItems((items) =>
-        items.map((item) => (item.id === id ? { ...item, is_read: true } : item)),
-      );
-      void mutate(
-        (current) => {
-          if (!current) return current;
-          const wasUnread = current.items.some(
-            (raw) => String(raw._id ?? raw.id) === id && !raw.is_read,
-          );
-          return {
-            ...current,
-            unread_count: wasUnread
-              ? Math.max(0, current.unread_count - 1)
-              : current.unread_count,
-            items: current.items.map((raw) =>
-              String(raw._id ?? raw.id) === id
-                ? { ...raw, is_read: true, read_at: new Date().toISOString() }
-                : raw,
-            ),
-          };
-        },
-        { revalidate: false },
-      );
-    },
-    [mutate],
-  );
-
   const applyOptimisticMarkAll = useCallback(() => {
-    setLocalItems((items) => items.map((item) => ({ ...item, is_read: true })));
+    setExtraItems((prev) =>
+      prev.length === 0 ? prev : prev.map((item) => ({ ...item, is_read: true })),
+    );
     void mutate(
       (current) => {
         if (!current) return current;
@@ -152,30 +121,6 @@ export function NotificationBell() {
       { revalidate: false },
     );
   }, [mutate]);
-
-  const handleItemClick = async (item: NotificationItem) => {
-    const href = resolveNotificationRedirectUrl(
-      item.redirect_url,
-      item.type,
-      item.payload,
-    );
-
-    if (!item.is_read && canMarkRead) {
-      applyOptimisticRead(item.id);
-      try {
-        await markNotificationRead(item.id);
-        void mutate();
-      } catch {
-        void mutate();
-      }
-    }
-
-    setOpen(false);
-
-    if (href) {
-      router.push(href);
-    }
-  };
 
   const handleMarkAllRead = async () => {
     if (!canMarkRead || unreadCount === 0) return;
@@ -199,9 +144,6 @@ export function NotificationBell() {
       const result = await fetchNotificationLatestPage(nextPage);
       setExtraItems((prev) => mergeNotificationItems(prev, result.items));
       setLoadedPage(nextPage);
-      setLocalItems((prev) =>
-        sortByCreatedDesc(mergeNotificationItems(prev, result.items)),
-      );
     } finally {
       setLoadingMore(false);
     }
@@ -249,7 +191,7 @@ export function NotificationBell() {
               isLoadingMore={loadingMore}
               canMarkRead={canMarkRead}
               isMarkingAll={isMarkingAll}
-              onItemClick={handleItemClick}
+
               onMarkAllRead={handleMarkAllRead}
               onLoadMore={handleLoadMore}
               onClose={() => setOpen(false)}
@@ -266,7 +208,7 @@ export function NotificationBell() {
               isLoadingMore={loadingMore}
               canMarkRead={canMarkRead}
               isMarkingAll={isMarkingAll}
-              onItemClick={handleItemClick}
+
               onMarkAllRead={handleMarkAllRead}
               onLoadMore={handleLoadMore}
               onClose={() => setOpen(false)}

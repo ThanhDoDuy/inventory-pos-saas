@@ -120,6 +120,11 @@ function applySession(
 // Reset on logout so a fresh login re-hydrates correctly.
 let sessionHydrated = false;
 
+// Mutex: ensures only one checkAuth network round-trip happens at a time.
+// AuthProvider (root layout) and AuthGuard (dashboard layout) both call checkAuth
+// on mount — without this they fire two parallel /auth/profile requests.
+let checkAuthPromise: Promise<void> | null = null;
+
 export const useAuthStore = create<AuthState>()((set, get) => ({
   user: null,
   accessToken: null,
@@ -188,58 +193,66 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
     // Skip the network round-trip if this session is already verified.
     if (sessionHydrated && get().isAuthenticated) return;
 
-    const storedAccess =
-      get().accessToken ??
-      getStoredAccessToken() ??
-      // Graceful migration: read legacy localStorage token one last time.
-      (typeof window !== 'undefined' ? localStorage.getItem('access_token') : null);
+    // Deduplicate concurrent calls (AuthProvider + AuthGuard both mount on initial load).
+    if (checkAuthPromise) return checkAuthPromise;
 
-    if (!storedAccess) {
-      // No access token and no cookie — can't hydrate without a network call.
-      // The response interceptor will attempt a cookie-based refresh on the first 401.
-      set({ isAuthenticated: false, user: null });
-      return;
-    }
+    checkAuthPromise = (async () => {
+      const storedAccess =
+        get().accessToken ??
+        getStoredAccessToken() ??
+        // Graceful migration: read legacy localStorage token one last time.
+        (typeof window !== 'undefined' ? localStorage.getItem('access_token') : null);
 
-    setStoredAccessToken(storedAccess);
-    apiClient.defaults.headers.common.Authorization = `Bearer ${storedAccess}`;
-
-    try {
-      const profile = await apiGet<AuthUser>('/auth/profile');
-      let user = mapUser(profile);
-
-      // Fallback: if profile doesn't include a populated role object, fetch it separately.
-      // This should be unnecessary once the backend always populates role_id in /auth/profile.
-      if (!user.role?.code && user.role_id) {
-        try {
-          const role = await apiGet<{ id: string; code: string; name: string }>(
-            `/rbac/roles/${user.role_id}`,
-          );
-          user = {
-            ...user,
-            role: {
-              id: String(role.id ?? user.role_id),
-              code: String(role.code).toUpperCase(),
-              name: role.name,
-            },
-          };
-        } catch {
-          // ignore — role will be missing but user is still authenticated
-        }
+      if (!storedAccess) {
+        // No access token and no cookie — can't hydrate without a network call.
+        // The response interceptor will attempt a cookie-based refresh on the first 401.
+        set({ isAuthenticated: false, user: null });
+        return;
       }
 
-      sessionHydrated = true;
-      set({
-        user,
-        accessToken: storedAccess,
-        refreshToken: null,
-        isAuthenticated: true,
-      });
-    } catch {
-      clearStoredTokens();
-      delete apiClient.defaults.headers.common.Authorization;
-      set({ isAuthenticated: false, user: null, accessToken: null, refreshToken: null });
-    }
+      setStoredAccessToken(storedAccess);
+      apiClient.defaults.headers.common.Authorization = `Bearer ${storedAccess}`;
+
+      try {
+        const profile = await apiGet<AuthUser>('/auth/profile');
+        let user = mapUser(profile);
+
+        // Fallback: if profile doesn't include a populated role object, fetch it separately.
+        if (!user.role?.code && user.role_id) {
+          try {
+            const role = await apiGet<{ id: string; code: string; name: string }>(
+              `/rbac/roles/${user.role_id}`,
+            );
+            user = {
+              ...user,
+              role: {
+                id: String(role.id ?? user.role_id),
+                code: String(role.code).toUpperCase(),
+                name: role.name,
+              },
+            };
+          } catch {
+            // ignore — role will be missing but user is still authenticated
+          }
+        }
+
+        sessionHydrated = true;
+        set({
+          user,
+          accessToken: storedAccess,
+          refreshToken: null,
+          isAuthenticated: true,
+        });
+      } catch {
+        clearStoredTokens();
+        delete apiClient.defaults.headers.common.Authorization;
+        set({ isAuthenticated: false, user: null, accessToken: null, refreshToken: null });
+      }
+    })().finally(() => {
+      checkAuthPromise = null;
+    });
+
+    return checkAuthPromise;
   },
 }));
 

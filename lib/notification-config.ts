@@ -1,5 +1,5 @@
 export const NOTIFICATION_LATEST_LIMIT = 5;
-export const NOTIFICATION_POLL_INTERVAL_MS = 30_000;
+export const NOTIFICATION_POLL_INTERVAL_MS = 10 * 60 * 1000; // 10 minutes
 
 export function resolveNotificationRedirectUrl(
   redirectUrl?: string,

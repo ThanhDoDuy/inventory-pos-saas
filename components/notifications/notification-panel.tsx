@@ -16,7 +16,6 @@ interface NotificationPanelProps {
   isLoadingMore: boolean;
   canMarkRead: boolean;
   isMarkingAll: boolean;
-  onItemClick: (item: NotificationItem) => void;
   onMarkAllRead: () => void;
   onLoadMore: () => void;
   onClose?: () => void;
@@ -31,7 +30,6 @@ export function NotificationPanel({
   isLoadingMore,
   canMarkRead,
   isMarkingAll,
-  onItemClick,
   onMarkAllRead,
   onLoadMore,
   onClose,
@@ -94,7 +92,7 @@ export function NotificationPanel({
         ) : (
           <div className="divide-y divide-border/70">
             {items.map((item) => (
-              <NotificationItemRow key={item.id} item={item} onClick={onItemClick} />
+              <NotificationItemRow key={item.id} item={item} />
             ))}
           </div>
         )}

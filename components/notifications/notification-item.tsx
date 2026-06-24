@@ -12,7 +12,7 @@ function notificationTypeLabel(type: string, t: (key: string) => string): string
 
 interface NotificationItemRowProps {
   item: NotificationItem;
-  onClick: (item: NotificationItem) => void;
+  onClick?: (item: NotificationItem) => void;
 }
 
 export function NotificationItemRow({ item, onClick }: NotificationItemRowProps) {
@@ -20,10 +20,8 @@ export function NotificationItemRow({ item, onClick }: NotificationItemRowProps)
   const { formatRelativeTime } = useFormat();
 
   return (
-    <button
-      type="button"
-      onClick={() => onClick(item)}
-      className={`flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-secondary/70 ${
+    <div
+      className={`flex w-full items-start gap-3 px-4 py-3 text-left ${
         item.is_read
           ? 'opacity-80'
           : 'bg-primary/5 border-l-2 border-l-primary'
@@ -49,6 +47,6 @@ export function NotificationItemRow({ item, onClick }: NotificationItemRowProps)
           </p>
         )}
       </div>
-    </button>
+    </div>
   );
 }
