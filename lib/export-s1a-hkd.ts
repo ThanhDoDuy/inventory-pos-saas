@@ -48,7 +48,7 @@ export async function exportS1aHkdToExcel(report: TaxReportData, filename?: stri
   rows.forEach((row, i) => {
     const r = DATA_START_ROW + i;
     sheet.row(r).cell(2).value(fmtDate(row.date));
-    sheet.row(r).cell(3).value(`${row.label} (${row.count} HĐ)`);
+    sheet.row(r).cell(3).value(row.label);
     sheet.row(r).cell(4).value(row.amount).style('numberFormat', '#,##0');
   });
 

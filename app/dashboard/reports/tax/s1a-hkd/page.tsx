@@ -139,10 +139,8 @@ export default function TaxS1aHkdPage() {
                       {formatDate(row.date)}
                     </td>
                     <td className="px-4 py-2.5 text-foreground">
-                      {row.label}{' '}
-                      <span className="text-muted-foreground text-xs">
-                        ({row.count} HĐ)
-                      </span>
+                      {row.label}
+                      <span className="text-muted-foreground text-xs ml-1">({row.count} HĐ)</span>
                     </td>
                     <td className="px-4 py-2.5 text-right tabular-nums font-medium text-foreground">
                       {formatCurrency(row.amount)}
