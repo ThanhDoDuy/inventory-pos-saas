@@ -17,6 +17,7 @@ import {
   ScrollText,
   Bell,
   BarChart3,
+  BookOpen,
 } from 'lucide-react';
 import { PERMISSIONS } from '@/lib/permission-codes';
 import {
@@ -171,6 +172,12 @@ export const NAV_SECTIONS: NavSection[] = [
         icon: Bell,
         permissions: [PERMISSIONS.NOTIFICATIONS_VIEW],
       },
+      {
+        href: '/dashboard/reports/tax/s1a-hkd',
+        labelKey: 'nav.item.taxReportS1a',
+        icon: BookOpen,
+        permissions: [PERMISSIONS.REPORTS_VIEW],
+      },
     ],
   },
 ];
@@ -232,6 +239,9 @@ export function isNavActive(pathname: string, href: string) {
     return pathname === href;
   }
   if (href === '/dashboard/pos') {
+    return pathname === href;
+  }
+  if (href === '/dashboard/reports') {
     return pathname === href;
   }
   if (href === '/dashboard/inventory') {

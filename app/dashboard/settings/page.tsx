@@ -1,6 +1,6 @@
 'use client';
 
-import { Building2, Banknote, Bell, Loader2, LogOut, Shield, X } from 'lucide-react';
+import { Building2, Banknote, Bell, Loader2, LogOut, Shield, X, FileText } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useAuthStore } from '@/lib/auth-store';
 import { useRouter } from 'next/navigation';
@@ -93,6 +93,19 @@ export default function SettingsPage() {
   const [isSavingTier, setIsSavingTier] = useState(false);
   const [editingLabels, setEditingLabels] = useState<Record<string, string>>({});
 
+  const [taxForm, setTaxForm] = useState({
+    businessName: '',
+    taxCode: '',
+    businessLocation: '',
+    group1Label: 'Bán hàng doanh nghiệp',
+    group1Types: 'COMPANY,GROUP',
+    group2Label: 'Bán hàng khách vãng lai',
+    group2Types: 'INDIVIDUAL,NONE',
+  });
+  const [taxMessage, setTaxMessage] = useState('');
+  const [taxError, setTaxError] = useState('');
+  const [isSavingTax, setIsSavingTax] = useState(false);
+
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [passwordForm, setPasswordForm] = useState({
     oldPassword: '',
@@ -129,6 +142,15 @@ export default function SettingsPage() {
         getSettingValue(settings, RECEIPT_LAYOUT_KEYS.showStorePhone, 'false') === 'true',
       showStoreAddress:
         getSettingValue(settings, RECEIPT_LAYOUT_KEYS.showStoreAddress, 'false') === 'true',
+    });
+    setTaxForm({
+      businessName: getSettingValue(settings, 'tax.business_name', ''),
+      taxCode: getSettingValue(settings, 'tax.tax_code', ''),
+      businessLocation: getSettingValue(settings, 'tax.business_location', ''),
+      group1Label: getSettingValue(settings, 'tax.revenue_group_1_label', 'Bán hàng doanh nghiệp'),
+      group1Types: getSettingValue(settings, 'tax.revenue_group_1_types', 'COMPANY,GROUP'),
+      group2Label: getSettingValue(settings, 'tax.revenue_group_2_label', 'Bán hàng khách vãng lai'),
+      group2Types: getSettingValue(settings, 'tax.revenue_group_2_types', 'INDIVIDUAL,NONE'),
     });
   }, [settings]);
 
@@ -276,6 +298,29 @@ export default function SettingsPage() {
     }
   };
 
+  const handleSaveTaxConfig = async () => {
+    setTaxError('');
+    setTaxMessage('');
+    setIsSavingTax(true);
+    try {
+      await bulkUpdateSettings([
+        { key: 'tax.business_name', value: taxForm.businessName },
+        { key: 'tax.tax_code', value: taxForm.taxCode },
+        { key: 'tax.business_location', value: taxForm.businessLocation },
+        { key: 'tax.revenue_group_1_label', value: taxForm.group1Label },
+        { key: 'tax.revenue_group_1_types', value: taxForm.group1Types },
+        { key: 'tax.revenue_group_2_label', value: taxForm.group2Label },
+        { key: 'tax.revenue_group_2_types', value: taxForm.group2Types },
+      ]);
+      await mutateSettings();
+      setTaxMessage(t('settings.taxReport.saved'));
+    } catch (err) {
+      setTaxError(err instanceof Error ? err.message : t('settings.taxReport.error'));
+    } finally {
+      setIsSavingTax(false);
+    }
+  };
+
   const handleChangePassword = async () => {
     setPasswordError('');
     if (passwordForm.newPassword.length < 8) {
@@ -312,6 +357,7 @@ export default function SettingsPage() {
     { id: 'billing', label: t('settings.tabs.billing'), icon: Banknote },
     { id: 'notifications', label: t('settings.tabs.notifications'), icon: Bell },
     { id: 'security', label: t('settings.tabs.security'), icon: Shield },
+    { id: 'tax', label: t('settings.tabs.tax'), icon: FileText },
   ];
 
   return (
@@ -889,6 +935,118 @@ export default function SettingsPage() {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'tax' && (
+        <div className="space-y-6">
+          <div className="bg-card rounded-lg border border-border p-6">
+            <h2 className="text-xl font-bold text-foreground mb-2">
+              {t('settings.taxReport.title')}
+            </h2>
+            <p className="text-sm text-muted-foreground mb-6">{t('settings.taxReport.subtitle')}</p>
+            {settingsLoading ? (
+              <div className="flex items-center gap-2 text-muted-foreground py-4">
+                <Loader2 className="animate-spin" size={18} />
+                {t('common.loading')}
+              </div>
+            ) : (
+              <>
+                {taxMessage && (
+                  <p className="mb-4 text-sm text-green-700 bg-green-50 border border-green-200 rounded-lg p-3">
+                    {taxMessage}
+                  </p>
+                )}
+                {taxError && (
+                  <p className="mb-4 text-sm text-destructive bg-destructive/10 border border-destructive/30 rounded-lg p-3">
+                    {taxError}
+                  </p>
+                )}
+                <div className="space-y-4 mb-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField label={t('settings.taxReport.businessName')} htmlFor="tax-biz-name">
+                      <input
+                        id="tax-biz-name"
+                        type="text"
+                        value={taxForm.businessName}
+                        onChange={(e) => setTaxForm((f) => ({ ...f, businessName: e.target.value }))}
+                        className={inputClassName}
+                      />
+                    </FormField>
+                    <FormField label={t('settings.taxReport.taxCode')} htmlFor="tax-code">
+                      <input
+                        id="tax-code"
+                        type="text"
+                        value={taxForm.taxCode}
+                        onChange={(e) => setTaxForm((f) => ({ ...f, taxCode: e.target.value }))}
+                        className={inputClassName}
+                      />
+                    </FormField>
+                  </div>
+                  <FormField label={t('settings.taxReport.businessLocation')} htmlFor="tax-location">
+                    <input
+                      id="tax-location"
+                      type="text"
+                      value={taxForm.businessLocation}
+                      onChange={(e) => setTaxForm((f) => ({ ...f, businessLocation: e.target.value }))}
+                      className={inputClassName}
+                    />
+                  </FormField>
+                  <div className="border-t border-border pt-4">
+                    <p className="text-xs text-muted-foreground mb-3">{t('settings.taxReport.hint')}</p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField label={t('settings.taxReport.group1Label')} htmlFor="tax-g1-label">
+                        <input
+                          id="tax-g1-label"
+                          type="text"
+                          value={taxForm.group1Label}
+                          onChange={(e) => setTaxForm((f) => ({ ...f, group1Label: e.target.value }))}
+                          className={inputClassName}
+                        />
+                      </FormField>
+                      <FormField label={t('settings.taxReport.group1Types')} htmlFor="tax-g1-types">
+                        <input
+                          id="tax-g1-types"
+                          type="text"
+                          value={taxForm.group1Types}
+                          onChange={(e) => setTaxForm((f) => ({ ...f, group1Types: e.target.value }))}
+                          className={inputClassName}
+                        />
+                      </FormField>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                      <FormField label={t('settings.taxReport.group2Label')} htmlFor="tax-g2-label">
+                        <input
+                          id="tax-g2-label"
+                          type="text"
+                          value={taxForm.group2Label}
+                          onChange={(e) => setTaxForm((f) => ({ ...f, group2Label: e.target.value }))}
+                          className={inputClassName}
+                        />
+                      </FormField>
+                      <FormField label={t('settings.taxReport.group2Types')} htmlFor="tax-g2-types">
+                        <input
+                          id="tax-g2-types"
+                          type="text"
+                          value={taxForm.group2Types}
+                          onChange={(e) => setTaxForm((f) => ({ ...f, group2Types: e.target.value }))}
+                          className={inputClassName}
+                        />
+                      </FormField>
+                    </div>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleSaveTaxConfig}
+                  disabled={isSavingTax}
+                  className="px-6 py-2 bg-primary text-primary-foreground rounded-lg font-semibold hover:bg-primary/90 transition-colors disabled:opacity-50"
+                >
+                  {isSavingTax ? t('settings.taxReport.saving') : t('settings.buttons.saveChanges')}
+                </button>
+              </>
+            )}
           </div>
         </div>
       )}

@@ -74,6 +74,7 @@ export interface Messages {
       settings: string;
       auditLogs: string;
       notifications: string;
+      taxReportS1a: string;
     };
     empty: {
       noAccess: string;
@@ -200,6 +201,24 @@ export interface Messages {
         quantity: string;
         value: string;
       };
+    };
+    taxS1aHkd: {
+      title: string;
+      subtitle: string;
+      year: string;
+      exportExcel: string;
+      exporting: string;
+      loading: string;
+      noData: string;
+      table: {
+        date: string;
+        transaction: string;
+        amount: string;
+        invoiceCount: string;
+      };
+      total: string;
+      configMissing: string;
+      goToSettings: string;
     };
   };
   pos: {
@@ -1057,6 +1076,7 @@ export interface Messages {
       billing: string;
       notifications: string;
       security: string;
+      tax: string;
     };
     business: {
       title: string;
@@ -1094,6 +1114,21 @@ export interface Messages {
       enable_low_stock_alert: { label: string; desc: string };
       enable_refund: { label: string; desc: string };
       enable_partial_payment: { label: string; desc: string };
+    };
+    taxReport: {
+      title: string;
+      subtitle: string;
+      businessName: string;
+      taxCode: string;
+      businessLocation: string;
+      group1Label: string;
+      group1Types: string;
+      group2Label: string;
+      group2Types: string;
+      saved: string;
+      error: string;
+      saving: string;
+      hint: string;
     };
     priceTiers: {
       title: string;
