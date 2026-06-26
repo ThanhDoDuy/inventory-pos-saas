@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/lib/auth-store';
-import { extractErrorMessage } from '@/lib/api-client';
+import { extractErrorMessage, clearStoredTokens } from '@/lib/api-client';
 import { LanguageSwitcher } from '@/components/language-switcher';
 import { useTranslation } from '@/lib/i18n/use-translation';
 import Link from 'next/link';
@@ -24,6 +24,8 @@ export default function LoginPage() {
     setError('');
 
     try {
+      // Clear any stale tokens to prevent refresh token conflicts
+      clearStoredTokens();
       await login(email, password);
       router.push('/dashboard');
     } catch (err) {

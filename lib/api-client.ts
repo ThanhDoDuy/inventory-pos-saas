@@ -85,19 +85,30 @@ async function refreshAccessToken(): Promise<string | null> {
   const legacyToken =
     typeof window !== 'undefined' ? localStorage.getItem('refresh_token') : null;
 
-  const response = await axios.post<ApiResponse<{ access_token: string }>>(
-    `${API_BASE_URL}/auth/refresh-token`,
-    legacyToken ? { refresh_token: legacyToken } : {},
-    { withCredentials: true },
-  );
+  try {
+    const response = await axios.post<ApiResponse<{ access_token: string }>>(
+      `${API_BASE_URL}/auth/refresh-token`,
+      legacyToken ? { refresh_token: legacyToken } : {},
+      { withCredentials: true },
+    );
 
-  const accessToken = response.data.data?.access_token;
-  if (accessToken) {
-    setStoredAccessToken(accessToken);
-    apiClient.defaults.headers.common.Authorization = `Bearer ${accessToken}`;
-    return accessToken;
+    const accessToken = response.data.data?.access_token;
+    if (accessToken) {
+      setStoredAccessToken(accessToken);
+      apiClient.defaults.headers.common.Authorization = `Bearer ${accessToken}`;
+      return accessToken;
+    }
+    return null;
+  } catch (err) {
+    // Refresh failed (e.g., Invalid Refresh Token) — clear tokens and force redirect to login
+    clearStoredTokens();
+    delete apiClient.defaults.headers.common.Authorization;
+
+    if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/login')) {
+      window.location.href = '/login';
+    }
+    return null;
   }
-  return null;
 }
 
 apiClient.interceptors.response.use(
@@ -106,6 +117,11 @@ apiClient.interceptors.response.use(
     const original = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
 
     if (error.response?.status !== 401 || !original || original._retry) {
+      return Promise.reject(error);
+    }
+
+    // Don't try to refresh on auth endpoints — let them fail with their original error
+    if (original.url?.includes('/auth/')) {
       return Promise.reject(error);
     }
 
@@ -119,11 +135,9 @@ apiClient.interceptors.response.use(
 
     const newToken = await refreshPromise;
     if (!newToken) {
-      clearStoredTokens();
-      if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/login')) {
-        window.location.href = '/login';
-      }
-      return Promise.reject(error);
+      // Refresh failed — clearStoredTokens and redirect already handled in refreshAccessToken()
+      // Don't reject with the original error; silently redirect to login
+      return Promise.reject(new Error('Session expired. Redirecting to login...'));
     }
 
     original.headers.Authorization = `Bearer ${newToken}`;
